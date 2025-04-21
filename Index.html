@@ -150,7 +150,7 @@
     </footer>
 
     <script>
-        // --- DOM Elements ---
+                // --- DOM Elements ---
         const signInLink = document.getElementById('signInLink');
         const userProfileHeader = document.getElementById('user-profile-header');
         const userNameHeader = document.getElementById('userNameHeader');
@@ -164,109 +164,134 @@
         const heroSubheadline = document.getElementById('heroSubheadline');
         const heroDescription = document.getElementById('heroDescription');
 
+        // --- Configuration ---
+        const API_BASE_URL = 'https://api.fireship.org'; // <-- USE YOUR LIVE API DOMAIN
+
         // --- Utility Functions ---
         async function apiRequest(url, options) {
-           // (Keep existing apiRequest function)
+             // Construct the full URL if the provided URL starts with '/'
+             const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+             console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
              try {
-                 const response = await fetch(url, options);
-                 if (!response.ok) {
-                     let errorMsg = `Request failed with status: ${response.status}`;
-                     try {
-                         const errorData = await response.json();
-                         errorMsg = errorData.message || errorMsg;
-                     } catch (e) { /* Ignore */ }
-                     // Specific handling for 401 Unauthorized (treat as logged out)
-                      if (response.status === 401) {
-                           console.log("User not authenticated.");
-                           return null; // Indicate logged out state
-                      }
-                     throw new Error(errorMsg);
+                 // Use fullUrl in the fetch call
+                 const r = await fetch(fullUrl, options); // Use the new variable 'r' for response
+
+                 if (!r.ok) {
+                     let errorMsg = `API Error (${r.status})`;
+                     let errorData=null;
+                     try { errorData = await r.json(); errorMsg = errorData.message || errorMsg;} catch (e) {}
+                     console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+                     if(r.status===401){
+                         console.warn("API 401 received on Index page, treating as logged out.");
+                         // Don't redirect from index, just return null
+                         return null;
+                     }
+                     throw new Error(errorData?.message || `Request failed: ${r.status}`);
                  }
-                 const contentType = response.headers.get("content-type");
-                 if (contentType && contentType.indexOf("application/json") !== -1) {
-                      return await response.json();
+                 const ct = r.headers.get("content-type");
+                 if (ct?.includes("application/json")) {
+                     const d = await r.json();
+                     console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                     return d;
                  } else {
-                      return {};
+                     console.debug(`API OK NoJSON @ ${fullUrl}`); // Log fullUrl
+                     return {};
                  }
-             } catch (error) {
-                 console.error(`API Request Error (${url}):`, error);
-                 throw error;
+             } catch (e) { // Error handling
+                  console.error(`API Excep (${fullUrl}):`, e); // Use fullUrl in error log
+                  if (e.message.toLowerCase().includes('failed to fetch')) throw new Error("Network error.");
+                  throw e; // Re-throw original or network error
              }
         }
 
+
          // --- UI Update Functions ---
          function updateHeaderUI(userData, hasBooking) {
-             if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) {
-                 // Logged In State
-                 signInLink.style.display = 'none';
-                 userProfileHeader.style.display = 'flex';
-                 userNameHeader.textContent = userData.name || 'User';
-                 userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png'; // Use placeholder if no avatar
+             // Ensure elements exist before trying to modify
+             const signInLinkEl = document.getElementById('signInLink');
+             const userProfileHeaderEl = document.getElementById('user-profile-header');
+             const userNameHeaderEl = document.getElementById('userNameHeader');
+             const userAvatarHeaderEl = document.getElementById('userAvatarHeader');
+             const notificationDotEl = document.getElementById('notificationDot');
+             const lessonsNotificationDotEl = document.getElementById('lessonsNotificationDot');
 
-                 // Show notification dot if booking exists
-                  if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none';
-                  if (lessonsNotificationDot) lessonsNotificationDot.style.display = hasBooking ? 'inline-block' : 'none';
+             if (userData && userProfileHeaderEl && userNameHeaderEl && userAvatarHeaderEl && signInLinkEl) {
+                 signInLinkEl.style.display = 'none';
+                 userProfileHeaderEl.style.display = 'flex';
+                 userNameHeaderEl.textContent = userData.name || 'User';
+                 userAvatarHeaderEl.src = userData.avatarUrl || 'placeholder-avatar.png';
+                 userAvatarHeaderEl.onerror = () => { if(userAvatarHeaderEl) userAvatarHeaderEl.src = 'placeholder-avatar.png'; };
 
-             } else if (signInLink && userProfileHeader) {
-                 // Logged Out State
-                 signInLink.style.display = 'block';
-                 userProfileHeader.style.display = 'none';
-                  if (notificationDot) notificationDot.style.display = 'none';
-                  if (lessonsNotificationDot) lessonsNotificationDot.style.display = 'none';
+                 if (notificationDotEl) notificationDotEl.style.display = hasBooking ? 'block' : 'none';
+                 if (lessonsNotificationDotEl) lessonsNotificationDotEl.classList.toggle('visible', hasBooking);
+
+             } else if (signInLinkEl && userProfileHeaderEl) {
+                 signInLinkEl.style.display = 'block'; // Or 'inline-flex'
+                 userProfileHeaderEl.style.display = 'none';
+                 if (notificationDotEl) notificationDotEl.style.display = 'none';
+                 if (lessonsNotificationDotEl) lessonsNotificationDotEl.classList.remove('visible');
              }
          }
+
 
          function updateHeroUI(isLoggedIn, hasBooking, setupStatus) {
              if (!ctaButton || !ctaButtonText || !heroSubheadline || !heroDescription) return;
 
              if (isLoggedIn && hasBooking) {
-                 // Logged in WITH booking
                  heroSubheadline.textContent = "You have a session booked!";
-                 heroSubheadline.style.background = 'linear-gradient(90deg, var(--primary-color), var(--secondary-color))'; // Change color
+                 heroSubheadline.style.background = 'linear-gradient(90deg, var(--primary-color), var(--secondary-color))';
                  heroDescription.textContent = "View your upcoming lesson details or manage your profile.";
                  ctaButtonText.textContent = "View My Lesson";
-                 ctaButton.href = "lessons.html"; // Link to lessons page
-                 ctaButton.style.background = 'linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%)'; // Different button color
+                 ctaButton.href = "lessons.html";
+                 ctaButton.style.background = 'linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%)';
              } else if (isLoggedIn && !hasBooking) {
-                  // Logged in, NO booking - determine next step
                   let nextUrl = 'aboutyourself.html';
                   let buttonText = 'Continue Your Setup';
+                   // Use optional chaining for setupStatus checks
                    if (setupStatus?.about && setupStatus?.learningStyle && setupStatus?.proficiency) {
                        nextUrl = 'booking.html';
                        buttonText = 'Book Your Free Session!';
-                   } // Add other checks if needed (learningstyle, etc.)
+                   } else if (setupStatus?.about && setupStatus?.learningStyle) {
+                       nextUrl = 'languageproficiency.html';
+                       buttonText = 'Set Your Proficiency';
+                   } else if (setupStatus?.about) {
+                        nextUrl = 'learningstyle.html';
+                        buttonText = 'Choose Learning Style';
+                   } // else default is aboutyourself.html
 
                    heroSubheadline.textContent = "Ready to Start Learning?";
-                   heroSubheadline.style.background = 'linear-gradient(90deg, var(--accent-color), #ff4d4d)'; // Default color
+                   heroSubheadline.style.background = 'linear-gradient(90deg, var(--accent-color), #ff4d4d)';
                    heroDescription.textContent = "Complete your profile setup or book your free 1-on-1 session now!";
                    ctaButtonText.textContent = buttonText;
                    ctaButton.href = nextUrl;
-                   ctaButton.style.background = 'linear-gradient(90deg, var(--success-color) 0%, #25a25a 100%)'; // Default green
+                   ctaButton.style.background = 'linear-gradient(90deg, var(--success-color) 0%, #25a25a 100%)';
 
              } else {
                  // Logged Out State (Default)
                  heroSubheadline.innerHTML = '<i class="fas fa-star"></i> Your First 1-on-1 Session is 100% FREE! <i class="fas fa-star"></i>';
-                 heroSubheadline.style.background = 'linear-gradient(90deg, var(--accent-color), #ff4d4d)'; // Default color
+                 heroSubheadline.style.background = 'linear-gradient(90deg, var(--accent-color), #ff4d4d)';
                  heroDescription.textContent = "Experience personalized lessons with expert tutors, tailored to your unique learning style. Start speaking confidently today!";
                  ctaButtonText.textContent = "Claim Your Free Session!";
-                 ctaButton.href = "welcome.html"; // Default link to welcome/login
-                 ctaButton.style.background = 'linear-gradient(90deg, var(--success-color) 0%, #25a25a 100%)'; // Default green
+                 ctaButton.href = "welcome.html"; // Link to welcome/login
+                 ctaButton.style.background = 'linear-gradient(90deg, var(--success-color) 0%, #25a25a 100%)';
              }
          }
 
 
          // --- Event Listeners ---
          function setupDropdown() {
-             const profileArea = document.getElementById('user-profile-header'); // Click area
-             if (profileArea && profileDropdown) {
+             // Ensure elements exist before adding listeners
+             const profileArea = document.getElementById('user-profile-header');
+             const profileDropdownEl = document.getElementById('profileDropdown');
+
+             if (profileArea && profileDropdownEl) {
                  profileArea.addEventListener('click', (event) => {
-                     event.stopPropagation(); // Prevent triggering window listener immediately
-                     profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
+                     event.stopPropagation();
+                     profileDropdownEl.style.display = profileDropdownEl.style.display === 'block' ? 'none' : 'block';
                  });
-                 // Close dropdown if clicking outside
                  window.addEventListener('click', (event) => {
-                      if (!profileArea.contains(event.target)) {
-                         profileDropdown.style.display = 'none';
+                      if (profileDropdownEl.style.display === 'block' && !profileArea.contains(event.target)) {
+                         profileDropdownEl.style.display = 'none';
                       }
                  });
              }
@@ -275,14 +300,11 @@
         async function handleSignOut() {
              console.log("Signing out...");
              try {
-                  // TODO: Replace with your actual backend logout endpoint
                   await apiRequest('/api/auth/logout', { method: 'POST' });
                   console.log("Logout successful on backend.");
-                   // Clear local state and redirect (or just refresh)
-                  updateHeaderUI(null, false); // Update header to logged-out state
-                  updateHeroUI(false, false, {}); // Update hero to logged-out state
-                   // Optionally redirect to home or login page:
-                   // window.location.href = '/';
+                  // Update UI immediately to reflect logout
+                  updateHeaderUI(null, false);
+                  updateHeroUI(false, false, {});
              } catch (error) {
                   console.error("Sign out failed:", error);
                   alert(`Sign out failed: ${error.message}`);
@@ -292,24 +314,29 @@
 
         // --- Initial Load ---
         window.addEventListener('DOMContentLoaded', async function() {
-            console.log("Index page loaded. Checking user status...");
+            console.log("Index page DOM loaded. Checking user status...");
+            // Ensure header elements exist before proceeding
+             if (!document.getElementById('user-profile-header') || !document.getElementById('signInLink')) {
+                 console.error("Header elements not found on page load!");
+                 return; // Stop if header isn't set up right
+             }
+
              let userData = null;
              let hasBooking = false;
              let setupStatus = {};
              let isLoggedIn = false;
 
              try {
-                 // TODO: Replace with your actual backend endpoint
                  const status = await apiRequest('/api/user/status', { method: 'GET' });
 
-                  if (status) { // apiRequest returns null for 401
+                  if (status && status.user) { // Check for user object specifically
                        isLoggedIn = true;
-                       userData = status.user || {}; // Assuming backend returns user details in status
+                       userData = status.user;
                        hasBooking = status.hasBooking || false;
                        setupStatus = status.setupComplete || {};
-                       console.log("User is logged in. Status:", status);
+                       console.log("User logged in. Status:", status);
                   } else {
-                       console.log("User is not logged in.");
+                       console.log("User not logged in or invalid status response.");
                        isLoggedIn = false;
                   }
 
@@ -321,26 +348,43 @@
              // Update UI based on fetched status
              updateHeaderUI(isLoggedIn ? userData : null, hasBooking);
              updateHeroUI(isLoggedIn, hasBooking, setupStatus);
-             setupDropdown(); // Setup dropdown interactivity
+             setupDropdown(); // Setup dropdown interactivity AFTER header elements are potentially shown
 
-            if (signOutBtn) {
-                 signOutBtn.addEventListener('click', handleSignOut);
-             }
+            // Setup signout button listener only if the button exists
+            const signOutBtnEl = document.getElementById('signOutBtn');
+            if (signOutBtnEl) {
+                 signOutBtnEl.addEventListener('click', handleSignOut);
+            } else {
+                console.warn("Sign out button not found initially."); // Might be hidden
+            }
 
-             // --- Scroll Header Effect ---
+             // Scroll Header Effect
               window.addEventListener('scroll', function() {
                  document.body.classList.toggle('scrolled', window.scrollY > 50);
               }, { passive: true });
 
-             // --- Intersection Observer for Animations (Keep As Is) ---
+             // Intersection Observer for Animations
               const elementsToAnimate = document.querySelectorAll('.feature-card, .step, .testimonial-card, .coming-soon-card, .intro-section');
-              const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
-              const observerCallback = (entries, observer) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('animate-in'); observer.unobserve(entry.target); } }); };
-              const observer = new IntersectionObserver(observerCallback, observerOptions);
-              elementsToAnimate.forEach((el, index) => { const stagger = 0.1; el.style.setProperty('--animation-delay', `${index * stagger}s`); observer.observe(el); });
+              if ('IntersectionObserver' in window) {
+                const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+                const observerCallback = (entries, observer) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('animate-in'); observer.unobserve(entry.target); } }); };
+                const observer = new IntersectionObserver(observerCallback, observerOptions);
+                elementsToAnimate.forEach((el, index) => { const stagger = 0.1; el.style.setProperty('--animation-delay', `${index * stagger}s`); observer.observe(el); });
+              } else {
+                  // Fallback for older browsers: just show elements immediately
+                  elementsToAnimate.forEach(el => el.style.opacity = 1);
+              }
+
 
         }); // End DOMContentLoaded
 
+        // Helper function to get element by ID (defined outside DOMContentLoaded)
+        function getElement(id) {
+            const el = document.getElementById(id);
+            // Optional: Add error handling if element not found, but might be noisy if elements are dynamically shown/hidden
+            // if (!el) { console.warn(`Element with ID "${id}" not found.`); }
+            return el;
+        }
     </script>
 
 </body>

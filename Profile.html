@@ -238,20 +238,70 @@
     const notificationDot = getElement('notificationDot');
     const lessonsNotificationDot = getElement('lessonsNotificationDot');
 
-    // --- Utilities & Lesson Logic (Keep from lessons.html) ---
-    async function apiRequest(url, options) { /* ... Keep existing ... */ try { const response = await fetch(url, options); if (!response.ok) { let errorMsg = `API Error (${response.status})`; let errorData=null; try { errorData = await response.json(); errorMsg = errorData.message || errorMsg;} catch (e) {} console.error(`API Fail: ${response.status} ${response.statusText} @ ${url}`, errorData); if (response.status === 401) { console.warn("API 401 -> Welcome"); window.location.href = 'welcome.html'; return null;} throw new Error(errorData?.message || `Request failed: ${response.status}`); } const contentType = response.headers.get("content-type"); if (contentType?.includes("application/json")) { const d=await response.json(); console.debug(`API OK JSON @ ${url}:`, d); return d;} else { console.debug(`API OK NoJSON @ ${url}`); return {}; } } catch (error) { console.error(`API Excep (${url}):`, error); if (error.message.toLowerCase().includes('failed to fetch')) throw new Error("Network error."); throw error; } }
+    // --- Utilities & Lesson Logic ---
+
+    // Add this line BEFORE the apiRequest function definition
+    const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
+
+    async function apiRequest(url, options) {
+         // Construct the full URL if the provided URL starts with '/'
+         const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
+         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+         try {
+             // Use fullUrl in the fetch call
+             const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+
+             if (!r.ok) {
+                 let errorMsg = `API Error (${r.status})`;
+                 let errorData = null;
+                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
+                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+
+                 // Specific 401 handling for this page (redirect to welcome)
+                 if (r.status === 401) { // Check specific status
+                     console.warn("API 401 -> Welcome");
+                     window.location.href = 'welcome.html';
+                     return null; // Return null to signal a redirect or halt further processing
+                 }
+                 // Throw a formatted error for other non-ok statuses
+                 throw new Error(errorData?.message || `Request failed: ${r.status}`);
+             }
+
+             // Check content type before trying to parse JSON
+             const ct = r.headers.get("content-type");
+             if (ct?.includes("application/json")) {
+                 const d = await r.json();
+                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                 return d;
+             } else {
+                 // Handle non-JSON success responses (like 204 No Content or other types)
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
+                 // Return an empty object as the original function did
+                 return {};
+             }
+         } catch (e) { // Error handling
+              console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
+              // Check for network errors (e.g., "Failed to fetch")
+              if (e.message.toLowerCase().includes('failed to fetch')) {
+                  throw new Error("Network error.");
+              }
+              // Re-throw original error (could be the custom error from !r.ok or the network error)
+              throw e;
+         }
+    }
+
     function showLoadingState(isLoading) { /* ... Keep existing ... */ if (loadingSpinner) loadingSpinner.style.display = isLoading ? 'block' : 'none'; if (!isLoading) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
     function displayLessons(lessons) { /* ... Keep existing ... */ if (!lessonsListContainer) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (lessons?.length > 0) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; lessons.sort((a, b) => new Date(a.utcStartTime) - new Date(b.utcStartTime)); lessons.forEach((lesson, index) => { const lessonCard = createLessonCardElement(lesson); lessonCard.style.animationDelay = `${index * 0.05}s`; lessonsListContainer.appendChild(lessonCard); }); } else { if (emptyStateDiv) emptyStateDiv.style.display = 'block'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
     function displayErrorState(isProfileError = false) { if (!lessonsListContainer || !errorStateDiv) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (emptyStateDiv) emptyStateDiv.style.display = 'none'; const errorMsgElement = errorStateDiv.querySelector('p'); if(errorMsgElement) { errorMsgElement.textContent = isProfileError ? "Error fetching profile data. Please refresh." : "Error fetching lessons. Please refresh."; } errorStateDiv.style.display = 'block'; }
-    function createLessonCardElement(lesson) { /* ... Keep existing ... */ const card = document.createElement('div'); card.className = 'lesson-card'; card.dataset.lessonId = lesson.id; const startTime = new Date(lesson.utcStartTime); const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 20) * 60 * 1000); const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }; const formattedDate = startTime.toLocaleDateString(undefined, dateOptions); const formattedStartTime = startTime.toLocaleTimeString(undefined, timeOptions); const formattedEndTime = endTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); card.innerHTML = `<div class="lesson-details"><h3>${lesson.title || 'Personalized Session'}</h3><p><i class="far fa-calendar-alt"></i> ${formattedDate}</p><p><i class="far fa-clock"></i> ${formattedStartTime} - ${formattedEndTime}</p><div class="teacher"><img class="teacher-avatar" src="${lesson.instructor?.avatarUrl || 'placeholder-avatar.png'}" alt="Teacher"><span>${lesson.instructor?.name || 'To be decided'}</span></div></div><div class="lesson-actions"><button class="btn" onclick="rescheduleLesson('${lesson.id}')"><i class="fas fa-edit"></i> Reschedule</button><a href="confirmation.html?lessonId=${lesson.id}" class="btn btn-secondary"><i class="fas fa-video"></i> Join/View</a><button class="btn btn-danger" onclick="cancelLesson('${lesson.id}')"><i class="fas fa-times-circle"></i> Cancel</button></div>`; return card; }
+    function createLessonCardElement(lesson) { /* ... Keep existing ... */ const card = document.createElement('div'); card.className = 'lesson-card animate-in'; card.dataset.lessonId = lesson.id; const startTime = new Date(lesson.utcStartTime); const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 20) * 60 * 1000); const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }; const formattedDate = startTime.toLocaleDateString(undefined, dateOptions); const formattedStartTime = startTime.toLocaleTimeString(undefined, timeOptions); const formattedEndTime = endTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); card.innerHTML = `<div class="lesson-details"><h3>${lesson.title || 'Personalized Session'}</h3><p><i class="far fa-calendar-alt"></i> ${formattedDate}</p><p><i class="far fa-clock"></i> ${formattedStartTime} - ${formattedEndTime}</p><div class="teacher"><img class="teacher-avatar" src="${lesson.instructor?.avatarUrl || 'placeholder-avatar.png'}" alt="Teacher" onerror="this.onerror=null; this.src='placeholder-avatar.png';"><span>${lesson.instructor?.name || 'To be decided'}</span></div></div><div class="lesson-actions"><button class="btn" onclick="rescheduleLesson('${lesson.id}')"><i class="fas fa-edit"></i> Reschedule</button><a href="confirmation.html?lessonId=${lesson.id}" class="btn btn-secondary"><i class="fas fa-video"></i> Join/View</a><button class="btn btn-danger" onclick="cancelLesson('${lesson.id}')"><i class="fas fa-times-circle"></i> Cancel</button></div>`; return card; }
     function rescheduleLesson(lessonId) { /* ... Keep existing ... */ console.log("Reschedule lesson:", lessonId); alert(`Rescheduling requires integration.`); }
-    async function cancelLesson(lessonId) { /* ... Keep existing ... */ console.log("Cancel lesson:", lessonId); if (confirm(`Are you sure you want to cancel lesson ${lessonId}?`)) { alert(`Cancellation requires backend integration.`); } }
+    async function cancelLesson(lessonId) { /* ... Keep existing ... */ console.log("Cancel lesson:", lessonId); if (confirm(`Are you sure you want to cancel lesson ${lessonId}? This action cannot be undone.`)) { alert(`Cancellation requires backend integration.`); /* Add backend call here */ } }
 
     // --- Header Logic (Keep from lessons.html) ---
     function updateHeaderUI(userData, hasBooking) { if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) { signInLink.style.display = 'none'; userProfileHeader.style.display = 'flex'; userNameHeader.textContent = userData.name || 'User'; userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png'; userAvatarHeader.onerror = () => { userAvatarHeader.src = 'placeholder-avatar.png'; }; if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.toggle('visible', hasBooking); } else if (signInLink && userProfileHeader) { signInLink.style.display = 'block'; userProfileHeader.style.display = 'none'; if (notificationDot) notificationDot.style.display = 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.remove('visible'); } }
     function setupDropdown() { const profileArea = userProfileHeader; if (profileArea && profileDropdown) { profileArea.addEventListener('click', (event) => { event.stopPropagation(); profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block'; }); window.addEventListener('click', (event) => { if (profileDropdown.style.display === 'block' && !profileArea.contains(event.target)) { profileDropdown.style.display = 'none'; } }); } }
-    async function handleSignOut() { console.log("Signing out..."); try { await apiRequest('/api/auth/logout', { method: 'POST' }); window.location.href = 'welcome.html'; } catch (error) { console.error("Sign out failed:", error); alert(`Sign out failed: ${error.message}`); } }
-    async function checkAuthAndSetupHeader() { console.log("[Header Auth Check] Checking..."); try { const status = await apiRequest('/api/user/status', { method: 'GET' }); if (status && status.user) { updateHeaderUI(status.user, status.hasBooking || false); } else { updateHeaderUI(null, false); } } catch (error) { console.warn("[Header Auth Check] Failed:", error.message); updateHeaderUI(null, false); } }
+    async function handleSignOut() { console.log("Signing out..."); try { const result = await apiRequest('/api/auth/logout', { method: 'POST' }); if (result === null) return; // Redirect happened window.location.href = 'welcome.html'; } catch (error) { console.error("Sign out failed:", error); if (error.message !== "Redirecting") { alert(`Sign out failed: ${error.message}`); } } }
+    async function checkAuthAndSetupHeader() { console.log("[Header Auth Check] Checking..."); try { const status = await apiRequest('/api/user/status', { method: 'GET' }); if (status === null) return; // Redirect happened if (status && status.user) { updateHeaderUI(status.user, status.hasBooking || false); } else { updateHeaderUI(null, false); } } catch (error) { console.warn("[Header Auth Check] Failed:", error.message); updateHeaderUI(null, false); } }
 
     // --- Populate Profile Details ---
     function populateProfileDetails(profileData) {
@@ -260,7 +310,13 @@
              if (profileNameEl) profileNameEl.textContent = 'Error Loading';
              if (profileEmailEl) profileEmailEl.textContent = 'Error Loading';
              if (profileDobEl) profileDobEl.textContent = '--';
-             // ... reset other fields ...
+             if (profileGenderEl) profileGenderEl.textContent = '--';
+             if (profileNationalityEl) profileNationalityEl.textContent = '--';
+             if (profileNativeLangEl) profileNativeLangEl.textContent = '--';
+             if (profileProficiencyEl) profileProficiencyEl.textContent = '--';
+             if (profileLearningPathEl) profileLearningPathEl.textContent = '--';
+             if (profileAvatarEl) profileAvatarEl.src = 'placeholder-avatar.png';
+             document.querySelectorAll('.profile-value').forEach(el => el.classList.add('placeholder'));
              return;
         }
 
@@ -276,23 +332,35 @@
 
         // Account Details Section
         if (profileDobEl) {
-            profileDobEl.textContent = profileData.dob ? new Date(profileData.dob + 'T00:00:00Z').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '--'; // Display UTC date nicely
-             profileDobEl.classList.toggle('placeholder', !profileData.dob);
-        }
+             // Attempt to parse DOB assuming YYYY-MM-DD and display in local long format
+             let dobDisplay = '--';
+             try {
+                 if (profileData.dob && /^\d{4}-\d{2}-\d{2}$/.test(profileData.dob)) {
+                     // Add time part and Z to correctly interpret as UTC date part only
+                     const utcDate = new Date(profileData.dob + 'T00:00:00Z');
+                     if (!isNaN(utcDate)) {
+                         dobDisplay = utcDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+                     }
+                 }
+             } catch (e) { console.error("Error formatting DOB:", e); }
+             profileDobEl.textContent = dobDisplay;
+             profileDobEl.classList.toggle('placeholder', dobDisplay === '--');
+         }
         if (profileGenderEl) {
             profileGenderEl.textContent = profileData.gender ? profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1) : '--';
              profileGenderEl.classList.toggle('placeholder', !profileData.gender);
         }
         if (profileNationalityEl) {
-            let natDisplay = '--';
-             if (profileData.nationality) {
-                 natDisplay = profileData.nationality === 'Other' && profileData.country_other
-                     ? `Other (${profileData.country_other})` // Show selected country if 'Other'
-                     : profileData.nationality; // Show code like 'SA', 'AE' etc.
+             // Display country name if 'Other' was chosen, otherwise show the choice ('US', 'SA', etc.)
+             let natDisplay = '--';
+             if (profileData.nationality_choice) {
+                 natDisplay = profileData.nationality_choice === 'other' && profileData.country
+                     ? `Other (${profileData.country})` // Show country name if 'Other' was choice
+                     : profileData.nationality_choice; // Otherwise show the choice code/value
              }
              profileNationalityEl.textContent = natDisplay;
-             profileNationalityEl.classList.toggle('placeholder', !profileData.nationality);
-        }
+             profileNationalityEl.classList.toggle('placeholder', natDisplay === '--');
+         }
          if (profileNativeLangEl) {
              profileNativeLangEl.textContent = profileData.native_language ? profileData.native_language.charAt(0).toUpperCase() + profileData.native_language.slice(1) : '--';
               profileNativeLangEl.classList.toggle('placeholder', !profileData.native_language);
@@ -301,14 +369,15 @@
 
         // Learning Preferences Section
         if (profileProficiencyEl) {
-             profileProficiencyEl.textContent = profileData.proficiency_level || '--';
-             profileProficiencyEl.classList.toggle('placeholder', !profileData.proficiency_level);
+             profileProficiencyEl.textContent = profileData.level || '--'; // Using 'level' based on other scripts
+             profileProficiencyEl.classList.toggle('placeholder', !profileData.level);
         }
         if (profileLearningPathEl) {
             let pathDisplay = '--';
-             if (profileData.learning_focus && profileData.learning_approach && profileData.learning_specialization) {
+             // Using step1, step2, step3 based on learning-style page data structure
+             if (profileData.step1 && profileData.step2 && profileData.step3) {
                  // Simple concatenation - adjust formatting as needed
-                 pathDisplay = `${profileData.learning_focus} > ${profileData.learning_approach} > ${profileData.learning_specialization}`;
+                 pathDisplay = `${profileData.step1} > ${profileData.step2} > ${profileData.step3}`;
              }
              profileLearningPathEl.textContent = pathDisplay;
              profileLearningPathEl.classList.toggle('placeholder', pathDisplay === '--');
@@ -318,21 +387,21 @@
 
     // --- Data Fetching for Profile Page ---
     async function fetchProfilePageData() {
-        showLoadingState(true); // Show spinner for lessons list
+        showLoadingState(true); // Show spinner for lessons list (initially)
         try {
-            // Setup header first using status check
+            // Setup header first using status check (will redirect if needed)
             await checkAuthAndSetupHeader();
 
-            // Fetch full profile details
-            const profileData = await apiRequest('/api/user/profile', { method: 'GET' });
+            // Fetch full profile details (will redirect if needed)
+            const profileData = await apiRequest('/api/user/profile/all', { method: 'GET' }); // Endpoint that returns combined profile & prefs
             if (profileData === null) { // Redirect happened in apiRequest
                  displayErrorState(true); // Show profile error
                  return;
             }
-            console.log("Fetched profile data:", profileData);
+            console.log("Fetched combined profile data:", profileData);
             populateProfileDetails(profileData); // Populate profile sections
 
-            // Fetch lessons
+            // Fetch lessons (will redirect if needed)
             const lessonsResponse = await apiRequest('/api/user/lessons', { method: 'GET' });
              if (lessonsResponse === null) { // Redirect happened
                  displayErrorState(false); // Show lesson error
@@ -346,9 +415,7 @@
             console.error("Error fetching profile page data:", error);
             displayErrorState(true); // Show general error covering both profile/lessons
             // Clear profile fields on error
-             if (profileNameEl) profileNameEl.textContent = 'Error';
-             if (profileEmailEl) profileEmailEl.textContent = 'Could not load';
-             populateProfileDetails(null); // Reset other fields
+             populateProfileDetails(null); // Reset profile fields to error/placeholder state
         } finally {
             showLoadingState(false);
         }

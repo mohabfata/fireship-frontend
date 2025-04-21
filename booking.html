@@ -456,33 +456,55 @@
         // --- Utilities ---
         function getElement(id) { const el = document.getElementById(id); if (!el) console.error(`DOM ID "${id}" not found!`); return el; }
         function querySelector(sel) { const el = document.querySelector(sel); if (!el) console.warn(`DOM Selector "${sel}" not found.`); return el; }
+
+        // Add this line BEFORE the apiRequest function definition
+        const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
+
         async function apiRequest(url, options) {
-            // (Keep existing apiRequest - ensure 401 handling is present)
-            console.debug(`API Req: ${options?.method || 'GET'} ${url}`);
-            try {
-                const r = await fetch(url, options);
-                if (!r.ok) {
-                    let m = `API Error (${r.status})`; let d=null;
-                    try { d=await r.json(); m=d.message||m;} catch (e) {}
-                    console.error(`API Fail: ${r.status} ${r.statusText} @ ${url}`, d);
-                    if(r.status===401 && !url.includes('/api/auth/logout')){
-                        console.warn("API 401 -> Welcome");
-                        window.location.href='welcome.html';
-                        return null; // Prevent further processing
-                    }
-                    throw new Error(d?.message||`Request failed: ${r.status}`);
-                }
-                const ct = r.headers.get("content-type");
-                if (ct?.includes("application/json")) {
-                    const d = await r.json(); console.debug(`API OK JSON @ ${url}:`, d); return d;
-                } else {
-                    console.debug(`API OK NoJSON @ ${url}`); return { success: true }; // Indicate success for non-json
-                }
-            } catch (e) {
-                console.error(`API Excep (${url}):`, e);
-                if (e.message.toLowerCase().includes('failed to fetch')) throw new Error("Network error.");
-                throw e;
-            }
+             // Construct the full URL if the provided URL starts with '/'
+             const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
+             console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+             try {
+                 // Use fullUrl in the fetch call
+                 const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+
+                 if (!r.ok) {
+                     let errorMsg = `API Error (${r.status})`;
+                     let errorData = null;
+                     try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
+                     console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+
+                     // Specific 401 handling for booking page (redirect to welcome)
+                     if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) { // Avoid redirect loop on logout
+                         console.warn("API 401 -> Welcome");
+                         window.location.href = 'welcome.html';
+                         return null; // Return null to signal a redirect or halt further processing
+                     }
+                     // Throw a formatted error
+                     throw new Error(errorData?.message || `Request failed: ${r.status}`);
+                 }
+
+                 // Check content type before trying to parse JSON
+                 const ct = r.headers.get("content-type");
+                 if (ct?.includes("application/json")) {
+                     const d = await r.json();
+                     console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                     return d;
+                 } else {
+                     // Handle non-JSON success responses (like 204 No Content or other types)
+                     console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
+                     // Return an empty object or a success indicator if needed by calling code
+                     return { success: true }; // Or return {}; if preferred
+                 }
+             } catch (e) { // Error handling
+                  console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
+                  // Check for network errors (e.g., "Failed to fetch")
+                  if (e.message.toLowerCase().includes('failed to fetch')) {
+                      throw new Error("Network error.");
+                  }
+                  // Re-throw original error (could be the custom error from !r.ok or the network error)
+                  throw e;
+             }
         }
         function showButtonLoading(b, l) { if(!b)return; const t=b.querySelector('.btn-text'); const o=b.querySelector('.btn-loader'); b.disabled=l; b.classList.toggle('loading',l); if(t)t.style.display=l?'none':'inline'; if(o)o.style.display=l?'inline-block':'none'; }
         function showModalFeedback(m, e=false) { if (!els.modalFeedback) return; els.modalFeedback.textContent = m; els.modalFeedback.className = e ? 'error' : ''; els.modalFeedback.style.display = 'block'; }
@@ -531,18 +553,22 @@
             console.log("Signing out...");
             try {
                 const result = await apiRequest('/api/auth/logout', { method: 'POST' });
-                 if (result === null) return; // Redirect happened
+                 if (result === null) return; // Redirect should have happened in apiRequest
+                // Fallback redirect if apiRequest didn't handle it
                 window.location.href = 'welcome.html';
             } catch (error) {
                 console.error("Sign out failed:", error);
-                alert(`Sign out failed: ${error.message}`);
+                // Avoid alert if it was a redirect signal
+                if (error.message !== "Redirecting") {
+                   alert(`Sign out failed: ${error.message}`);
+                }
             }
         }
         async function checkAuthAndSetupHeader() { // Renamed to avoid conflict with checkUserStatus
             console.log("[Header Auth Check] Checking...");
             try {
                 const status = await apiRequest('/api/user/status', { method: 'GET' });
-                if (status === null) return null; // Redirect happened, signal to stop init
+                if (status === null) return null; // Redirect happened or fatal API error, signal to stop init
 
                 if (status && status.user) {
                     console.log("[Header Auth Check] User logged in:", status.user);
@@ -560,9 +586,10 @@
                 }
             } catch (error) {
                 console.warn("[Header Auth Check] Failed:", error.message);
-                updateHeaderUI(null, false);
+                 // Don't alert here, just update UI and log
+                 updateHeaderUI(null, false);
                  setOverlay(true, `Authentication Error. Please try refreshing. <br><small>(${error.message})</small>`);
-                return null; // Indicate error
+                 return null; // Indicate error
             }
         }
 
@@ -574,6 +601,7 @@
                 // Use the status already fetched by the header check if available
                 const status = initialStatus || await apiRequest('/api/user/status', { method: 'GET' });
                 if (status === null) { // Redirect or major error happened
+                    // Overlay message should be set by checkAuthAndSetupHeader or apiRequest
                     throw new Error("User status check failed or redirected.");
                 }
 
@@ -581,24 +609,37 @@
                 console.log("[Booking Status Check] Received:", status, "Has booking:", hasBooking);
 
                 if (hasBooking) {
-                    setOverlay(true, `Session booked. <a href="profile.html" style="font-weight:600;color:var(--primary-color);">View Lesson</a>`);
+                    setOverlay(true, `Session booked. <a href="lessons.html" style="font-weight:600;color:var(--primary-color);">View Lesson</a>`); // Link to lessons.html
                     if (els.bookButton) els.bookButton.disabled = true;
                     // Disable calendar nav if booked
                      if(els.prevMonthBtn) els.prevMonthBtn.disabled = true;
                      if(els.nextMonthBtn) els.nextMonthBtn.disabled = true;
                 } else {
-                    setOverlay(false);
-                    if (els.bookButton) els.bookButton.disabled = true; // Disabled until time selected
-                    console.log("[Booking Status Check] User can book.");
-                    // Enable calendar nav if not booked (renderCalendar will handle limits)
-                     if(els.prevMonthBtn) els.prevMonthBtn.disabled = false;
-                     if(els.nextMonthBtn) els.nextMonthBtn.disabled = false;
+                     // Check if profile setup is complete before allowing booking
+                     if (!status.setupComplete?.about || !status.setupComplete?.learningStyle || !status.setupComplete?.proficiency) {
+                         console.log("[Booking Status Check] Profile setup incomplete.");
+                         setOverlay(true, `Please complete your profile setup first.<br><a href="aboutyourself.html" style="font-weight:600;color:var(--primary-color);">Go to Profile Setup</a>`);
+                         if (els.bookButton) els.bookButton.disabled = true;
+                         if (els.prevMonthBtn) els.prevMonthBtn.disabled = true;
+                         if (els.nextMonthBtn) els.nextMonthBtn.disabled = true;
+                         return false; // Indicate user cannot proceed with booking yet
+                     } else {
+                         setOverlay(false); // Setup complete, remove overlay
+                         if (els.bookButton) els.bookButton.disabled = true; // Disabled until time selected
+                         console.log("[Booking Status Check] User can book.");
+                         // Enable calendar nav if not booked (renderCalendar will handle limits)
+                         if(els.prevMonthBtn) els.prevMonthBtn.disabled = false;
+                         if(els.nextMonthBtn) els.nextMonthBtn.disabled = false;
+                     }
                 }
-                 return true; // Indicate status check was successful (even if booked)
+                 return true; // Indicate status check was successful (even if booked or setup needed)
 
             } catch (e) {
                 console.error("[Booking Status Check] Failed:", e);
-                setOverlay(true, `Could not verify booking status. Refresh. <br><small>(${e.message})</small>`);
+                // Don't show overlay if it was handled by auth check already
+                if (!els.calendarDisabledOverlay.classList.contains('visible')) {
+                     setOverlay(true, `Could not verify booking status. Refresh. <br><small>(${e.message})</small>`);
+                }
                 if (els.bookButton) els.bookButton.disabled = true;
                 if (els.prevMonthBtn) els.prevMonthBtn.disabled = true;
                 if (els.nextMonthBtn) els.nextMonthBtn.disabled = true;
@@ -610,16 +651,15 @@
         function selectDate(day) { /* (Keep existing function) */ if (hasBooking || !els.calendarDays || !els.selectedDateDisplay || !els.timeSlotsContainer) return; const year = currentCalendarDate.getFullYear(); const month = currentCalendarDate.getMonth(); selectedDate = new Date(year, month, day); console.log("[Date Select] Selected:", selectedDate.toLocaleDateString()); selectedTimeSlotInfo = null; if (els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; if (els.bookButton) els.bookButton.disabled = true; if (els.bookingSummary) els.bookingSummary.style.display = 'none'; renderCalendar(); const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' }; els.selectedDateDisplay.textContent = selectedDate.toLocaleDateString(undefined, options); switchToTimeView(); updateClockToCurrentAnimated(); fetchAndGenerateTimeSlots(selectedDate); }
         function switchToTimeView() { /* (Keep existing function) */ if (!els.calendarView || !els.timeView) return; if (viewState === 'calendar' && selectedDate) { viewState = 'time'; els.calendarView.classList.add('hidden'); els.timeView.classList.add('visible'); console.log("[View Switch] To Time"); } }
         function switchToCalendarView() { /* (Keep existing function) */ if (!els.calendarView || !els.timeView) return; if (viewState === 'time') { viewState = 'calendar'; els.timeView.classList.remove('visible'); els.calendarView.classList.remove('hidden'); console.log("[View Switch] To Calendar"); } }
-        async function fetchAndGenerateTimeSlots(date) { /* (Keep existing function) */ if (!els.timeSlotsContainer || !date) return; const localDateString = getLocalDateString(date); console.log(`[Time Slots] Requesting for: ${localDateString}`); els.timeSlotsContainer.innerHTML = `<div class="time-slots-loading"><i class="fas fa-spinner fa-spin"></i> Loading times...</div>`; try { let slots; const cacheKey = localDateString; if (availabilityCache[cacheKey]) { console.debug(`[Time Slots] Cache hit: ${cacheKey}.`); slots = availabilityCache[cacheKey]; } else { console.log(`[Time Slots] Cache miss: ${cacheKey}. Fetching...`); const apiUrl = `/api/booking/availability?date=${localDateString}`; const data = await apiRequest(apiUrl, { method: 'GET' }); if (data === null) throw new Error("API error."); slots = data.slots || []; availabilityCache[cacheKey] = slots; console.log(`[Time Slots] Received ${slots.length} slots from API.`); } generateTimeSlotsUI(slots); } catch (error) { console.error(`[Time Slots] Error fetching/processing:`, error); els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">Load failed: ${error.message || 'Could not fetch times.'}</div>`; } }
+        async function fetchAndGenerateTimeSlots(date) { /* (Keep existing function) */ if (!els.timeSlotsContainer || !date) return; const localDateString = getLocalDateString(date); console.log(`[Time Slots] Requesting for: ${localDateString}`); els.timeSlotsContainer.innerHTML = `<div class="time-slots-loading"><i class="fas fa-spinner fa-spin"></i> Loading times...</div>`; try { let slots; const cacheKey = localDateString; if (availabilityCache[cacheKey]) { console.debug(`[Time Slots] Cache hit: ${cacheKey}.`); slots = availabilityCache[cacheKey]; } else { console.log(`[Time Slots] Cache miss: ${cacheKey}. Fetching...`); const apiUrl = `/api/booking/availability?date=${localDateString}`; const data = await apiRequest(apiUrl, { method: 'GET' }); if (data === null) throw new Error("API error or redirect."); slots = data.slots || []; availabilityCache[cacheKey] = slots; console.log(`[Time Slots] Received ${slots.length} slots from API.`); } generateTimeSlotsUI(slots); } catch (error) { console.error(`[Time Slots] Error fetching/processing:`, error); els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">Load failed: ${error.message || 'Could not fetch times.'}</div>`; } }
         function generateTimeSlotsUI(slots) { /* (Keep existing function) */ if (!els.timeSlotsContainer) return; els.timeSlotsContainer.innerHTML = ''; if (!slots || slots.length === 0) { els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">No time slots found for this date.</div>`; return; } const periods = { morning: [], afternoon: [], evening: [] }; slots.forEach(slot => { try { const utcDate = new Date(slot.time); if (isNaN(utcDate)) return; const localHour = utcDate.getHours(); const displayTimeRange = formatTimeRangeForDisplay(slot.time); const slotData = { utcTime: slot.time, status: slot.status, displayTimeRange: displayTimeRange }; if (localHour < 12) periods.morning.push(slotData); else if (localHour < 17) periods.afternoon.push(slotData); else periods.evening.push(slotData); } catch (e) {} }); let slotDelay = 0; const stagger = 0.03; let slotsAdded = 0; const addPeriodSection = (pSlots, lbl) => { if (pSlots.length > 0) { const pC = document.createElement('div'); pC.className = 'time-period'; pC.innerHTML = `<div class="period-label">${lbl} (Your Time)</div><div class="time-grid"></div>`; const g = pC.querySelector('.time-grid'); pSlots.sort((a,b) => new Date(a.utcTime) - new Date(b.utcTime)); pSlots.forEach(sd => { const sE = createTimeSlotElement(sd, slotDelay); g.appendChild(sE); slotDelay += stagger; slotsAdded++; }); els.timeSlotsContainer.appendChild(pC); } }; addPeriodSection(periods.morning, 'Morning'); addPeriodSection(periods.afternoon, 'Afternoon'); addPeriodSection(periods.evening, 'Evening'); if (slotsAdded === 0) { els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">No time slots available for this date.</div>`; } else { requestAnimationFrame(() => { els.timeSlotsContainer.querySelectorAll('.time-slot').forEach(el => el.classList.add('animate-in')); }); } if (selectedTimeSlotInfo) { const ps = els.timeSlotsContainer.querySelector(`.time-slot[data-utc-time="${selectedTimeSlotInfo.utcTime}"]`); if (ps?.classList.contains('available')) { ps.classList.add('selected'); const sld = new Date(selectedTimeSlotInfo.utcTime); updateClockAnimated(sld.getHours(), sld.getMinutes()); if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = `Selected: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}`; updateSummary(); if(els.bookingSummary) els.bookingSummary.style.display = 'block'; if(els.bookButton) els.bookButton.disabled = false;} else { selectedTimeSlotInfo = null; if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; updateClockToCurrentAnimated(); updateSummary(); if(els.bookingSummary) els.bookingSummary.style.display = 'none'; if(els.bookButton) els.bookButton.disabled = true; } } }
         function createTimeSlotElement(slotData, delay) { /* (Keep existing function) */ const slot = document.createElement('div'); slot.className = `time-slot ${slotData.status}`; slot.dataset.utcTime = slotData.utcTime; slot.textContent = slotData.displayTimeRange; slot.style.setProperty('--slot-animation-delay', `${delay}s`); if (slotData.status === 'available') { slot.addEventListener('click', () => selectTimeSlot(slot, slotData)); slot.style.cursor = 'pointer'; } else { slot.style.cursor = 'not-allowed'; } return slot; }
         function selectTimeSlot(slotElem, slotData) { /* (Keep existing function) */ if (hasBooking || slotData.status !== 'available') return; els.timeSlotsContainer?.querySelectorAll('.time-slot.selected').forEach(el => el.classList.remove('selected')); slotElem.classList.add('selected'); try { const startDate = new Date(slotData.utcTime); if (isNaN(startDate)) throw new Error("Invalid date"); const endDate = new Date(startDate.getTime() + LESSON_DURATION_MINUTES * 60 * 1000); const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true }; const tzName = getLocalTimeZoneName(); selectedTimeSlotInfo = { utcTime: slotData.utcTime, localStartTimeLabel: startDate.toLocaleTimeString(undefined, timeOptions), localEndTimeLabel: endDate.toLocaleTimeString(undefined, timeOptions), localTimeZoneName: tzName }; console.log("[Time Select] Info:", selectedTimeSlotInfo); updateClockAnimated(startDate.getHours(), startDate.getMinutes()); if (els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = `Selected: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${tzName}`; updateSummary(); if (els.bookingSummary) { els.bookingSummary.style.display = 'block'; els.bookingSummary.style.opacity = 0; requestAnimationFrame(() => { els.bookingSummary.style.opacity = 1; }); } if (els.bookButton) els.bookButton.disabled = false; } catch (e) { console.error("Error selecting slot:", e); selectedTimeSlotInfo = null; if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; if(els.bookButton) els.bookButton.disabled = true; if(els.bookingSummary) els.bookingSummary.style.display = 'none'; updateClockToCurrentAnimated(); } }
         function updateSummary() { /* (Keep existing function) */ if (!els.summaryDateSpan || !els.summaryTimeSpan) return; els.summaryDateSpan.textContent = selectedDate ? `Date: ${selectedDate.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric', year:'numeric' })}` : 'Date: --'; if (selectedTimeSlotInfo) { els.summaryTimeSpan.textContent = `Time: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}`; } else { els.summaryTimeSpan.textContent = 'Time: --'; } }
 
-        // --- Event Listeners (Keep Existing) ---
-        els.backToCalendarBtn?.addEventListener('click', switchToCalendarView);
-        els.prevMonthBtn?.addEventListener('click', () => { if (viewState === 'calendar' && !hasBooking && !els.prevMonthBtn.disabled) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); delete monthStatusCache[getLocalDateString(currentCalendarDate).substring(0,7)]; renderCalendar(); updateClockToCurrentAnimated(); } });
-        els.nextMonthBtn?.addEventListener('click', () => { if (viewState === 'calendar' && !hasBooking && !els.nextMonthBtn.disabled) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); delete monthStatusCache[getLocalDateString(currentCalendarDate).substring(0,7)]; renderCalendar(); updateClockToCurrentAnimated(); } });
+        // --- Event Listeners (Keep Existing - minor change for consistency) ---
+        // Event listener setup moved to initializeBookingPage to ensure they are added
+        // only after successful status checks and for logged-in, non-booked users.
 
         // --- Clock Functionality (Keep Existing) ---
         let clockRadius, centerX, centerY; let currentHourAngle = -Math.PI / 2; let currentMinuteAngle = -Math.PI / 2; let targetHourAngle = -Math.PI / 2; let targetMinuteAngle = -Math.PI / 2; let animationReqId = null; const ANIMATION_DURATION = 500; let animationStartTime = 0; let startHourAngle = currentHourAngle; let startMinuteAngle = currentMinuteAngle;
@@ -638,7 +678,7 @@
         els.dayNightToggle?.addEventListener('click', (e) => { if (!document.body) return; e.stopPropagation(); document.body.classList.toggle('night-mode'); try { localStorage.setItem('theme', document.body.classList.contains('night-mode') ? 'night' : 'day'); } catch (e) {} resizeClock(); renderCalendar(); });
 
         // --- Modal & Booking Confirmation (Keep Existing) ---
-        function setupModal() { if (!els.confirmationModal || !els.modalCancelBtn || !els.modalConfirmBtn || !els.bookButton || !els.modalMessage) return; els.bookButton.addEventListener('click', () => { if (selectedDate && selectedTimeSlotInfo) { const ds = selectedDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); els.modalMessage.innerHTML = `Date: <strong>${ds}</strong><br>Time: <strong>${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}</strong>`; clearModalFeedback(); els.confirmationModal.classList.add('visible'); } else { console.warn("Book button clicked without selection"); } }); els.modalCancelBtn.addEventListener('click', () => { els.confirmationModal.classList.remove('visible'); showButtonLoading(els.modalConfirmBtn, false); els.modalCancelBtn.disabled = false; }); els.modalConfirmBtn.addEventListener('click', async () => { if (!selectedTimeSlotInfo?.utcTime) { showModalFeedback("Details missing.", true); return; } clearModalFeedback(); showButtonLoading(els.modalConfirmBtn, true); els.modalCancelBtn.disabled = true; const bookingData = { utcStartTime: selectedTimeSlotInfo.utcTime }; console.log("[Confirm Booking] Sending:", bookingData); try { const res = await apiRequest('/api/booking/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bookingData) }); if (res === null) throw new Error("API error."); console.log("[Confirm Booking] Success:", res); const newLessonId = res.lessonId; if (!newLessonId) throw new Error("Missing lesson ID."); window.location.href = `confirmation.html?lessonId=${newLessonId}`; } catch (error) { console.error("[Confirm Booking] Failed:", error); let userMessage = error.message || "Unknown error."; if (error.message.includes('409') || error.message.toLowerCase().includes('slot already booked')) { userMessage = "Sorry, slot just booked. Select another."; } else if (error.message.includes('400') || error.message.toLowerCase().includes('booking failed')) { userMessage = error.message.includes('Booking failed:') ? error.message : `Booking validation failed: ${error.message}`; } else if (error.message.includes('Network error')) { userMessage = "Booking failed: Network error."; } showModalFeedback(userMessage, true); if (error.message.includes('409') || error.message.includes('400')) { if (selectedDate) { const dateKey = getLocalDateString(selectedDate); delete availabilityCache[dateKey]; delete monthStatusCache[dateKey.substring(0,7)]; console.log(`[Confirm Booking] Cache invalidated for ${dateKey}.`); fetchAndGenerateTimeSlots(selectedDate); } switchToTimeView(); } } finally { showButtonLoading(els.modalConfirmBtn, false); els.modalCancelBtn.disabled = false; } }); }
+        function setupModal() { if (!els.confirmationModal || !els.modalCancelBtn || !els.modalConfirmBtn || !els.bookButton || !els.modalMessage) return; els.bookButton.addEventListener('click', () => { if (selectedDate && selectedTimeSlotInfo) { const ds = selectedDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); els.modalMessage.innerHTML = `Date: <strong>${ds}</strong><br>Time: <strong>${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}</strong>`; clearModalFeedback(); els.confirmationModal.classList.add('visible'); } else { console.warn("Book button clicked without selection"); } }); els.modalCancelBtn.addEventListener('click', () => { els.confirmationModal.classList.remove('visible'); showButtonLoading(els.modalConfirmBtn, false); els.modalCancelBtn.disabled = false; }); els.modalConfirmBtn.addEventListener('click', async () => { if (!selectedTimeSlotInfo?.utcTime) { showModalFeedback("Details missing.", true); return; } clearModalFeedback(); showButtonLoading(els.modalConfirmBtn, true); els.modalCancelBtn.disabled = true; const bookingData = { utcStartTime: selectedTimeSlotInfo.utcTime }; console.log("[Confirm Booking] Sending:", bookingData); try { const res = await apiRequest('/api/booking/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bookingData) }); if (res === null) throw new Error("API error or redirect."); console.log("[Confirm Booking] Success:", res); const newLessonId = res.lessonId; if (!newLessonId) throw new Error("Missing lesson ID."); window.location.href = `confirmation.html?lessonId=${newLessonId}`; } catch (error) { console.error("[Confirm Booking] Failed:", error); let userMessage = error.message || "Unknown error."; if (error.message.includes('409') || error.message.toLowerCase().includes('slot already booked')) { userMessage = "Sorry, slot just booked. Select another."; } else if (error.message.includes('400') || error.message.toLowerCase().includes('booking failed')) { userMessage = error.message.includes('Booking failed:') ? error.message : `Booking validation failed: ${error.message}`; } else if (error.message.includes('Network error')) { userMessage = "Booking failed: Network error."; } showModalFeedback(userMessage, true); if (error.message.includes('409') || error.message.includes('400') || error.message.toLowerCase().includes('slot already booked')) { if (selectedDate) { const dateKey = getLocalDateString(selectedDate); delete availabilityCache[dateKey]; delete monthStatusCache[dateKey.substring(0,7)]; console.log(`[Confirm Booking] Cache invalidated for ${dateKey}.`); fetchAndGenerateTimeSlots(selectedDate); } switchToTimeView(); } } finally { showButtonLoading(els.modalConfirmBtn, false); els.modalCancelBtn.disabled = false; } }); }
 
         // --- Initialization ---
         async function initializeBookingPage() {
@@ -664,11 +704,12 @@
              // 3. Setup Modal (needs to be done before checkUserStatus modifies buttons)
              setupModal();
 
-            // 4. Check Booking Status (using data from header check)
-            const canProceed = await checkUserStatus(initialStatus);
+            // 4. Check Booking Status & Setup (using data from header check)
+            const canProceedWithBooking = await checkUserStatus(initialStatus);
 
-             // 5. If user can proceed (not already booked, status check ok)
-            if (canProceed) {
+             // 5. If user can proceed with booking (not already booked, setup complete, status check ok)
+            if (canProceedWithBooking && !hasBooking) {
+                 console.log("[Booking Page] User can book. Setting up booking interactions.");
                  // Setup remaining event listeners that depend on user being able to interact
                 els.backToCalendarBtn?.addEventListener('click', switchToCalendarView);
                 els.prevMonthBtn?.addEventListener('click', () => { if (viewState === 'calendar' && !hasBooking && !els.prevMonthBtn.disabled) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); delete monthStatusCache[getLocalDateString(currentCalendarDate).substring(0,7)]; renderCalendar(); updateClockToCurrentAnimated(); } });
@@ -678,7 +719,7 @@
                  await renderCalendar();
                  console.log("[Booking Page] Initial render complete.");
             } else {
-                 console.log("[Booking Page] Halting further calendar setup due to booking status or error.");
+                 console.log("[Booking Page] Halting further calendar setup due to booking status, setup needed, or error.");
             }
 
             // 6. Setup listeners that run regardless

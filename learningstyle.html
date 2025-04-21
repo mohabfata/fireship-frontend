@@ -321,40 +321,54 @@
     let currentStep = 1; // Track current step (start at 1 for this page)
 
     // --- Utility Functions ---
-    // Use apiRequest from learningstyle.html as it handles 401 redirect slightly differently
+
+    // Add this line BEFORE the apiRequest function definition
+    const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
+
     async function apiRequest(url, options) {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                let errorMsg = `Request failed with status: ${response.status}`;
-                let errorData = null;
-                try {
-                    errorData = await response.json();
-                    errorMsg = errorData.message || errorMsg;
-                } catch (e) { /* Ignore */ }
+         // Construct the full URL if the provided URL starts with '/'
+         const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
+         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+         try {
+             // Use fullUrl in the fetch call
+             const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+
+             if (!r.ok) {
+                 let errorMsg = `API Error (${r.status})`;
+                 let errorData = null;
+                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
+                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+
                  // Special handling for 401 (Unauthorized) - redirect to welcome
-                 if (response.status === 401 && !url.includes('/api/auth/logout')) { // Don't redirect on logout failure
+                 if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) { // Don't redirect on logout failure
                      console.warn("API 401 Unauthorized detected, redirecting to welcome page.");
                      window.location.href = 'welcome.html';
                      return null; // Prevent further processing after redirect trigger
                  }
-                throw new Error(errorMsg);
-            }
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-                 return await response.json();
-            } else {
-                 // For non-JSON responses (like maybe logout), return success indication
-                 return { success: true };
-            }
-        } catch (error) {
-            console.error(`API Request Error (${url}):`, error);
-            // Handle specific error types if needed, e.g., network errors
-             if (error.message.toLowerCase().includes('failed to fetch')) {
-                 throw new Error("Network error. Please check your connection.");
+                 // Throw a formatted error
+                 throw new Error(errorData?.message || `Request failed: ${r.status}`);
              }
-            throw error; // Re-throw other errors
-        }
+
+             // Check content type before trying to parse JSON
+             const ct = r.headers.get("content-type");
+             if (ct?.includes("application/json")) {
+                 const d = await r.json();
+                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                 return d;
+             } else {
+                 // For non-JSON responses (like maybe logout), return success indication
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
+                 return { success: true }; // Or return {}; if preferred
+             }
+         } catch (e) { // Error handling
+              console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
+              // Handle specific error types if needed, e.g., network errors
+              if (e.message.toLowerCase().includes('failed to fetch')) {
+                  throw new Error("Network error. Please check your connection.");
+              }
+              // Re-throw other errors (could be the custom error from !r.ok or the network error)
+              throw e;
+         }
     }
 
     function showButtonLoading(button, isLoading) {
@@ -395,9 +409,9 @@
     async function checkExistingPreferences() {
          console.log("Checking for existing learning style preferences...");
          try {
-             // TODO: Replace with your actual backend endpoint
+             // Use the updated apiRequest function
              const prefs = await apiRequest('/api/user/preferences/learning-style', { method: 'GET' });
-             if (prefs === null) return; // Redirect happened in apiRequest
+             if (prefs === null) return; // Redirect happened or fatal API error in apiRequest
 
              if (prefs && prefs.step1 && prefs.step2 && prefs.step3) {
                  console.log("Found existing preferences:", prefs);
@@ -597,14 +611,14 @@
         showButtonLoading(els.saveButton, true);
 
         try {
-            // TODO: Replace with your actual backend endpoint
+             // Use the updated apiRequest function
             const result = await apiRequest('/api/user/preferences/learning-style', {
                 method: 'POST', // Or PUT if updating
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(userPath)
             });
 
-             if (result === null) { // Redirect happened
+             if (result === null) { // Redirect happened or fatal API error
                  // Button loading state will remain until redirect completes
                  return;
              }
@@ -619,7 +633,7 @@
         }
     }
 
-    // --- Header Logic Functions (Imported from Profile.html JS) ---
+    // --- Header Logic Functions (Imported from Profile.html JS - Keep Existing) ---
     function updateHeaderUI(userData, hasBooking) {
         const { signInLink, userProfileHeader, userNameHeader, userAvatarHeader, notificationDot, lessonsNotificationDot } = els;
         if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) {
@@ -627,7 +641,7 @@
             userProfileHeader.style.display = 'flex';
             userNameHeader.textContent = userData.name || 'User';
             userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png';
-            userAvatarHeader.onerror = () => { userAvatarHeader.src = 'placeholder-avatar.png'; };
+            userAvatarHeader.onerror = () => { if (userAvatarHeader) userAvatarHeader.src = 'placeholder-avatar.png'; }; // Added check
             if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none'; // Use main dot for bookings
             if (lessonsNotificationDot) lessonsNotificationDot.classList.toggle('visible', hasBooking); // Use lessons dot for bookings
         } else if (signInLink && userProfileHeader) {
@@ -660,33 +674,42 @@
     async function handleSignOut() {
         console.log("Signing out...");
         try {
+             // Use the updated apiRequest function
             const result = await apiRequest('/api/auth/logout', { method: 'POST' });
-             if (result === null) return; // Redirect happened
+             if (result === null) return; // Redirect happened in apiRequest
+            // Fallback redirect
             window.location.href = 'welcome.html'; // Redirect after successful logout
         } catch (error) {
             console.error("Sign out failed:", error);
-            alert(`Sign out failed: ${error.message}`);
+            if (error.message !== "Redirecting") { // Avoid alert if redirect signal
+                alert(`Sign out failed: ${error.message}`);
+            }
         }
     }
 
     async function checkAuthAndSetupHeader() {
         console.log("[Header Auth Check] Checking...");
         try {
-            // Use the /api/user/status endpoint which might return user info and booking status
+            // Use the updated apiRequest function
             const status = await apiRequest('/api/user/status', { method: 'GET' });
-            if (status === null) return; // Redirect happened
+            if (status === null) return; // Redirect happened or fatal API error
 
             if (status && status.user) {
                 console.log("[Header Auth Check] User logged in:", status.user);
                 updateHeaderUI(status.user, status.hasBooking || false); // Pass user data and booking status
             } else {
                 console.log("[Header Auth Check] User not logged in.");
-                updateHeaderUI(null, false); // No user data, no bookings
+                 // Learning style page likely requires login, redirect
+                 updateHeaderUI(null, false); // No user data, no bookings
+                 console.warn("User not logged in on learning style page. Redirecting to welcome.");
+                 window.location.href = 'welcome.html';
             }
         } catch (error) {
-            // If status check fails (network error, server error other than 401), assume logged out
+            // If status check fails (network error, server error other than 401), assume logged out and redirect
             console.warn("[Header Auth Check] Failed:", error.message);
             updateHeaderUI(null, false);
+            console.error("Auth check failed, redirecting to welcome.");
+            window.location.href = 'welcome.html';
         }
     }
 
@@ -695,14 +718,19 @@
         console.log("Initializing learning style flow...");
 
         // 1. Setup Header and check auth status FIRST
-        await checkAuthAndSetupHeader(); // Wait for auth check to complete
+        await checkAuthAndSetupHeader(); // Wait for auth check to complete (might redirect)
         setupDropdown(); // Setup dropdown interactivity
         if(els.signOutBtn) {
             els.signOutBtn.addEventListener('click', handleSignOut); // Setup signout listener
         }
 
-        // 2. Check for existing learning style preferences
-        // This now runs *after* the header is potentially updated based on auth status
+        // Check again if redirect happened during auth check
+        if (els.userProfileHeader && els.userProfileHeader.style.display === 'none' && els.signInLink && els.signInLink.style.display !== 'none') {
+            console.log("Halting flow initialization as user is not logged in or redirected.");
+            return; // Stop further initialization
+        }
+
+        // 2. Check for existing learning style preferences (only if auth succeeded)
         await checkExistingPreferences();
 
         // 3. Setup learning style step listeners (only if not skipped by checkExistingPreferences)
@@ -719,7 +747,7 @@
         els.step4Back?.addEventListener('click', resetFlow);
         els.saveButton?.addEventListener('click', saveLearningStyle);
 
-        // Initial animation trigger (if we landed on step 1)
+        // Initial animation trigger (if we landed on step 1 or skipped to step 4)
         if (currentStep === 1 && document.querySelector('.step-1-screen.active')) {
             triggerCardAnimations(document.querySelector('.step-1-screen'));
         } else if (currentStep === 4 && document.querySelector('.step-4-screen.active')) {

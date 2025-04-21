@@ -171,8 +171,9 @@
 
   <!-- JavaScript -->
   <script>
-    // --- DOM Elements ---
+      // --- DOM Elements ---
     // Form elements
+    function getElement(id) { const el = document.getElementById(id); if (!el) console.error(`DOM Element ID "${id}" not found!`); return el; } // Define helper first
     const form = getElement('userInfoForm');
     const nameInput = getElement('name');
     const dobInput = getElement('dob');
@@ -196,69 +197,70 @@
     const notificationDot = getElement('notificationDot');
     const lessonsNotificationDot = getElement('lessonsNotificationDot');
 
+    // --- Configuration ---
+    const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API DOMAIN
+
     // --- Utility Functions ---
-    async function apiRequest(url, options) { console.debug(`API Req: ${options?.method || 'GET'} ${url}`); try { const r = await fetch(url, options); if (!r.ok) { let m = `API Error (${r.status})`; let d=null; try { d=await r.json(); m=d.message||m;} catch (e) {} console.error(`API Fail: ${r.status} ${r.statusText} @ ${url}`, d); if(r.status===401){console.warn("API 401 -> Welcome"); window.location.href='welcome.html'; return null;} throw new Error(d?.message||`Request failed: ${r.status}`); } const ct = r.headers.get("content-type"); if (ct?.includes("application/json")) { const d = await r.json(); console.debug(`API OK JSON @ ${url}:`, d); return d; } else { console.debug(`API OK NoJSON @ ${url}`); return {}; } } catch (e) { console.error(`API Excep (${url}):`, e); if (e.message.toLowerCase().includes('failed to fetch')) throw new Error("Network error."); throw e; } }
-    function showLoading(isLoading) { showButtonLoading(submitButton, isLoading); } // Use generic helper
+    async function apiRequest(url, options) {
+        const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+        console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`);
+        try {
+            const r = await fetch(fullUrl, options);
+            if (!r.ok) {
+                let m = `API Error (${r.status})`; let d=null;
+                try { d=await r.json(); m=d.message||m;} catch (e) {}
+                console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, d);
+                if(r.status===401){ console.warn("API 401 -> Welcome"); window.location.href='welcome.html'; return null; }
+                throw new Error(d?.message || `Request failed: ${r.status}`);
+            }
+            const ct = r.headers.get("content-type");
+            if (ct?.includes("application/json")) {
+                const d = await r.json(); console.debug(`API OK JSON @ ${fullUrl}:`, d); return d;
+            } else { console.debug(`API OK NoJSON @ ${fullUrl}`); return {}; }
+        } catch (e) {
+            console.error(`API Excep (${fullUrl}):`, e);
+            if (e.message.toLowerCase().includes('failed to fetch')) throw new Error("Network error.");
+            throw e;
+        }
+    }
     function showButtonLoading(b, l) { if(!b)return; const t=b.querySelector('.btn-text'); const o=b.querySelector('.btn-loader'); b.disabled=l; b.classList.toggle('loading',l); if(t)t.style.display=l?'none':'inline'; if(o)o.style.display=l?'inline-block':'none'; if(b.querySelector('.btn-icon')) b.querySelector('.btn-icon').style.display = l ? 'none' : 'inline-block'; }
+    function showLoading(isLoading) { showButtonLoading(submitButton, isLoading); }
     function showFeedback(m, e=false) { if (!submissionFeedback) return; submissionFeedback.textContent = m; submissionFeedback.className = e ? 'error' : 'success'; submissionFeedback.style.display = 'block'; }
     function clearFeedback() { if (!submissionFeedback) return; submissionFeedback.textContent = ''; submissionFeedback.style.display = 'none'; }
 
     // --- Header Logic ---
-    function updateHeaderUI(userData, hasBooking) { /* ... Keep same logic ... */ if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) { signInLink.style.display = 'none'; userProfileHeader.style.display = 'flex'; userNameHeader.textContent = userData.name || 'User'; userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png'; userAvatarHeader.onerror = () => { userAvatarHeader.src = 'placeholder-avatar.png'; }; if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.toggle('visible', hasBooking); } else if (signInLink && userProfileHeader) { signInLink.style.display = 'block'; userProfileHeader.style.display = 'none'; if (notificationDot) notificationDot.style.display = 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.remove('visible'); } }
-    function setupDropdown() { /* ... Keep same logic ... */ const profileArea = userProfileHeader; if (profileArea && profileDropdown) { profileArea.addEventListener('click', (event) => { event.stopPropagation(); profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block'; }); window.addEventListener('click', (event) => { if (profileDropdown.style.display === 'block' && !profileArea.contains(event.target)) { profileDropdown.style.display = 'none'; } }); } }
-    async function handleSignOut() { /* ... Keep same logic ... */ console.log("Signing out..."); try { await apiRequest('/api/auth/logout', { method: 'POST' }); window.location.href = 'welcome.html'; } catch (error) { console.error("Sign out failed:", error); alert(`Sign out failed: ${error.message}`); } }
-    async function checkAuthAndSetupHeader() { /* ... Keep same logic ... */ console.log("[Header Auth Check] Checking..."); try { const status = await apiRequest('/api/user/status', { method: 'GET' }); if (status && status.user) { updateHeaderUI(status.user, status.hasBooking || false); } else { updateHeaderUI(null, false); } } catch (error) { console.warn("[Header Auth Check] Failed:", error.message); updateHeaderUI(null, false); } }
+    function updateHeaderUI(userData, hasBooking) { if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) { signInLink.style.display = 'none'; userProfileHeader.style.display = 'flex'; userNameHeader.textContent = userData.name || 'User'; userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png'; userAvatarHeader.onerror = () => { userAvatarHeader.src = 'placeholder-avatar.png'; }; if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.toggle('visible', hasBooking); } else if (signInLink && userProfileHeader) { signInLink.style.display = 'block'; userProfileHeader.style.display = 'none'; if (notificationDot) notificationDot.style.display = 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.remove('visible'); } }
+    function setupDropdown() { const profileArea = userProfileHeader; if (profileArea && profileDropdown) { profileArea.addEventListener('click', (event) => { event.stopPropagation(); profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block'; }); window.addEventListener('click', (event) => { if (profileDropdown?.style.display === 'block' && !profileArea.contains(event.target)) { profileDropdown.style.display = 'none'; } }); } }
+    async function handleSignOut() { console.log("Signing out..."); try { await apiRequest('/api/auth/logout', { method: 'POST' }); window.location.href = 'welcome.html'; } catch (error) { console.error("Sign out failed:", error); alert(`Sign out failed: ${error.message}`); } }
+    async function checkAuthAndSetupHeader() { console.log("[Header Auth Check] Checking..."); try { const status = await apiRequest('/api/user/status', { method: 'GET' }); if (status && status.user) { updateHeaderUI(status.user, status.hasBooking || false); } else { updateHeaderUI(null, false); } } catch (error) { console.warn("[Header Auth Check] Failed:", error.message); updateHeaderUI(null, false); } }
 
     // --- Form Logic ---
-    async function fetchAndPrefillData() { /* ... Keep same logic as before ... */ console.log("[Prefill] Fetching about data..."); try { const userData = await apiRequest('/api/user/profile/about', { method: 'GET' }); if (userData === null) return; console.log("[Prefill] Fetched:", userData); if (userData && Object.keys(userData).length > 0) { if (userData.name) nameInput.value = userData.name; if (userData.dob && /^\d{4}-\d{2}-\d{2}$/.test(userData.dob)) dobInput.value = userData.dob; if (userData.gender) { const gi = document.querySelector(`input[name="gender"][value="${userData.gender}"]`); if(gi) gi.checked = true; } if (userData.nationality_choice) { const nc = userData.nationality_choice; const cv = userData.country; const ni = document.querySelector(`input[name="nationality_choice"][value="${nc}"]`); if (ni) { ni.checked = true; const isOther = (nc === 'other'); toggleCountryDropdown(isOther); if (isOther && cv) countryDropdown.value = cv; } else { toggleCountryDropdown(false); } } else { toggleCountryDropdown(false); } console.log("[Prefill] Complete."); } else { console.log("[Prefill] No data found."); toggleCountryDropdown(false); } } catch (error) { console.warn("[Prefill] Fetch failed:", error.message); toggleCountryDropdown(false); /* Handle 401 redirect in apiRequest */ } }
+    async function fetchAndPrefillData() { console.log("[Prefill] Fetching about data..."); try { const userData = await apiRequest('/api/user/profile/about', { method: 'GET' }); if (userData === null) return; console.log("[Prefill] Fetched:", userData); if (userData && Object.keys(userData).length > 0) { if (userData.name && nameInput) nameInput.value = userData.name; if (userData.dob && /^\d{4}-\d{2}-\d{2}$/.test(userData.dob) && dobInput) dobInput.value = userData.dob; if (userData.gender) { const gi = document.querySelector(`input[name="gender"][value="${userData.gender}"]`); if(gi) gi.checked = true; } if (userData.nationality_choice) { const nc = userData.nationality_choice; const cv = userData.country; const ni = document.querySelector(`input[name="nationality_choice"][value="${nc}"]`); if (ni) { ni.checked = true; const isOther = (nc === 'other'); toggleCountryDropdown(isOther); if (isOther && cv && countryDropdown) countryDropdown.value = cv; } else { toggleCountryDropdown(false); } } else { toggleCountryDropdown(false); } console.log("[Prefill] Complete."); } else { console.log("[Prefill] No data found."); toggleCountryDropdown(false); } } catch (error) { console.warn("[Prefill] Fetch failed:", error.message); toggleCountryDropdown(false); } }
     function toggleCountryDropdown(show) { if (!countryDropdown) return; countryDropdown.style.display = show ? 'block' : 'none'; countryDropdown.required = show; countryDropdown.disabled = !show; if (!show) countryDropdown.value = ""; }
     function showError(groupEl, errId, msg) { if(groupEl) groupEl.classList.add('error'); const errEl = getElement(errId); if(errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } }
     function clearError(groupEl) { if (groupEl) { groupEl.classList.remove('error'); const errEl = groupEl.querySelector('.validation-error'); if(errEl) errEl.style.display = 'none'; } }
-    function validateForm() { /* ... Keep same validation logic ... */ console.log("Validating form..."); let isValid = true; clearError(nameGroup); clearError(nationalityGroup); clearError(dobGroup); clearError(genderGroup); if (nameInput.value.trim() === '') { showError(nameGroup, 'name-error', 'Please enter your full name'); isValid = false; } const selectedNat = document.querySelector('input[name="nationality_choice"]:checked'); if (!selectedNat) { showError(nationalityGroup, 'nationality-error', 'Please select your nationality'); isValid = false; } else if (selectedNat.value === 'other') { if (!countryDropdown.value) { showError(nationalityGroup, 'nationality-error', 'Please select your country'); isValid = false; } } if (!dobInput.value) { showError(dobGroup, 'dob-error', 'Please enter date of birth'); isValid = false; } else { try { const dob = new Date(dobInput.value); if (isNaN(dob.getTime())) throw new Error("Invalid"); const today = new Date(); today.setHours(0,0,0,0); if (dob > today) { showError(dobGroup, 'dob-error', 'Date cannot be in the future'); isValid = false; } else { const cutoff = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()); if (dob > cutoff) { showError(dobGroup, 'dob-error', 'Must be 18+'); isValid = false; } } } catch (e) { showError(dobGroup, 'dob-error', 'Invalid date format'); isValid = false; } } if (!document.querySelector('input[name="gender"]:checked')) { showError(genderGroup, 'gender-error', 'Please select gender'); isValid = false; } console.log("Validation result:", isValid); return isValid; }
-    function setupFormHandlers() {
-         nationalityRadios.forEach(radio => { radio.addEventListener('change', () => { toggleCountryDropdown(otherRadio.checked); clearError(nationalityGroup); }); });
-         nameInput.addEventListener('input', () => clearError(nameGroup));
-         dobInput.addEventListener('input', () => clearError(dobGroup));
-         countryDropdown.addEventListener('change', () => clearError(nationalityGroup));
-         genderRadios.forEach(radio => radio.addEventListener('change', () => clearError(genderGroup)));
-         form.addEventListener('submit', async function(e) {
-             e.preventDefault(); console.log("Form submit triggered."); clearFeedback();
-             if (validateForm()) {
-                 console.log("Form valid, submitting..."); showLoading(true);
-                 const selectedNatRadio = document.querySelector('input[name="nationality_choice"]:checked');
-                 const selectedGenRadio = document.querySelector('input[name="gender"]:checked');
-                 const natChoice = selectedNatRadio ? selectedNatRadio.value : null;
-                 const formData = { name: nameInput.value.trim(), nationality_choice: natChoice, country: (natChoice === 'other') ? countryDropdown.value : null, dob: dobInput.value, gender: selectedGenRadio ? selectedGenRadio.value : null };
-                 console.log('Submitting:', JSON.stringify(formData));
-                 try {
-                     const result = await apiRequest('/api/user/profile/about', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-                     if (result === null) return; // Redirect happened
-                     console.log("Submit success:", result);
-                     window.location.href = "learningstyle.html";
-                 } catch (error) { console.error("Submit failed:", error); showFeedback(`Error: ${error.message}`, true); showLoading(false); }
-             } else { console.log("Form invalid."); showFeedback("Please fix errors.", true); const firstError = form.querySelector('.input-group.error'); if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-         });
-    }
+    function validateForm() { console.log("Validating form..."); let isValid = true; clearError(nameGroup); clearError(nationalityGroup); clearError(dobGroup); clearError(genderGroup); if (!nameInput || nameInput.value.trim() === '') { showError(nameGroup, 'name-error', 'Please enter your full name'); isValid = false; } const selectedNat = document.querySelector('input[name="nationality_choice"]:checked'); if (!selectedNat) { showError(nationalityGroup, 'nationality-error', 'Please select nationality'); isValid = false; } else if (selectedNat.value === 'other') { if (!countryDropdown || !countryDropdown.value) { showError(nationalityGroup, 'nationality-error', 'Please select country'); isValid = false; } } if (!dobInput || !dobInput.value) { showError(dobGroup, 'dob-error', 'Please enter date of birth'); isValid = false; } else { try { const dob = new Date(dobInput.value); if (isNaN(dob.getTime())) throw new Error("Invalid"); const today = new Date(); today.setHours(0,0,0,0); if (dob > today) { showError(dobGroup, 'dob-error', 'Date cannot be in future'); isValid = false; } else { const cutoff = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()); if (dob > cutoff) { showError(dobGroup, 'dob-error', 'Must be 18+'); isValid = false; } } } catch (e) { showError(dobGroup, 'dob-error', 'Invalid date format'); isValid = false; } } if (!document.querySelector('input[name="gender"]:checked')) { showError(genderGroup, 'gender-error', 'Please select gender'); isValid = false; } console.log("Validation result:", isValid); return isValid; }
+    function setupFormHandlers() { if (!form) { console.error("Form not found!"); return; } nationalityRadios.forEach(radio => { radio.addEventListener('change', () => { if(otherRadio) toggleCountryDropdown(otherRadio.checked); clearError(nationalityGroup); }); }); if(nameInput) nameInput.addEventListener('input', () => clearError(nameGroup)); if(dobInput) dobInput.addEventListener('input', () => clearError(dobGroup)); if(countryDropdown) countryDropdown.addEventListener('change', () => clearError(nationalityGroup)); genderRadios.forEach(radio => radio.addEventListener('change', () => clearError(genderGroup))); form.addEventListener('submit', async function(e) { e.preventDefault(); console.log("Form submit triggered."); clearFeedback(); if (validateForm()) { console.log("Form valid, submitting..."); showLoading(true); const selectedNatRadio = document.querySelector('input[name="nationality_choice"]:checked'); const selectedGenRadio = document.querySelector('input[name="gender"]:checked'); const natChoice = selectedNatRadio ? selectedNatRadio.value : null; const formData = { name: nameInput.value.trim(), nationality_choice: natChoice, country: (natChoice === 'other' && countryDropdown) ? countryDropdown.value : null, dob: dobInput.value, gender: selectedGenRadio ? selectedGenRadio.value : null }; console.log('Submitting:', JSON.stringify(formData)); try { const result = await apiRequest('/api/user/profile/about', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) }); if (result === null) return; console.log("Submit success:", result); window.location.href = "learningstyle.html"; } catch (error) { console.error("Submit failed:", error); showFeedback(`Error: ${error.message}`, true); showLoading(false); } } else { console.log("Form invalid."); showFeedback("Please fix errors.", true); const firstError = form.querySelector('.input-group.error'); if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }); }
 
     // --- Initial Page Setup ---
     window.addEventListener('DOMContentLoaded', async function() {
         console.log("AboutYou Page DOM Loaded");
-        setDobMaxDate(); // Set max date for DOB input
+        setDobMaxDate();
         setupDropdown(); // Setup profile dropdown listener
         if(signOutBtn) signOutBtn.addEventListener('click', handleSignOut); // Setup signout
         setupFormHandlers(); // Setup form validation and submission
         await checkAuthAndSetupHeader(); // Check login status and update header FIRST
-        await fetchAndPrefillData(); // Attempt to load existing user data AFTER checking auth
-        setupHeaderScroll(); // Add scroll effect to header AFTER potential header update
-        applyEntranceAnimations(); // Optional entrance animations
+        await fetchAndPrefillData(); // Load existing user data AFTER checking auth
+        setupHeaderScroll();
+        applyEntranceAnimations();
     });
 
     // --- Helper Functions ---
     function setDobMaxDate() { if (dobInput) { const today = new Date(); const y = today.getFullYear() - 18; const m = String(today.getMonth() + 1).padStart(2, '0'); const d = String(today.getDate()).padStart(2, '0'); dobInput.max = `${y}-${m}-${d}`; console.log("Set DOB max date:", dobInput.max); } }
     function setupHeaderScroll() { window.addEventListener('scroll', () => { document.body.classList.toggle('scrolled', window.scrollY > 30); }, { passive: true }); }
     function applyEntranceAnimations() { document.querySelectorAll('.content-header > *, .form-card').forEach((el, i) => { el.style.opacity='0'; el.style.transform='translateY(20px)'; el.style.animation=`fadeInUp 0.6s ease-out ${0.1 + i * 0.1}s forwards`; }); }
-    function getElement(id) { const el = document.getElementById(id); if (!el) console.error(`Element ID "${id}" not found!`); return el; }
+    // getElement defined earlier
 
-  </script>
+</script>
 </body>
 </html>

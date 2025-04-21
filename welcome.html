@@ -153,28 +153,50 @@
     /**
      * Utility function to make fetch requests and handle common errors.
      */
+    // Add this line BEFORE the apiRequest function definition
+    const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
+
     async function apiRequest(url, options) {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                let errorMsg = `Request failed with status: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorMsg = errorData.message || errorMsg;
-                } catch (e) { /* Ignore if response body is not JSON */ }
-                throw new Error(errorMsg);
-            }
-            // Handle cases where backend sends success but no JSON body (e.g., 204 No Content)
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-                 return await response.json();
-            } else {
-                 return {}; // Return empty object if no JSON content
-            }
-        } catch (error) {
-            console.error(`API Request Error (${url}):`, error);
-            throw error; // Re-throw the error to be caught by the calling function
-        }
+         // Construct the full URL if the provided URL starts with '/'
+         const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
+         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+         try {
+             // Use fullUrl in the fetch call
+             const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+
+             if (!r.ok) {
+                 let errorMsg = `Request failed with status: ${r.status}`; // Use original phrasing slightly adapted
+                 let errorData = null;
+                 try {
+                     errorData = await r.json();
+                     errorMsg = errorData.message || errorMsg;
+                 } catch (e) { /* Ignore if response body is not JSON */ }
+                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl (from template)
+                 // <<< NO specific 401 redirect needed here based on original welcome.html code >>>
+                 throw new Error(errorMsg); // Throw the constructed error message
+             }
+
+             // Check content type before trying to parse JSON
+             const ct = r.headers.get("content-type");
+             if (ct?.includes("application/json")) {
+                 const d = await r.json();
+                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl (from template)
+                 return d;
+             } else {
+                 // Handle non-JSON success responses as original did
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl (from template)
+                 return {}; // Return empty object like original
+             }
+         } catch (e) { // Error handling
+              console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl (from template)
+              // Check for network errors (from template)
+              if (e.message.toLowerCase().includes('failed to fetch')) {
+                  // Consider a more user-friendly message for network errors on welcome page
+                  throw new Error("Network error. Please check connection and try again.");
+              }
+              // Re-throw other errors (like original and template)
+              throw e;
+         }
     }
 
 
@@ -195,7 +217,7 @@
 
       try {
          // 1. Verify token with backend (creates session)
-         // TODO: Replace '/api/auth/google' with your actual backend endpoint
+         // Use the updated apiRequest
          await apiRequest('/api/auth/google', {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
@@ -204,7 +226,7 @@
          console.log("Backend verification successful.");
 
          // 2. Check user's setup progress
-         // TODO: Replace '/api/user/status' with your actual backend endpoint
+         // Use the updated apiRequest
          const status = await apiRequest('/api/user/status', { method: 'GET' });
          console.log("User status received:", status);
 
@@ -267,7 +289,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
         console.log("Welcome page loaded. Checking initial auth status...");
         try {
-            // TODO: Replace '/api/user/status' with your actual backend endpoint
+            // Use the updated apiRequest
             const status = await apiRequest('/api/user/status', { method: 'GET' });
             // If the request succeeds, the user is already logged in (valid session)
             console.log("User is already logged in. Status:", status);
@@ -293,9 +315,10 @@
             updateUiPostSignIn(nextUrl, message); // Show continue button immediately
 
         } catch (error) {
-            // If the status request fails (e.g., 401 Unauthorized), the user is not logged in.
-            // No UI change needed, the Google Sign-In button should be visible.
-            console.log("User not logged in or session expired.");
+            // If the status request fails (e.g., 401 Unauthorized, or other errors like network), the user is not logged in.
+            // No UI change needed, the Google Sign-In button should remain visible.
+             // Log the specific error for debugging, but don't show it to the user unless needed
+             console.log("Initial auth status check failed (User likely not logged in):", error.message);
         }
     });
 

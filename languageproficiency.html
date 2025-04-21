@@ -324,40 +324,54 @@
     let isQuizSelected = false; // Flag to track if level was set by quiz
 
     // --- Utility Functions ---
+
+    // Add this line BEFORE the apiRequest function definition
+    const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
+
     async function apiRequest(url, options) {
-        // (Keep existing apiRequest function - ensure it handles 401 etc.)
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                let errorMsg = `Request failed with status: ${response.status}`;
-                let errorData = null;
-                try {
-                    errorData = await response.json();
-                    errorMsg = errorData.message || errorMsg;
-                } catch (e) { /* Ignore */ }
+         // Construct the full URL if the provided URL starts with '/'
+         const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
+         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+         try {
+             // Use fullUrl in the fetch call
+             const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+
+             if (!r.ok) {
+                 let errorMsg = `API Error (${r.status})`;
+                 let errorData = null;
+                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
+                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+
                  // Special handling for 401 (Unauthorized) - redirect to welcome
-                 if (response.status === 401 && !url.includes('/api/auth/logout')) { // Don't redirect on logout failure
+                 if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) { // Don't redirect on logout failure
                      console.warn("API 401 Unauthorized detected, redirecting to welcome page.");
                      window.location.href = 'welcome.html';
                      return null; // Prevent further processing after redirect trigger
                  }
-                throw new Error(errorMsg);
-            }
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-                 return await response.json();
-            } else {
-                 // For non-JSON responses (like maybe logout), return success indication
-                 return { success: true };
-            }
-        } catch (error) {
-            console.error(`API Request Error (${url}):`, error);
-            // Handle specific error types if needed, e.g., network errors
-             if (error.message.toLowerCase().includes('failed to fetch')) {
-                 throw new Error("Network error. Please check your connection.");
+                 // Throw a formatted error
+                 throw new Error(errorData?.message || `Request failed: ${r.status}`);
              }
-            throw error; // Re-throw other errors
-        }
+
+             // Check content type before trying to parse JSON
+             const ct = r.headers.get("content-type");
+             if (ct?.includes("application/json")) {
+                 const d = await r.json();
+                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                 return d;
+             } else {
+                 // For non-JSON responses (like maybe logout), return success indication
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
+                 return { success: true }; // Or return {}; if preferred
+             }
+         } catch (e) { // Error handling
+              console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
+              // Handle specific error types if needed, e.g., network errors
+              if (e.message.toLowerCase().includes('failed to fetch')) {
+                  throw new Error("Network error. Please check your connection.");
+              }
+              // Re-throw other errors (could be the custom error from !r.ok or the network error)
+              throw e;
+         }
     }
 
 
@@ -373,7 +387,10 @@
 
         if (btnText) btnText.style.display = isLoading ? 'none' : 'inline';
         if (btnLoader) btnLoader.style.display = isLoading ? 'inline-block' : 'none';
-        if (btnIcon) btnIcon.style.display = isLoading ? 'inline-block' : 'none'; // Show icon when not loading
+        // If you want the icon to *always* show when not loading, adjust this:
+        // if (btnIcon) btnIcon.style.display = isLoading ? 'none' : 'inline-block';
+        // If icon is *part* of the loading state (e.g., spinner icon):
+        if (btnIcon) btnIcon.style.display = isLoading ? 'inline-block' : 'none'; // Show icon only when loading? Check your CSS/HTML structure
     }
 
      function showFeedback(message, isError = false) {
@@ -400,9 +417,9 @@
         // (Keep existing function)
         console.log("Attempting to fetch existing proficiency data...");
         try {
-            // TODO: Replace with your actual backend endpoint
+            // Use the updated apiRequest function
             const prefs = await apiRequest('/api/user/preferences/proficiency', { method: 'GET' });
-            if (prefs === null) return; // Redirect happened in apiRequest
+            if (prefs === null) return; // Redirect happened or fatal API error in apiRequest
 
             console.log("Fetched proficiency data:", prefs);
 
@@ -424,10 +441,17 @@
                         selectProficiency(levelIndex, prefs.quizSelected || false); // Pass fetched quiz status
                         console.log(`Pre-selected level: ${prefs.level} (Index: ${levelIndex}), Quiz: ${prefs.quizSelected || false}`);
                         if (els.continueButton) els.continueButton.disabled = false;
+                    } else {
+                         // Handle case where fetched level name is invalid
+                         console.warn(`Fetched level "${prefs.level}" not found in mapping.`);
+                         if (els.continueButton) els.continueButton.disabled = true; // Force selection if fetched level is bad
                     }
                 } else {
-                    // If level is missing, but native language is set, don't disable button
-                    if (prefs.nativeLanguage && els.continueButton) els.continueButton.disabled = true; // Requires level selection
+                    // If level is missing, but native language is set, don't disable button initially, require selection
+                    if (prefs.nativeLanguage && els.continueButton) {
+                         els.continueButton.disabled = true; // Requires level selection
+                         updateDescriptionArea(-1); // Show placeholder text
+                    }
                 }
                  console.log("Proficiency form pre-filled.");
             } else {
@@ -437,6 +461,9 @@
                  if (defaultLangOption && !els.nativeLangOptionsContainer?.querySelector('.language-option.selected')) {
                       defaultLangOption.classList.add('selected');
                  }
+                 // Ensure button is disabled if no level prefilled
+                 if (els.continueButton) els.continueButton.disabled = true;
+                 updateDescriptionArea(-1); // Show placeholder text
             }
         } catch (error) {
             console.warn("Could not fetch proficiency data:", error.message);
@@ -445,6 +472,9 @@
               if (defaultLangOption && !els.nativeLangOptionsContainer?.querySelector('.language-option.selected')) {
                    defaultLangOption.classList.add('selected');
               }
+             // Keep button disabled on fetch error
+             if (els.continueButton) els.continueButton.disabled = true;
+             updateDescriptionArea(-1);
         }
     }
 
@@ -550,14 +580,16 @@
         showButtonLoading(els.continueButton, true);
 
         try {
-            // TODO: Replace with your actual backend endpoint
+            // Use the updated apiRequest function
             const result = await apiRequest('/api/user/preferences/proficiency', {
                  method: 'POST', // Or PUT
                  headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify(dataToSend)
             });
 
-            if (result === null) { // Redirect happened
+            if (result === null) { // Redirect happened or fatal API error
+                 // Button loading state might need reset if redirect doesn't happen immediately
+                 // showButtonLoading(els.continueButton, false); // Consider adding this if needed
                  return;
             }
 
@@ -591,7 +623,7 @@
     els.openQuizBtn?.addEventListener('click', function() { /* (Keep existing code) */ quizQuestions = selectRandomQuestions(); if (quizQuestions.length === 0) { alert("Error: Could not load quiz questions."); return; } currentQuestion = 0; questionScores = {}; const nextBtn = document.getElementById("nextBtn"); const prevBtn = document.getElementById("prevBtn"); const quizResult = document.getElementById("quizResult"); const quizNav = document.querySelector(".quiz-navigation"); if (nextBtn) { nextBtn.disabled = false; nextBtn.innerHTML = (quizQuestions.length === 1) ? `Submit Answers <i class="fas fa-check" style="margin-left: 5px;"></i>` : `Next <i class="fas fa-chevron-right" style="margin-left: 5px;"></i>`; } if(prevBtn) prevBtn.disabled = true; if (quizResult) quizResult.textContent = ""; if (quizNav) quizNav.style.display = "flex"; const quizContent = document.querySelector(".quiz-content"); const existingBg = quizContent?.querySelector(".quiz-bg"); if(existingBg) existingBg.remove(); if(els.quizModal) els.quizModal.style.display = 'flex'; loadQuestion(currentQuestion); startTimer(10 * 60); });
     els.quizCloseBtn?.addEventListener('click', () => closeQuiz());
 
-     // --- Header Logic Functions (Imported from Profile.html JS) ---
+     // --- Header Logic Functions (Keep Existing) ---
     function updateHeaderUI(userData, hasBooking) {
         const { signInLink, userProfileHeader, userNameHeader, userAvatarHeader, notificationDot, lessonsNotificationDot } = els;
         if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) {
@@ -599,7 +631,7 @@
             userProfileHeader.style.display = 'flex';
             userNameHeader.textContent = userData.name || 'User';
             userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png';
-            userAvatarHeader.onerror = () => { userAvatarHeader.src = 'placeholder-avatar.png'; };
+            userAvatarHeader.onerror = () => { if (userAvatarHeader) userAvatarHeader.src = 'placeholder-avatar.png'; }; // Added check
             if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none';
             if (lessonsNotificationDot) lessonsNotificationDot.classList.toggle('visible', hasBooking);
         } else if (signInLink && userProfileHeader) {
@@ -631,31 +663,43 @@
     async function handleSignOut() {
         console.log("Signing out...");
         try {
+            // Use the updated apiRequest
             const result = await apiRequest('/api/auth/logout', { method: 'POST' });
-             if (result === null) return; // Redirect happened
+             if (result === null) return; // Redirect happened in apiRequest
+            // Fallback redirect
             window.location.href = 'welcome.html'; // Redirect after successful logout
         } catch (error) {
             console.error("Sign out failed:", error);
-            alert(`Sign out failed: ${error.message}`);
+             if (error.message !== "Redirecting") { // Avoid alert if it was a redirect signal
+                 alert(`Sign out failed: ${error.message}`);
+             }
         }
     }
 
     async function checkAuthAndSetupHeader() {
         console.log("[Header Auth Check] Checking...");
         try {
+            // Use the updated apiRequest
             const status = await apiRequest('/api/user/status', { method: 'GET' });
-            if (status === null) return; // Redirect happened
+            if (status === null) return; // Redirect happened or fatal API error
 
             if (status && status.user) {
                 console.log("[Header Auth Check] User logged in:", status.user);
                 updateHeaderUI(status.user, status.hasBooking || false);
             } else {
                 console.log("[Header Auth Check] User not logged in.");
-                updateHeaderUI(null, false);
+                 // Proficiency page usually requires login, redirect or show message
+                 updateHeaderUI(null, false);
+                 console.warn("User not logged in on proficiency page. Redirecting to welcome.");
+                 window.location.href = 'welcome.html'; // Redirect if not logged in
             }
         } catch (error) {
             console.warn("[Header Auth Check] Failed:", error.message);
             updateHeaderUI(null, false);
+             // Consider showing an error message or redirecting on auth error too
+             // showFeedback("Error checking login status. Please refresh.", true);
+             console.error("Auth check failed, potentially redirecting.");
+             // window.location.href = 'welcome.html'; // Optionally redirect on error
         }
     }
 
@@ -665,17 +709,25 @@
         console.log("Initializing proficiency page...");
 
         // 1. Setup Header and check auth status FIRST
-        await checkAuthAndSetupHeader(); // Wait for auth check
+        await checkAuthAndSetupHeader(); // Wait for auth check (which might redirect)
         setupDropdown(); // Setup dropdown interaction
         if(els.signOutBtn) {
             els.signOutBtn.addEventListener('click', handleSignOut); // Setup signout listener
+        }
+
+        // Ensure the rest of the code only runs if the page wasn't redirected
+        // A simple check: if the user profile header is not displayed (meaning user logged out/redirected)
+        if (els.userProfileHeader && els.userProfileHeader.style.display === 'none' && els.signInLink && els.signInLink.style.display !== 'none') {
+            console.log("Halting full page init as user is not logged in or redirected.");
+            return; // Stop further initialization if auth failed/redirected
         }
 
         // 2. Setup core page functionality
         generateLevelSelectorItems();
         setupNativeLanguageSelection();
         await fetchAndPrefillProficiency(); // Fetch data and prefill if exists (now runs after header setup)
-        updateDescriptionArea(selectedProficiencyIndex); // Update description based on potentially prefilled index
+        // Update description based on potentially prefilled index OR default (-1)
+        updateDescriptionArea(selectedProficiencyIndex);
 
         // 3. Setup remaining event listeners
         if(els.continueButton) {

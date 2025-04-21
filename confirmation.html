@@ -371,8 +371,7 @@
       <p id="confirmation-id">Confirmation ID: Loading...</p>
     </div>
   </div>
-
-  <script>
+<script>
     // --- DOM Elements ---
     const els = { // Group elements
         loadingOverlay: document.getElementById('loading-overlay'),
@@ -414,40 +413,54 @@
     let countdownInterval = null; // To store interval ID
 
     // --- Utility Functions ---
+
+    // Add this line BEFORE the apiRequest function definition
+    const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
+
     async function apiRequest(url, options) {
-       // (Keep existing apiRequest function - ensure 401 handling)
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                let errorMsg = `Request failed with status: ${response.status}`;
-                let errorData = null;
-                try {
-                    errorData = await response.json();
-                    errorMsg = errorData.message || errorMsg;
-                } catch (e) { /* Ignore */ }
-                // Special handling for 401 (Unauthorized) - redirect to welcome
-                if (response.status === 401 && !url.includes('/api/auth/logout')) { // Don't redirect on logout failure
-                    console.warn("API 401 Unauthorized detected, redirecting to welcome page.");
-                    window.location.href = 'welcome.html';
-                    return null; // Prevent further processing after redirect trigger
-                }
-                throw new Error(errorMsg);
-            }
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-                 return await response.json();
-            } else {
-                 // For non-JSON responses (like maybe logout), return success indication
-                 return { success: true };
-            }
-        } catch (error) {
-            console.error(`API Request Error (${url}):`, error);
-            // Handle specific error types if needed, e.g., network errors
-             if (error.message.toLowerCase().includes('failed to fetch')) {
-                 throw new Error("Network error. Please check your connection.");
+         // Construct the full URL if the provided URL starts with '/'
+         const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
+         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+         try {
+             // Use fullUrl in the fetch call
+             const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+
+             if (!r.ok) {
+                 let errorMsg = `API Error (${r.status})`;
+                 let errorData = null;
+                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
+                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+
+                 // Special handling for 401 (Unauthorized) - redirect to welcome
+                 if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) { // Don't redirect on logout failure
+                     console.warn("API 401 Unauthorized detected, redirecting to welcome page.");
+                     window.location.href = 'welcome.html';
+                     return null; // Prevent further processing after redirect trigger
+                 }
+                 // Throw a formatted error
+                 throw new Error(errorData?.message || `Request failed: ${r.status}`);
              }
-            throw error; // Re-throw other errors
-        }
+
+             // Check content type before trying to parse JSON
+             const ct = r.headers.get("content-type");
+             if (ct?.includes("application/json")) {
+                 const d = await r.json();
+                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                 return d;
+             } else {
+                 // For non-JSON responses (like maybe logout), return success indication
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
+                 return { success: true }; // Or return {}; if preferred
+             }
+         } catch (e) { // Error handling
+              console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
+              // Handle specific error types if needed, e.g., network errors
+              if (e.message.toLowerCase().includes('failed to fetch')) {
+                  throw new Error("Network error. Please check your connection.");
+              }
+              // Re-throw other errors (could be the custom error from !r.ok or the network error)
+              throw e;
+         }
     }
 
     function getLessonIdFromUrl() {
@@ -512,11 +525,15 @@
         console.log("Signing out...");
         try {
             const result = await apiRequest('/api/auth/logout', { method: 'POST' });
-             if (result === null) return; // Redirect happened
+             if (result === null) return; // Redirect happened in apiRequest
+            // Fallback redirect if apiRequest didn't handle it
             window.location.href = 'welcome.html';
         } catch (error) {
             console.error("Sign out failed:", error);
-            alert(`Sign out failed: ${error.message}`);
+             // Avoid alert if it was a redirect signal
+            if (error.message !== "Redirecting") {
+                alert(`Sign out failed: ${error.message}`);
+            }
         }
     }
 
@@ -524,7 +541,7 @@
         console.log("[Header Auth Check] Checking...");
         try {
             const status = await apiRequest('/api/user/status', { method: 'GET' });
-            if (status === null) return false; // Redirect happened, stop further processing
+            if (status === null) return false; // Redirect happened or fatal API error, stop further processing
 
             if (status && status.user) {
                 console.log("[Header Auth Check] User logged in:", status.user);
@@ -564,7 +581,11 @@
             const lessonData = await apiRequest(apiUrl, { method: 'GET' });
 
             if (lessonData === null) { // Redirect or API error handled in apiRequest
-                 showError("Failed to load lesson data."); // Generic error if null returned
+                 // Error message should have been shown by checkAuth or apiRequest 401 handler
+                 // Or if it was another API error, show a generic message here.
+                 if (!document.getElementById('error-message').style.display || document.getElementById('error-message').style.display === 'none') {
+                     showError("Failed to load lesson data.");
+                 }
                  return;
             }
 
@@ -584,12 +605,13 @@
 
         } catch (error) {
             console.error("Failed to fetch lesson details:", error);
-            // Handle specific errors like 404 (Not Found) or 403 (Forbidden)
+            // Handle specific errors like 404 (Not Found) or 403 (Forbidden) that might not have been caught by apiRequest 401
             if (error.message.includes('404')) {
                  showError(`Lesson with ID ${lessonId} not found.`);
-            } else if (error.message.includes('403') || error.message.includes('401')) {
+            } else if (error.message.includes('403')) { // 403 Forbidden might be used if user is logged in but shouldn't see this lesson
                  showError("You are not authorized to view this lesson.");
             } else {
+                 // Show error message from apiRequest if available, otherwise generic
                  showError(`Error loading lesson: ${error.message}`);
             }
         } finally {
@@ -601,15 +623,23 @@
         // (Keep existing function)
         if (!data) return;
         els.lessonTitleEl.textContent = data.learningPathTitle || 'Personalized Session';
-        els.instructorNameEl.textContent = "To be decided";
+        els.instructorNameEl.textContent = "To be decided"; // Placeholder
         const lessonStartTimeUTC = data.utcStartTime;
         if (lessonStartTimeUTC) {
              const startTime = new Date(lessonStartTimeUTC);
-             const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-             const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' };
-             els.lessonDateEl.textContent = startTime.toLocaleDateString(undefined, dateOptions);
-             els.lessonTimeEl.textContent = startTime.toLocaleTimeString(undefined, timeOptions);
-             startCountdown(startTime);
+             if (!isNaN(startTime)) {
+                 const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                 const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' };
+                 els.lessonDateEl.textContent = startTime.toLocaleDateString(undefined, dateOptions);
+                 els.lessonTimeEl.textContent = startTime.toLocaleTimeString(undefined, timeOptions);
+                 startCountdown(startTime);
+             } else {
+                 console.error("Invalid start time received:", lessonStartTimeUTC);
+                 els.lessonDateEl.textContent = 'Invalid Date';
+                 els.lessonTimeEl.textContent = 'Invalid Time';
+                 stopCountdown();
+                 if (els.countdownErrorEl) els.countdownErrorEl.style.display = 'block';
+             }
         } else {
             els.lessonDateEl.textContent = 'N/A';
             els.lessonTimeEl.textContent = 'N/A';
@@ -633,9 +663,9 @@
          // (Keep existing function)
         if (els.copyButton && els.zoomLinkField && els.copyToast) {
             els.copyButton.onclick = function() {
-                if (els.zoomLinkField.value === 'Loading...' || els.zoomLinkField.value === 'Not available') return;
+                if (els.zoomLinkField.value === 'Loading...' || els.zoomLinkField.value === 'Not available' || els.zoomLinkField.value === '#') return;
                 els.zoomLinkField.select();
-                els.zoomLinkField.setSelectionRange(0, 99999);
+                els.zoomLinkField.setSelectionRange(0, 99999); // For mobile devices
                 navigator.clipboard.writeText(els.zoomLinkField.value)
                     .then(() => {
                         els.copyToast.classList.add('show');
@@ -653,7 +683,7 @@
     function startCountdown(targetDate) { if (!(targetDate instanceof Date) || isNaN(targetDate)) { console.error("Invalid target date for countdown:", targetDate); stopCountdown(); if (els.countdownErrorEl) els.countdownErrorEl.style.display = 'block'; updateCountdownDisplay(0); return; } if (els.countdownErrorEl) els.countdownErrorEl.style.display = 'none'; stopCountdown(); const update = () => updateCountdownDisplay(targetDate); update(); countdownInterval = setInterval(update, 1000); }
     function stopCountdown() { if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; } }
     function updateCountdownDisplay(targetDate) { if (!els.daysEl || !els.hoursEl || !els.minutesEl || !els.secondsEl || !els.countdownTimerEl) return; const now = new Date(); const diff = targetDate - now; if (diff <= 0) { els.daysEl.textContent = '0'; els.hoursEl.textContent = '0'; els.minutesEl.textContent = '0'; els.secondsEl.textContent = '0'; stopCountdown(); const countdownSection = document.querySelector('.countdown-section'); if (countdownSection && !countdownSection.querySelector('.lesson-starting-message')) { countdownSection.style.backgroundColor = 'var(--success)'; countdownSection.innerHTML = '<h2 class="lesson-starting-message" style="color: white; padding: 20px;">Your lesson is starting now!</h2>'; } return; } const days = Math.floor(diff / (1000 * 60 * 60 * 24)); const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)); const seconds = Math.floor((diff % (1000 * 60)) / 1000); els.daysEl.textContent = days; els.hoursEl.textContent = hours; els.minutesEl.textContent = minutes; els.secondsEl.textContent = seconds; }
-    function setupCalendarButtons(lessonData) { if (!lessonData?.utcStartTime || !lessonData?.zoom) { console.warn("Cannot setup calendar buttons, missing lesson data."); if(els.googleBtn) els.googleBtn.disabled = true; if(els.outlookBtn) els.outlookBtn.disabled = true; if(els.appleBtn) els.appleBtn.disabled = true; return; } if(els.googleBtn) els.googleBtn.disabled = false; if(els.outlookBtn) els.outlookBtn.disabled = false; if(els.appleBtn) els.appleBtn.disabled = false; const startTime = new Date(lessonData.utcStartTime); const endTime = new Date(startTime.getTime() + (lessonData.durationMinutes || 20) * 60 * 1000); const title = encodeURIComponent(lessonData.learningPathTitle || 'Fireship English Lesson'); const description = encodeURIComponent( `Instructor: To be decided\nJoin via Zoom: ${lessonData.zoom.joinUrl || 'N/A'}\nMeeting ID: ${lessonData.zoom.meetingId || 'N/A'}\nPasscode: ${lessonData.zoom.passcode || 'N/A'}` ); const location = encodeURIComponent(lessonData.zoom.joinUrl || 'Online'); const formatGoogleDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, ''); const googleStart = formatGoogleDate(startTime); const googleEnd = formatGoogleDate(endTime); const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${googleStart}/${googleEnd}&details=${description}&location=${location}`; if (els.googleBtn) { els.googleBtn.onclick = () => { window.open(googleUrl, '_blank'); }; } if (els.outlookBtn) { els.outlookBtn.onclick = () => { alert('Outlook Calendar link generation would require backend support or a library.'); }; } if (els.appleBtn) { els.appleBtn.onclick = () => { alert('iCalendar (.ics) file generation would require backend support or a library.'); }; } }
+    function setupCalendarButtons(lessonData) { if (!lessonData?.utcStartTime || !lessonData?.zoom) { console.warn("Cannot setup calendar buttons, missing lesson data."); if(els.googleBtn) els.googleBtn.disabled = true; if(els.outlookBtn) els.outlookBtn.disabled = true; if(els.appleBtn) els.appleBtn.disabled = true; return; } if(els.googleBtn) els.googleBtn.disabled = false; if(els.outlookBtn) els.outlookBtn.disabled = false; if(els.appleBtn) els.appleBtn.disabled = false; const startTime = new Date(lessonData.utcStartTime); if (isNaN(startTime)) { console.error("Invalid lesson start time for calendar link generation."); return; } const endTime = new Date(startTime.getTime() + (lessonData.durationMinutes || 20) * 60 * 1000); const title = encodeURIComponent(lessonData.learningPathTitle || 'Fireship English Lesson'); const description = encodeURIComponent( `Instructor: To be decided\nJoin via Zoom: ${lessonData.zoom.joinUrl || 'N/A'}\nMeeting ID: ${lessonData.zoom.meetingId || 'N/A'}\nPasscode: ${lessonData.zoom.passcode || 'N/A'}` ); const location = encodeURIComponent(lessonData.zoom.joinUrl || 'Online'); const formatGoogleDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, ''); const googleStart = formatGoogleDate(startTime); const googleEnd = formatGoogleDate(endTime); const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${googleStart}/${googleEnd}&details=${description}&location=${location}`; if (els.googleBtn) { els.googleBtn.onclick = () => { window.open(googleUrl, '_blank'); }; } if (els.outlookBtn) { els.outlookBtn.onclick = () => { alert('Outlook Calendar link generation would require backend support or a library.'); }; } if (els.appleBtn) { els.appleBtn.onclick = () => { alert('iCalendar (.ics) file generation would require backend support or a library.'); }; } }
 
 
     // --- Initial Load ---
@@ -688,5 +718,6 @@
     document.addEventListener('DOMContentLoaded', initPage); // Call the async init function
 
   </script>
+  
 </body>
 </html>

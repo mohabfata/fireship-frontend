@@ -132,7 +132,7 @@
     </div>
   </div>
 
-  <script>
+ <script>
     // --- DOM Elements ---
     const lessonsListContainer = getElement('lessons-list');
     const emptyStateDiv = getElement('empty-state');
@@ -148,16 +148,66 @@
     const notificationDot = getElement('notificationDot'); // Main dot on avatar
     const lessonsNotificationDot = getElement('lessonsNotificationDot'); // Dot in dropdown
 
-    // --- Utilities & Core Logic (Keep from previous version) ---
-    async function apiRequest(url, options) { /* ... Keep existing ... */ try { const response = await fetch(url, options); if (!response.ok) { let errorMsg = `API Error (${response.status})`; let errorData=null; try { errorData = await response.json(); errorMsg = errorData.message || errorMsg;} catch (e) {} console.error(`API Fail: ${response.status} ${response.statusText} @ ${url}`, errorData); if (response.status === 401) { console.warn("API 401 -> Welcome"); window.location.href = 'welcome.html'; return null;} throw new Error(errorData?.message || `Request failed: ${response.status}`); } const contentType = response.headers.get("content-type"); if (contentType?.includes("application/json")) { const d=await response.json(); console.debug(`API OK JSON @ ${url}:`, d); return d;} else { console.debug(`API OK NoJSON @ ${url}`); return {}; } } catch (error) { console.error(`API Excep (${url}):`, error); if (error.message.toLowerCase().includes('failed to fetch')) throw new Error("Network error."); throw error; } }
+    // --- Utilities & Core Logic ---
+
+    // Add this line BEFORE the apiRequest function definition
+    const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
+
+    async function apiRequest(url, options) {
+         // Construct the full URL if the provided URL starts with '/'
+         const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
+         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+         try {
+             // Use fullUrl in the fetch call
+             const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+
+             if (!r.ok) {
+                 let errorMsg = `API Error (${r.status})`;
+                 let errorData = null;
+                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
+                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+
+                 // Specific 401 handling for this page (redirect to welcome)
+                 if (r.status === 401) { // Check specific status
+                     console.warn("API 401 -> Welcome");
+                     window.location.href = 'welcome.html';
+                     return null; // Return null to signal a redirect or halt further processing
+                 }
+                 // Throw a formatted error for other non-ok statuses
+                 throw new Error(errorData?.message || `Request failed: ${r.status}`);
+             }
+
+             // Check content type before trying to parse JSON
+             const ct = r.headers.get("content-type");
+             if (ct?.includes("application/json")) {
+                 const d = await r.json();
+                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                 return d;
+             } else {
+                 // Handle non-JSON success responses (like 204 No Content or other types)
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
+                 // Return an empty object as the original function did
+                 return {};
+             }
+         } catch (e) { // Error handling
+              console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
+              // Check for network errors (e.g., "Failed to fetch")
+              if (e.message.toLowerCase().includes('failed to fetch')) {
+                  throw new Error("Network error.");
+              }
+              // Re-throw original error (could be the custom error from !r.ok or the network error)
+              throw e;
+         }
+    }
+
     function showLoadingState(isLoading) { /* ... Keep existing ... */ if (loadingSpinner) loadingSpinner.style.display = isLoading ? 'block' : 'none'; if (!isLoading) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
     function displayLessons(lessons) { /* ... Keep existing ... */ if (!lessonsListContainer) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (lessons?.length > 0) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; lessons.sort((a, b) => new Date(a.utcStartTime) - new Date(b.utcStartTime)); lessons.forEach((lesson, index) => { const lessonCard = createLessonCardElement(lesson); lessonCard.style.animationDelay = `${index * 0.05}s`; lessonsListContainer.appendChild(lessonCard); }); } else { if (emptyStateDiv) emptyStateDiv.style.display = 'block'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
     function displayErrorState() { /* ... Keep existing ... */ if (!lessonsListContainer) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'block'; }
-    function createLessonCardElement(lesson) { /* ... Keep existing ... */ const card = document.createElement('div'); card.className = 'lesson-card'; card.dataset.lessonId = lesson.id; const startTime = new Date(lesson.utcStartTime); const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 20) * 60 * 1000); const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }; const formattedDate = startTime.toLocaleDateString(undefined, dateOptions); const formattedStartTime = startTime.toLocaleTimeString(undefined, timeOptions); const formattedEndTime = endTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); card.innerHTML = `<div class="lesson-details"><h3>${lesson.title || 'Personalized Session'}</h3><p><i class="far fa-calendar-alt"></i> ${formattedDate}</p><p><i class="far fa-clock"></i> ${formattedStartTime} - ${formattedEndTime}</p><div class="teacher"><img class="teacher-avatar" src="${lesson.instructor?.avatarUrl || 'placeholder-avatar.png'}" alt="Teacher"><span>${lesson.instructor?.name || 'To be decided'}</span></div></div><div class="lesson-actions"><button class="btn" onclick="rescheduleLesson('${lesson.id}')"><i class="fas fa-edit"></i> Reschedule</button><a href="confirmation.html?lessonId=${lesson.id}" class="btn btn-secondary"><i class="fas fa-video"></i> Join/View</a><button class="btn btn-danger" onclick="cancelLesson('${lesson.id}')"><i class="fas fa-times-circle"></i> Cancel</button></div>`; return card; }
+    function createLessonCardElement(lesson) { /* ... Keep existing ... */ const card = document.createElement('div'); card.className = 'lesson-card animate-in'; card.dataset.lessonId = lesson.id; const startTime = new Date(lesson.utcStartTime); const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 20) * 60 * 1000); const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }; const formattedDate = startTime.toLocaleDateString(undefined, dateOptions); const formattedStartTime = startTime.toLocaleTimeString(undefined, timeOptions); const formattedEndTime = endTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); card.innerHTML = `<div class="lesson-details"><h3>${lesson.title || 'Personalized Session'}</h3><p><i class="far fa-calendar-alt"></i> ${formattedDate}</p><p><i class="far fa-clock"></i> ${formattedStartTime} - ${formattedEndTime}</p><div class="teacher"><img class="teacher-avatar" src="${lesson.instructor?.avatarUrl || 'placeholder-avatar.png'}" alt="Teacher" onerror="this.onerror=null; this.src='placeholder-avatar.png';"><span>${lesson.instructor?.name || 'To be decided'}</span></div></div><div class="lesson-actions"><button class="btn" onclick="rescheduleLesson('${lesson.id}')"><i class="fas fa-edit"></i> Reschedule</button><a href="confirmation.html?lessonId=${lesson.id}" class="btn btn-secondary"><i class="fas fa-video"></i> Join/View</a><button class="btn btn-danger" onclick="cancelLesson('${lesson.id}')"><i class="fas fa-times-circle"></i> Cancel</button></div>`; return card; }
     function rescheduleLesson(lessonId) { /* ... Keep existing ... */ console.log("Reschedule lesson:", lessonId); alert(`Rescheduling requires integration.`); }
-    async function cancelLesson(lessonId) { /* ... Keep existing ... */ console.log("Cancel lesson:", lessonId); if (confirm(`Are you sure you want to cancel lesson ${lessonId}?`)) { alert(`Lesson cancellation requires backend integration.`); } }
+    async function cancelLesson(lessonId) { /* ... Keep existing ... */ console.log("Cancel lesson:", lessonId); if (confirm(`Are you sure you want to cancel lesson ${lessonId}? This action cannot be undone.`)) { alert(`Lesson cancellation requires backend integration.`); /* try { showButtonLoading(event.target, true); // Need event passed or find button await apiRequest(`/api/lessons/${lessonId}/cancel`, { method: 'POST' }); showFeedback('Lesson cancelled successfully.', false); fetchAndDisplayLessons(); // Refresh list } catch (error) { console.error('Error cancelling lesson:', error); showFeedback(`Failed to cancel: ${error.message}`, true); } finally { // showButtonLoading(event.target, false); } */ } }
 
-    // --- NEW Header Logic (Copied & Adapted from Index.html) ---
+    // --- NEW Header Logic (Copied & Adapted from Index.html - Keep Existing) ---
     function updateHeaderUI(userData, hasBooking) {
          if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) {
              signInLink.style.display = 'none';
@@ -199,19 +249,24 @@
      async function handleSignOut() {
           console.log("Signing out...");
           try {
-               await apiRequest('/api/auth/logout', { method: 'POST' });
+                // Use the updated apiRequest
+               const result = await apiRequest('/api/auth/logout', { method: 'POST' });
+               if (result === null) return; // Redirect happened in apiRequest
                console.log("Logout successful on backend.");
-               // Redirect to welcome page after logout
+               // Fallback redirect if needed
                window.location.href = 'welcome.html';
           } catch (error) {
                console.error("Sign out failed:", error);
-               alert(`Sign out failed: ${error.message}`); // Inform user
+               if (error.message !== "Redirecting") { // Avoid alert on redirect signal
+                   alert(`Sign out failed: ${error.message}`); // Inform user
+               }
           }
      }
 
      async function checkAuthAndSetupHeader() {
          console.log("[Header Auth Check] Checking user status...");
          try {
+             // Use the updated apiRequest
              const status = await apiRequest('/api/user/status', { method: 'GET' });
              // apiRequest handles 401 redirect, so if we get here, user is logged in or null was returned
              if (status && status.user) {
@@ -220,15 +275,20 @@
              } else if (status === null) {
                  // This case happens if apiRequest returned null due to 401, redirect already happened
                  console.log("[Header Auth Check] User not logged in (401 handled).");
-                 // updateHeaderUI(null, false); // Optionally ensure UI is logged out state
+                 // updateHeaderUI(null, false); // UI should already reflect logged out state due to redirect
              }
              else {
-                 console.log("[Header Auth Check] User not logged in (no status data).");
-                 updateHeaderUI(null, false); // Show Sign In link
+                 // This case might happen if the status endpoint returns OK but no user (e.g., session exists but user data missing)
+                 console.log("[Header Auth Check] User status received but no user data.");
+                 updateHeaderUI(null, false); // Treat as logged out
+                  // Potentially redirect here too if this state is invalid for the lessons page
+                  // window.location.href = 'welcome.html';
              }
          } catch (error) {
               console.warn("[Header Auth Check] Could not fetch user status:", error.message);
               updateHeaderUI(null, false); // Assume logged out on error, show Sign In
+               // Redirect here if auth error means user cannot see lessons page
+               // window.location.href = 'welcome.html';
          }
      }
      // --- End NEW Header Logic ---
@@ -238,12 +298,12 @@
     async function fetchAndDisplayLessons() {
         showLoadingState(true);
         try {
-            // Check auth status first (this will also update header)
+            // Check auth status first (this will also update header and potentially redirect)
             await checkAuthAndSetupHeader();
 
             // Fetch lessons (will redirect via apiRequest if not authenticated)
             const response = await apiRequest('/api/user/lessons', { method: 'GET' });
-            if (response === null) return; // Stop if redirected
+            if (response === null) return; // Stop if redirected by checkAuth or apiRequest
 
             const lessons = Array.isArray(response?.lessons) ? response.lessons : [];
             console.log("Fetched lessons:", lessons);
@@ -282,6 +342,6 @@
          return el;
      }
 
-  </script>
+  </script> 
 </body>
 </html>
