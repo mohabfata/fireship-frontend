@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson Confirmation | Fireship English</title>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Poppins Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- QR Code Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* --- STYLES --- */
+     :root {
+      /* Keep existing confirmation.html variables */
+      --primary: #5A8DEE;
+      --secondary: #3DDC97;
+      --primary-light: #eaf2ff;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #FF5252; /* Used by header too */
+      --gray-100: #f8faff; /* Used as --bg-light for header */
+      --gray-200: #eef2f7; /* Used as --border-color for header */
+      --gray-300: #dee2e6;
+      --gray-600: #8492a6; /* Used as --gray-color for header */
+      --gray-800: #34495e; /* Used as --dark-color for header */
+      --bg-gradient: linear-gradient(135deg, #f8faff, #eaf2ff);
+      --border-radius: 16px;
+      --box-shadow: 0 15px 40px rgba(90, 141, 238, 0.12);
+      --transition-speed: 0.3s;
+      --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+      --dark-purple: #4B0082; /* Add from header if needed */
+      --accent-color: #FF6347; /* Add from header if needed */
+    }
+    * {box-sizing: border-box; margin: 0; padding: 0;}
+    body {display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; margin: 0; background: var(--bg-gradient); font-family: 'Poppins', sans-serif; color: var(--gray-800); padding: 70px 20px 40px; /* Ensure padding-top matches header height */ line-height: 1.6;}
+
+    /* --- Header Styles (Imported and adapted from Profile.html) --- */
+    header.main-header {
+        background-color: white; /* Solid white initially */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+        padding: 0 2rem; /* Use profile padding */
+        position: fixed; /* Use fixed positioning */
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between; /* Space between logo and profile */
+        align-items: center;
+        height: 70px;
+        border-bottom: 1px solid var(--gray-200); /* Use confirmation variable */
+        transition: background-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
+    }
+    body.scrolled header.main-header {
+        background-color: rgba(255, 255, 255, 0.97); /* Slightly transparent on scroll */
+        backdrop-filter: blur(10px);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06);
+        border-bottom: 1px solid var(--gray-200); /* Use confirmation variable */
+    }
+    .header-logo-link { /* Added from profile */
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        height: 100%;
+    }
+    .header-logo {
+        display: flex;
+        align-items: center;
+        height: 40px;
+        overflow: visible;
+    }
+    .header-logo img {
+        height: 80px; /* Profile header uses 80px */
+        margin-right: 0.8rem;
+        transform: translateY(-7px); /* Profile header transform */
+    }
+    .header-logo span {
+        font-weight: 700;
+        font-size: 1.3rem;
+        color: var(--primary); /* Use confirmation variable */
+    }
+    /* User Profile Header (Copied from Profile.html) */
+    .user-profile-header {
+        display: none; /* Initially hidden, shown by JS if logged in */
+        align-items: center;
+        gap: 12px;
+        position: relative;
+        cursor: pointer;
+    }
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid var(--gray-200); /* Use confirmation variable */
+        object-fit: cover;
+        background-color: #eee;
+    }
+    .user-name-header {
+        font-weight: 600;
+        color: var(--gray-800); /* Use confirmation variable */
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .notification-dot {
+        width: 10px;
+        height: 10px;
+        background-color: var(--danger); /* Use confirmation variable */
+        border-radius: 50%;
+        position: absolute;
+        top: 0;
+        right: 0;
+        border: 1.5px solid white;
+        display: none; /* Shown by JS */
+    }
+    .profile-dropdown {
+        display: none; /* Toggled by JS */
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background-color: white;
+        border-radius: 8px; /* Use profile border-radius */
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border: 1px solid var(--gray-200); /* Use confirmation variable */
+        z-index: 1010;
+        min-width: 200px;
+        overflow: hidden;
+        list-style: none;
+        padding: 8px 0;
+    }
+    .profile-dropdown a, .profile-dropdown button {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        text-align: left;
+        padding: 10px 18px;
+        color: var(--gray-800); /* Use confirmation variable */
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .profile-dropdown a:hover, .profile-dropdown button:hover {
+        background-color: var(--gray-100); /* Use confirmation variable */
+        color: var(--primary); /* Use confirmation variable */
+    }
+    .profile-dropdown a i, .profile-dropdown button i {
+        margin-right: 12px;
+        color: var(--gray-600); /* Use confirmation variable */
+        transition: color 0.2s ease;
+        width: 16px;
+        text-align: center;
+    }
+    .profile-dropdown a:hover i, .profile-dropdown button:hover i {
+        color: var(--primary); /* Use confirmation variable */
+    }
+    .dropdown-divider {
+        height: 1px;
+        background-color: var(--gray-200); /* Use confirmation variable */
+        margin: 8px 0;
+    }
+    .lessons-link span { flex-grow: 1; }
+    .lessons-link .notification-dot { /* Style for dot inside link */
+        position: static;
+        display: inline-block;
+        margin-left: 8px;
+        width: 8px;
+        height: 8px;
+        vertical-align: middle;
+        background-color: var(--danger); /* Use confirmation variable */
+        border-radius: 50%;
+        border: 1px solid white;
+        visibility: hidden; /* Toggled by JS */
+    }
+    .lessons-link .notification-dot.visible { visibility: visible; }
+    #signInLink {
+        display: none; /* Hidden by default, shown by JS if logged out */
+        color: var(--primary); /* Use confirmation variable */
+        text-decoration: none;
+        font-weight: 600;
+        padding: 8px 18px;
+        border: 2px solid var(--primary); /* Use confirmation variable */
+        border-radius: 50px;
+        transition: all var(--transition-speed) var(--transition-timing);
+    }
+    #signInLink:hover {
+        background-color: var(--primary); /* Use confirmation variable */
+        color: white;
+    }
+    /* --- End Header Styles --- */
+
+    /* --- Existing Confirmation Styles (Keep unchanged) --- */
+    .container { background: #fff; border-radius: var(--border-radius); box-shadow: var(--box-shadow); padding: 40px; width: 100%; max-width: 750px; text-align: center; position: relative; overflow: hidden; border: 1px solid var(--gray-200); margin-top: 30px; /* Added margin-top to space from fixed header */ margin-bottom: 30px; display: none; }
+    .confetti {position: absolute; top: -10px; width: 10px; height: 20px; opacity: 0; animation: confetti-fall 3s ease-in-out forwards;}
+    @keyframes confetti-fall { 0% {opacity: 1; transform: translateY(-10px) rotate(0deg);} 100% {opacity: 0; transform: translateY(400px) rotate(360deg);} }
+    .header {margin-bottom: 30px; position: relative;}
+    .success-icon {display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; background-color: var(--primary-light); color: var(--success); font-size: 40px; border-radius: 50%; margin: 0 auto 20px; position: relative; animation: pulse 2s infinite;}
+    @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4);} 70% {box-shadow: 0 0 0 15px rgba(40, 167, 69, 0);} 100% {box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);} }
+    h1 {color: var(--gray-800); margin-bottom: 15px; font-size: 28px; font-weight: 700;}
+    .subtitle {color: var(--gray-600); margin-bottom: 30px; font-size: 16px;}
+    .lesson-details {background-color: var(--gray-100); border-radius: 15px; padding: 25px; margin: 30px 0; box-shadow: 0 5px 15px rgba(0,0,0,0.03);}
+    .detail-card {display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;}
+    .detail-item {background: white; border-radius: 12px; padding: 20px; text-align: left; box-shadow: 0 3px 10px rgba(0,0,0,0.05); transition: transform 0.2s;} .detail-item:hover {transform: translateY(-3px);} .detail-label {font-size: 14px; font-weight: 500; color: var(--gray-600); display: block; margin-bottom: 10px;} .detail-value {font-weight: 600; color: var(--gray-800); font-size: 16px;}
+    .countdown-section {background: var(--primary-light); border-radius: 15px; padding: 25px; margin: 30px 0; text-align: center;} .countdown-title {font-size: 16px; color: var(--gray-600); margin-bottom: 15px;} .countdown-timer {display: flex; justify-content: center; gap: 15px;} .countdown-item {display: flex; flex-direction: column; align-items: center;} .countdown-number {background: white; border-radius: 10px; font-size: 24px; font-weight: bold; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: var(--primary);} .countdown-label {margin-top: 8px; font-size: 14px; color: var(--gray-600);}
+    .zoom-section, .calendar-section, .navigation-section {margin: 35px 0;} .section-title {margin-bottom: 20px; color: var(--gray-800); font-size: 18px; font-weight: 600;} .zoom-link-display {display: flex; gap: 10px; margin-bottom: 15px; width: 100%;} .zoom-link-field {flex-grow: 1; padding: 12px 15px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px; background-color: var(--gray-100); color: var(--gray-800); cursor: text; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);} .copy-button {background-color: var(--gray-100); border: 1px solid var(--gray-300); border-radius: 8px; padding: 0 15px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; color: var(--gray-800); font-weight: 500;} .copy-button:hover {background-color: var(--gray-200);}
+    .zoom-link {background-color: var(--primary); color: white; padding: 14px 28px; text-decoration: none; border-radius: 50px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 5px 15px rgba(90, 141, 238, 0.3); margin-top: 15px;} .zoom-link i { font-size: 0.9em; } .zoom-link:hover {background-color: #4a7bd8; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(90, 141, 238, 0.4);}
+    .qr-section {margin: 30px 0; display: flex; flex-direction: column; align-items: center;} .qr-code {background: white; padding: 15px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); margin-bottom: 15px; min-height: 150px; /* Ensure space for QR code */} .qr-text {font-size: 14px; color: var(--gray-600);}
+    .meeting-info {background-color: var(--primary-light); border-radius: 15px; padding: 25px; margin: 30px 0; text-align: left;} .meeting-info-item {margin-bottom: 15px; display: flex; align-items: flex-start; gap: 15px;} .meeting-info-label {font-weight: 600; color: var(--gray-800); flex-basis: 120px;} .meeting-info-value {color: var(--gray-800); flex-grow: 1;}
+    .instructions {background-color: var(--primary-light); border-left: 4px solid var(--primary); padding: 20px; margin: 30px 0; text-align: left; border-radius: 0 8px 8px 0;} .instructions h3 {color: var(--primary); margin-bottom: 15px; font-weight: 600;} .instructions-list {list-style-type: none;} .instructions-list li {margin: 12px 0; padding-left: 30px; position: relative;} .instructions-list li:before {content: "\f00c"; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; left: 0; color: var(--success); font-weight: bold;}
+    .reschedule-notice {display: flex; align-items: center; gap: 10px; background-color: #FFF8E1; border-radius: 8px; padding: 15px; margin: 30px 0; text-align: left;} .notice-icon {color: var(--warning); font-size: 20px;}
+    .calendar-buttons, .navigation-buttons {display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;}
+    .calendar-button {background-color: white; border: 1px solid var(--gray-300); border-radius: 8px; padding: 12px 20px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; color: var(--gray-800); font-weight: 500; box-shadow: 0 3px 8px rgba(0,0,0,0.05);} .calendar-button:hover {background-color: var(--gray-100); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1);} .calendar-button i {color: var(--primary);}
+    .nav-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 28px; border-radius: 50px; font-weight: 600; transition: all var(--transition-speed) var(--transition-timing); cursor: pointer; font-size: 1rem; text-decoration: none; border: 2px solid transparent; }
+    .nav-button.primary { background: linear-gradient(90deg, var(--primary), var(--secondary)); border-color: transparent; color: white; box-shadow: 0 6px 20px rgba(90, 141, 238, 0.25); } .nav-button.primary:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(90, 141, 238, 0.35); filter: brightness(1.1); }
+    .nav-button.outline { background-color: transparent; border-color: var(--gray-200); color: var(--gray-600); box-shadow: none; } .nav-button.outline:hover { border-color: var(--gray-600); color: var(--gray-800); background-color: rgba(132, 146, 166, 0.05); transform: translateY(-2px); } .nav-button i { font-size: 0.9em; }
+    .footer {margin-top: 30px; border-top: 1px solid var(--gray-200); padding-top: 20px; color: var(--gray-600); font-size: 14px;}
+    .contact-link {color: var(--primary); text-decoration: none; font-weight: 500; transition: color 0.2s;} .contact-link:hover {color: #2A7DE1; text-decoration: underline;}
+    @media (max-width: 768px) { .detail-card {grid-template-columns: 1fr;} .countdown-timer {flex-wrap: wrap;} .container {padding: 25px; width: 95%; margin-top: 20px;} .calendar-buttons, .navigation-buttons {flex-direction: column; gap: 10px; align-items: center;} .nav-button { width: 100%; max-width: 300px; } header.main-header{padding: 0 1.5rem;} }
+    @media (max-width: 480px) { header.main-header{padding: 0 1rem;} .user-name-header { display: none; } }
+    /* Loading/Error States */
+     .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; opacity: 1; transition: opacity 0.5s ease-out; }
+     .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+     .loading-spinner {width: 50px; height: 50px; border: 5px solid var(--gray-200); border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;}
+    @keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
+    .error-message { text-align: center; padding: 40px; background-color: rgba(255, 82, 82, 0.1); border: 1px solid var(--danger); color: var(--danger); border-radius: var(--border-radius); margin: 30px auto; max-width: 700px; font-weight: 500; display: none; /* Hidden by default */ }
+    .error-message i { margin-right: 10px; }
+    .toast {position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--success); color: white; padding: 12px 24px; border-radius: 8px; font-weight: 500; box-shadow: 0 5px 15px rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s ease-in-out; z-index: 1001;} .toast.show {opacity: 1;}
+  </style>
+</head>
+<body>
+
+  <!-- Header (Imported from Profile.html) -->
+   <header class="main-header">
+    <a href="Index.html" class="header-logo-link"> <!-- Use link from profile -->
+        <div class="header-logo">
+            <img src="https://imgur.com/bXjTJAj.png" alt="Fireship Logo">
+            <span>Fireship</span>
+        </div>
+    </a>
+    <!-- Sign In Link (Shown/Hidden by JS) -->
+    <a href="welcome.html?source=signIn" id="signInLink" style="display: none;">Sign In</a>
+    <!-- User Profile Area (Shown/Hidden by JS) -->
+    <div class="user-profile-header" id="user-profile-header">
+         <span class="user-name-header" id="userNameHeader">User</span>
+         <img src="placeholder-avatar.png" alt="User Avatar" class="user-avatar" id="userAvatarHeader">
+         <div class="notification-dot" id="notificationDot"></div>
+         <div class="profile-dropdown" id="profileDropdown">
+             <a href="profile.html"><i class="fas fa-user-circle"></i> My Profile</a>
+             <a href="lessons.html" class="lessons-link">
+                 <i class="fas fa-calendar-check"></i>
+                 <span>My Lessons</span>
+                 <span class="notification-dot" id="lessonsNotificationDot"></span>
+             </a>
+             <div class="dropdown-divider"></div>
+             <button id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+         </div>
+    </div>
+  </header>
+  <!-- End Header -->
+
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p>Loading your lesson details...</p>
+  </div>
+
+  <div id="error-message" class="error-message">
+     <i class="fas fa-exclamation-triangle"></i> Error loading lesson details. Please try again or contact support.
+  </div>
+
+  <div id="copyToast" class="toast">Link copied to clipboard!</div>
+
+  <div class="container" id="confirmation-container">
+    <div class="header">
+      <div class="success-icon"><i class="fas fa-check"></i></div>
+      <h1>Your 1-on-1 Lesson is Confirmed!</h1>
+      <p class="subtitle">Thank you for booking with us. We're excited to help you achieve your learning goals!</p>
+    </div>
+
+    <div class="lesson-details">
+      <div class="detail-card">
+        <div class="detail-item"><span class="detail-label">Lesson</span><span class="detail-value" id="lessonTitle">Loading...</span></div>
+        <div class="detail-item"><span class="detail-label">Instructor</span><span class="detail-value" id="instructorName">Loading...</span></div>
+        <div class="detail-item"><span class="detail-label">Date</span><span class="detail-value" id="lessonDate">Loading...</span></div>
+        <div class="detail-item"><span class="detail-label">Time</span><span class="detail-value" id="lessonTime">Loading...</span></div>
+      </div>
+    </div>
+
+    <div class="countdown-section">
+      <p class="countdown-title">Your lesson will begin in:</p>
+      <div class="countdown-timer" id="countdown-timer">
+         <!-- Countdown elements will be populated by JS -->
+         <div class="countdown-item"><div class="countdown-number" id="days">--</div><div class="countdown-label">Days</div></div>
+         <div class="countdown-item"><div class="countdown-number" id="hours">--</div><div class="countdown-label">Hours</div></div>
+         <div class="countdown-item"><div class="countdown-number" id="minutes">--</div><div class="countdown-label">Minutes</div></div>
+         <div class="countdown-item"><div class="countdown-number" id="seconds">--</div><div class="countdown-label">Seconds</div></div>
+      </div>
+       <div id="countdown-error" style="color: var(--danger); margin-top: 10px; display: none;">Could not start countdown.</div>
+    </div>
+
+    <div class="zoom-section">
+      <p class="section-title">Join your lesson via Zoom:</p>
+      <div class="zoom-link-display">
+        <input type="text" id="zoomLinkField" class="zoom-link-field" value="Loading..." readonly>
+        <button id="copyButton" class="copy-button"><i class="fas fa-copy" style="margin-right: 5px;"></i> Copy</button>
+      </div>
+      <a href="#" id="zoomLink" class="zoom-link" target="_blank"><i class="fas fa-video"></i> Join Zoom Meeting</a>
+    </div>
+
+    <div class="meeting-info">
+      <p class="section-title">Meeting Information:</p>
+      <div class="meeting-info-item">
+        <span class="meeting-info-label"><i class="fas fa-id-badge" style="color: var(--primary); margin-right: 5px;"></i> Meeting ID:</span>
+        <span class="meeting-info-value" id="meetingId">Loading...</span>
+      </div>
+      <div class="meeting-info-item">
+        <span class="meeting-info-label"><i class="fas fa-key" style="color: var(--primary); margin-right: 5px;"></i> Passcode:</span>
+        <span class="meeting-info-value" id="passcode">Loading...</span>
+      </div>
+    </div>
+
+    <div class="qr-section">
+      <p class="section-title">Scan to join from your mobile device:</p>
+      <div class="qr-code" id="qrCode">
+          <p style="color: var(--gray-600); font-style: italic;">QR code will appear here.</p>
+      </div>
+      <p class="qr-text">Scan this QR code with your phone camera to instantly join the meeting</p>
+    </div>
+
+    <div class="instructions">
+      <h3><i class="fas fa-clipboard-list"></i> How to prepare for your lesson:</h3>
+      <ul class="instructions-list">
+        <li>Make sure you have Zoom installed or can access it through your browser</li>
+        <li>Test your audio and video before the lesson starts</li>
+        <li>Prepare your questions and topics you want to cover</li>
+        <li>Find a quiet space with minimal distractions</li>
+        <li>Join the meeting 5 minutes early to ensure everything is working properly</li>
+      </ul>
+    </div>
+
+    <div class="reschedule-notice">
+      <span class="notice-icon"><i class="fas fa-exclamation-triangle"></i></span>
+      <p>Need to reschedule? Please contact us at least 24 hours before your scheduled lesson time.</p>
+    </div>
+
+    <div class="calendar-section">
+      <p class="section-title">Add to your calendar:</p>
+      <div class="calendar-buttons">
+        <button class="calendar-button" id="googleCalendar"><i class="fab fa-google"></i> Google Calendar</button>
+        <button class="calendar-button" id="outlookCalendar"><i class="fab fa-microsoft"></i> Outlook Calendar</button>
+        <button class="calendar-button" id="appleCalendar"><i class="fab fa-apple"></i> Apple Calendar</button>
+      </div>
+    </div>
+
+    <div class="navigation-section">
+        <p class="section-title" style="font-size: 1.1rem; margin-bottom: 20px;">What's next?</p>
+         <div class="navigation-buttons">
+            <a href="profile.html" class="nav-button primary"> <i class="fas fa-user"></i> View My Profile </a>
+            <a href="index.html" class="nav-button outline"> <i class="fas fa-home"></i> Back to Home </a>
+        </div>
+    </div>
+
+    <div class="footer">
+      <p>Questions or need assistance? <a href="#" class="contact-link">Contact our support team</a></p>
+      <p id="confirmation-id">Confirmation ID: Loading...</p>
+    </div>
+  </div>
+
+  <script>
+    // --- DOM Elements ---
+    const els = { // Group elements
+        loadingOverlay: document.getElementById('loading-overlay'),
+        errorMessageDiv: document.getElementById('error-message'),
+        confirmationContainer: document.getElementById('confirmation-container'),
+        lessonTitleEl: document.getElementById('lessonTitle'),
+        instructorNameEl: document.getElementById('instructorName'),
+        lessonDateEl: document.getElementById('lessonDate'),
+        lessonTimeEl: document.getElementById('lessonTime'),
+        zoomLinkEl: document.getElementById('zoomLink'),
+        zoomLinkField: document.getElementById('zoomLinkField'),
+        meetingIdEl: document.getElementById('meetingId'),
+        passcodeEl: document.getElementById('passcode'),
+        confirmationIdEl: document.getElementById('confirmation-id'),
+        qrCodeContainer: document.getElementById('qrCode'),
+        copyButton: document.getElementById('copyButton'),
+        copyToast: document.getElementById('copyToast'),
+        googleBtn: document.getElementById('googleCalendar'),
+        outlookBtn: document.getElementById('outlookCalendar'),
+        appleBtn: document.getElementById('appleCalendar'),
+        countdownTimerEl: document.getElementById('countdown-timer'),
+        countdownErrorEl: document.getElementById('countdown-error'),
+        daysEl: document.getElementById('days'),
+        hoursEl: document.getElementById('hours'),
+        minutesEl: document.getElementById('minutes'),
+        secondsEl: document.getElementById('seconds'),
+        // Header Elements
+        signInLink: document.getElementById('signInLink'),
+        userProfileHeader: document.getElementById('user-profile-header'),
+        userNameHeader: document.getElementById('userNameHeader'),
+        userAvatarHeader: document.getElementById('userAvatarHeader'),
+        profileDropdown: document.getElementById('profileDropdown'),
+        signOutBtn: document.getElementById('signOutBtn'),
+        notificationDot: document.getElementById('notificationDot'),
+        lessonsNotificationDot: document.getElementById('lessonsNotificationDot')
+    };
+
+    let lessonDataStore = null; // To store fetched lesson data for calendar buttons
+    let countdownInterval = null; // To store interval ID
+
+    // --- Utility Functions ---
+    async function apiRequest(url, options) {
+       // (Keep existing apiRequest function - ensure 401 handling)
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                let errorMsg = `Request failed with status: ${response.status}`;
+                let errorData = null;
+                try {
+                    errorData = await response.json();
+                    errorMsg = errorData.message || errorMsg;
+                } catch (e) { /* Ignore */ }
+                // Special handling for 401 (Unauthorized) - redirect to welcome
+                if (response.status === 401 && !url.includes('/api/auth/logout')) { // Don't redirect on logout failure
+                    console.warn("API 401 Unauthorized detected, redirecting to welcome page.");
+                    window.location.href = 'welcome.html';
+                    return null; // Prevent further processing after redirect trigger
+                }
+                throw new Error(errorMsg);
+            }
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                 return await response.json();
+            } else {
+                 // For non-JSON responses (like maybe logout), return success indication
+                 return { success: true };
+            }
+        } catch (error) {
+            console.error(`API Request Error (${url}):`, error);
+            // Handle specific error types if needed, e.g., network errors
+             if (error.message.toLowerCase().includes('failed to fetch')) {
+                 throw new Error("Network error. Please check your connection.");
+             }
+            throw error; // Re-throw other errors
+        }
+    }
+
+    function getLessonIdFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('lessonId');
+    }
+
+    function showLoading(show) {
+        if (els.loadingOverlay) {
+            els.loadingOverlay.classList.toggle('hidden', !show);
+        }
+    }
+
+    function showError(message) {
+        if (els.errorMessageDiv) {
+             els.errorMessageDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message || 'Error loading lesson details.'}`;
+             els.errorMessageDiv.style.display = 'block';
+        }
+        if (els.confirmationContainer) {
+            els.confirmationContainer.style.display = 'none'; // Hide main content on error
+        }
+        showLoading(false);
+    }
+
+    // --- Header Logic ---
+     function updateHeaderUI(userData, hasBooking) {
+        const { signInLink, userProfileHeader, userNameHeader, userAvatarHeader, notificationDot, lessonsNotificationDot } = els;
+        if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) {
+            signInLink.style.display = 'none';
+            userProfileHeader.style.display = 'flex';
+            userNameHeader.textContent = userData.name || 'User';
+            userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png';
+            userAvatarHeader.onerror = () => { userAvatarHeader.src = 'placeholder-avatar.png'; };
+            if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none';
+            if (lessonsNotificationDot) lessonsNotificationDot.classList.toggle('visible', hasBooking);
+        } else if (signInLink && userProfileHeader) {
+            signInLink.style.display = 'block';
+            userProfileHeader.style.display = 'none';
+            if (notificationDot) notificationDot.style.display = 'none';
+            if (lessonsNotificationDot) lessonsNotificationDot.classList.remove('visible');
+        }
+    }
+
+    function setupDropdown() {
+        const { userProfileHeader, profileDropdown } = els;
+        if (userProfileHeader && profileDropdown) {
+            userProfileHeader.addEventListener('click', (event) => {
+                event.stopPropagation();
+                profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
+            });
+            window.addEventListener('click', (event) => {
+                if (profileDropdown.style.display === 'block' && !userProfileHeader.contains(event.target)) {
+                    profileDropdown.style.display = 'none';
+                }
+            });
+        } else {
+             console.warn("Could not set up dropdown - elements missing.");
+        }
+    }
+
+    async function handleSignOut() {
+        console.log("Signing out...");
+        try {
+            const result = await apiRequest('/api/auth/logout', { method: 'POST' });
+             if (result === null) return; // Redirect happened
+            window.location.href = 'welcome.html';
+        } catch (error) {
+            console.error("Sign out failed:", error);
+            alert(`Sign out failed: ${error.message}`);
+        }
+    }
+
+    async function checkAuthAndSetupHeader() {
+        console.log("[Header Auth Check] Checking...");
+        try {
+            const status = await apiRequest('/api/user/status', { method: 'GET' });
+            if (status === null) return false; // Redirect happened, stop further processing
+
+            if (status && status.user) {
+                console.log("[Header Auth Check] User logged in:", status.user);
+                updateHeaderUI(status.user, status.hasBooking || false);
+                return true; // Indicate success
+            } else {
+                console.log("[Header Auth Check] User not logged in.");
+                updateHeaderUI(null, false);
+                 // For confirmation page, user SHOULD be logged in. Show error or redirect.
+                 showError("You must be logged in to view this confirmation.");
+                 // Optionally redirect after a delay: setTimeout(() => { window.location.href = 'welcome.html'; }, 3000);
+                return false; // Indicate failure (not logged in)
+            }
+        } catch (error) {
+            console.warn("[Header Auth Check] Failed:", error.message);
+            updateHeaderUI(null, false);
+             showError("Authentication Error. Please try refreshing.");
+            return false; // Indicate failure
+        }
+    }
+
+    // --- Core Logic ---
+    async function fetchAndDisplayLesson() {
+        const lessonId = getLessonIdFromUrl();
+        if (!lessonId) {
+            showError("No lesson ID provided in the URL.");
+            return;
+        }
+
+        console.log(`Fetching details for lesson ID: ${lessonId}`);
+        showLoading(true);
+
+        try {
+            // Auth check is now done in initPage before this runs
+            // TODO: Replace with your actual backend endpoint
+            const apiUrl = `/api/lessons/${lessonId}`;
+            const lessonData = await apiRequest(apiUrl, { method: 'GET' });
+
+            if (lessonData === null) { // Redirect or API error handled in apiRequest
+                 showError("Failed to load lesson data."); // Generic error if null returned
+                 return;
+            }
+
+            lessonDataStore = lessonData; // Store for later use
+            console.log("Lesson data received:", lessonData);
+
+            populateLessonDetails(lessonData);
+            setupInteractions(lessonData);
+
+            if (els.confirmationContainer) {
+                els.confirmationContainer.style.display = 'block';
+            }
+            if (els.errorMessageDiv) {
+                 els.errorMessageDiv.style.display = 'none';
+            }
+            createConfetti(); // Display confetti on successful load
+
+        } catch (error) {
+            console.error("Failed to fetch lesson details:", error);
+            // Handle specific errors like 404 (Not Found) or 403 (Forbidden)
+            if (error.message.includes('404')) {
+                 showError(`Lesson with ID ${lessonId} not found.`);
+            } else if (error.message.includes('403') || error.message.includes('401')) {
+                 showError("You are not authorized to view this lesson.");
+            } else {
+                 showError(`Error loading lesson: ${error.message}`);
+            }
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function populateLessonDetails(data) {
+        // (Keep existing function)
+        if (!data) return;
+        els.lessonTitleEl.textContent = data.learningPathTitle || 'Personalized Session';
+        els.instructorNameEl.textContent = "To be decided";
+        const lessonStartTimeUTC = data.utcStartTime;
+        if (lessonStartTimeUTC) {
+             const startTime = new Date(lessonStartTimeUTC);
+             const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+             const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' };
+             els.lessonDateEl.textContent = startTime.toLocaleDateString(undefined, dateOptions);
+             els.lessonTimeEl.textContent = startTime.toLocaleTimeString(undefined, timeOptions);
+             startCountdown(startTime);
+        } else {
+            els.lessonDateEl.textContent = 'N/A';
+            els.lessonTimeEl.textContent = 'N/A';
+            stopCountdown();
+             if (els.countdownErrorEl) els.countdownErrorEl.style.display = 'block';
+        }
+        const zoomLink = data.zoom?.joinUrl || '#';
+        els.zoomLinkEl.href = zoomLink;
+        els.zoomLinkField.value = zoomLink === '#' ? 'Not available' : zoomLink;
+        els.meetingIdEl.textContent = data.zoom?.meetingId || 'N/A';
+        els.passcodeEl.textContent = data.zoom?.passcode || 'N/A';
+        els.confirmationIdEl.textContent = `Confirmation ID: ${data.confirmationId || 'N/A'}`;
+        if (zoomLink !== '#') {
+            generateQRCode(zoomLink);
+        } else {
+            els.qrCodeContainer.innerHTML = '<p style="color: var(--gray-600); font-style: italic;">Zoom link not available for QR code.</p>';
+        }
+    }
+
+    function setupInteractions(data) {
+         // (Keep existing function)
+        if (els.copyButton && els.zoomLinkField && els.copyToast) {
+            els.copyButton.onclick = function() {
+                if (els.zoomLinkField.value === 'Loading...' || els.zoomLinkField.value === 'Not available') return;
+                els.zoomLinkField.select();
+                els.zoomLinkField.setSelectionRange(0, 99999);
+                navigator.clipboard.writeText(els.zoomLinkField.value)
+                    .then(() => {
+                        els.copyToast.classList.add('show');
+                        setTimeout(() => els.copyToast.classList.remove('show'), 3000);
+                    })
+                    .catch(err => { console.error('Could not copy text: ', err); alert('Failed to copy link.'); });
+            };
+        } else { console.warn("Copy button elements not found."); }
+        setupCalendarButtons(data);
+    }
+
+    // --- Helper Functions (Keep: createConfetti, generateQRCode, Countdown, Calendar Buttons) ---
+    function createConfetti() { const container = document.querySelector('.container'); if (!container) return; const colors = ['#5A8DEE', '#3DDC97', '#FFC107', '#FF6347', '#9C27B0', '#00BCD4']; for (let i = 0; i < 50; i++) { const confetti = document.createElement('div'); confetti.className = 'confetti'; confetti.style.left = Math.random() * 100 + '%'; confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; confetti.style.animationDelay = Math.random() * 3 + 's'; container.appendChild(confetti); } }
+    function generateQRCode(url) { if (!els.qrCodeContainer) return; els.qrCodeContainer.innerHTML = ''; try { new QRCode(els.qrCodeContainer, { text: url, width: 150, height: 150, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); } catch(e) { console.error("QR Code generation failed:", e); els.qrCodeContainer.innerHTML = '<p style="color: var(--danger);">QR code generation failed.</p>'; } }
+    function startCountdown(targetDate) { if (!(targetDate instanceof Date) || isNaN(targetDate)) { console.error("Invalid target date for countdown:", targetDate); stopCountdown(); if (els.countdownErrorEl) els.countdownErrorEl.style.display = 'block'; updateCountdownDisplay(0); return; } if (els.countdownErrorEl) els.countdownErrorEl.style.display = 'none'; stopCountdown(); const update = () => updateCountdownDisplay(targetDate); update(); countdownInterval = setInterval(update, 1000); }
+    function stopCountdown() { if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; } }
+    function updateCountdownDisplay(targetDate) { if (!els.daysEl || !els.hoursEl || !els.minutesEl || !els.secondsEl || !els.countdownTimerEl) return; const now = new Date(); const diff = targetDate - now; if (diff <= 0) { els.daysEl.textContent = '0'; els.hoursEl.textContent = '0'; els.minutesEl.textContent = '0'; els.secondsEl.textContent = '0'; stopCountdown(); const countdownSection = document.querySelector('.countdown-section'); if (countdownSection && !countdownSection.querySelector('.lesson-starting-message')) { countdownSection.style.backgroundColor = 'var(--success)'; countdownSection.innerHTML = '<h2 class="lesson-starting-message" style="color: white; padding: 20px;">Your lesson is starting now!</h2>'; } return; } const days = Math.floor(diff / (1000 * 60 * 60 * 24)); const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)); const seconds = Math.floor((diff % (1000 * 60)) / 1000); els.daysEl.textContent = days; els.hoursEl.textContent = hours; els.minutesEl.textContent = minutes; els.secondsEl.textContent = seconds; }
+    function setupCalendarButtons(lessonData) { if (!lessonData?.utcStartTime || !lessonData?.zoom) { console.warn("Cannot setup calendar buttons, missing lesson data."); if(els.googleBtn) els.googleBtn.disabled = true; if(els.outlookBtn) els.outlookBtn.disabled = true; if(els.appleBtn) els.appleBtn.disabled = true; return; } if(els.googleBtn) els.googleBtn.disabled = false; if(els.outlookBtn) els.outlookBtn.disabled = false; if(els.appleBtn) els.appleBtn.disabled = false; const startTime = new Date(lessonData.utcStartTime); const endTime = new Date(startTime.getTime() + (lessonData.durationMinutes || 20) * 60 * 1000); const title = encodeURIComponent(lessonData.learningPathTitle || 'Fireship English Lesson'); const description = encodeURIComponent( `Instructor: To be decided\nJoin via Zoom: ${lessonData.zoom.joinUrl || 'N/A'}\nMeeting ID: ${lessonData.zoom.meetingId || 'N/A'}\nPasscode: ${lessonData.zoom.passcode || 'N/A'}` ); const location = encodeURIComponent(lessonData.zoom.joinUrl || 'Online'); const formatGoogleDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, ''); const googleStart = formatGoogleDate(startTime); const googleEnd = formatGoogleDate(endTime); const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${googleStart}/${googleEnd}&details=${description}&location=${location}`; if (els.googleBtn) { els.googleBtn.onclick = () => { window.open(googleUrl, '_blank'); }; } if (els.outlookBtn) { els.outlookBtn.onclick = () => { alert('Outlook Calendar link generation would require backend support or a library.'); }; } if (els.appleBtn) { els.appleBtn.onclick = () => { alert('iCalendar (.ics) file generation would require backend support or a library.'); }; } }
+
+
+    // --- Initial Load ---
+    async function initPage() {
+         console.log("Initializing confirmation page...");
+
+         // 1. Setup Header & Auth Check
+         const isAuthOk = await checkAuthAndSetupHeader();
+         setupDropdown(); // Setup dropdown interactivity regardless of auth status
+         if (els.signOutBtn) {
+             els.signOutBtn.addEventListener('click', handleSignOut); // Setup signout listener
+         }
+
+         // 2. If auth check failed or user not logged in, stop here
+         if (!isAuthOk) {
+             console.log("Halting confirmation page load due to auth issue.");
+             showLoading(false); // Ensure loading overlay is hidden
+             return;
+         }
+
+         // 3. Fetch and display lesson details (only if auth is OK)
+         await fetchAndDisplayLesson();
+
+         // 4. Add scroll listener for header styling
+         window.addEventListener('scroll', function() {
+             document.body.classList.toggle('scrolled', window.scrollY > 30);
+         }, { passive: true });
+
+         console.log("Confirmation page initialized.");
+    }
+
+    document.addEventListener('DOMContentLoaded', initPage); // Call the async init function
+
+  </script>
+</body>
+</html>

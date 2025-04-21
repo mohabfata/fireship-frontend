@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fireship English - Your Path to Fluency | 100% Free 1-on-1 Trial!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- STYLES (Keep Existing Styles) --- */
+         :root {
+            --primary-color: #5A8DEE; --secondary-color: #3DDC97; --dark-purple: #4B0082; --accent-color: #FF6347; --success-color: #28a745; --warning-color: #ffc107; --light-color: #ffffff; --bg-light: #f8faff; --bg-section-alt: #f5f8fd; --dark-color: #34495e; --gray-color: #8492a6; --border-color: #eef2f7; --border-radius: 16px; --box-shadow: 0 22px 55px rgba(90, 141, 238, 0.18); --box-shadow-light: 0 10px 30px rgba(0, 0, 0, 0.06); --transition-speed: 0.4s; --animation-speed: 0.5s; --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='hexagons' fill='%23eaf2ff' fill-opacity='0.4' fill-rule='nonzero'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.99-7.5L26 15v1 S9 22.5 9 22.5h10v-1.5S23 15 23 15L12.99 7.5zM28 19.09v15l-14 8.08L0 34.09v-15L14 5.91 28 19.09z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); min-height: 100vh; color: var(--dark-color); line-height: 1.7; overflow-x: hidden; }
+
+        /* Header (Now potentially dynamic) */
+        header.main-header { background-color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px); box-shadow: none; padding: 0.75rem 2.5rem; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; height: 70px; border-bottom: 1px solid transparent; transition: background-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease; }
+        body.scrolled header.main-header { background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06); border-bottom: 1px solid var(--border-color); }
+        .header-logo { display: flex; align-items: center; height: 40px; overflow: visible; } .header-logo img { height: 80px; margin-right: 0.8rem; transform: translateY(-7px); } .header-logo span { font-weight: 700; font-size: 1.3rem; color: var(--primary-color); }
+        /* Sign In Link - Default */
+        #signInLink { color: var(--primary-color); background-color: transparent; text-decoration: none; font-weight: 600; padding: 10px 20px; border: 2px solid var(--primary-color); border-radius: 50px; transition: all var(--transition-speed) var(--transition-timing); display: block; /* Default visible */}
+        #signInLink:hover { background-color: var(--primary-color); color: white; box-shadow: 0 5px 15px rgba(90, 141, 238, 0.2); transform: translateY(-2px); }
+        /* User Profile Header - Default hidden */
+        .user-profile-header { display: none; align-items: center; gap: 12px; position: relative; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border-color); cursor: pointer; background-color: #eee; /* Placeholder */ }
+        .user-name-header { font-weight: 600; color: var(--dark-color); cursor: pointer; }
+        .profile-dropdown { display: none; /* Hidden by default */ position: absolute; top: calc(100% + 10px); right: 0; background-color: white; border-radius: var(--border-radius); box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid var(--border-color); z-index: 1010; min-width: 180px; overflow: hidden; }
+        .profile-dropdown a, .profile-dropdown button { display: block; width: 100%; text-align: left; padding: 12px 20px; color: var(--dark-color); text-decoration: none; font-size: 0.95rem; font-weight: 500; background: none; border: none; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
+        .profile-dropdown a:hover, .profile-dropdown button:hover { background-color: var(--bg-light); color: var(--primary-color); }
+        .profile-dropdown a i, .profile-dropdown button i { margin-right: 10px; color: var(--gray-color); transition: color 0.2s ease; }
+        .profile-dropdown a:hover i, .profile-dropdown button:hover i { color: var(--primary-color); }
+        .dropdown-divider { height: 1px; background-color: var(--border-color); margin: 5px 0; }
+        .notification-dot { width: 10px; height: 10px; background-color: var(--accent-color); border-radius: 50%; position: absolute; top: 0; right: 0; border: 1px solid white; display: none; /* Hidden by default */ }
+
+        /* Main Content */
+        main { padding: 0 20px 80px; }
+        /* Hero Section */
+        .hero-section { text-align: center; padding: 120px 30px 140px; margin-bottom: 0; background-image: linear-gradient(rgba(255, 255, 255, 0.88), rgba(248, 251, 255, 0.88)), url('https://images.unsplash.com/photo-1543269865-cbf427effbad?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA&ixlib=rb-1.2.1&q=80&w=1920'); background-size: cover; background-position: center center; background-attachment: fixed; border-radius: 0; clip-path: polygon(0 0, 100% 0, 100% 90%, 50% 100%, 0 90%); padding-bottom: 180px; position: relative; overflow: hidden; }
+        .hero-content { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; }
+        .hero-section h1 { font-size: 4rem; color: var(--primary-color); margin-bottom: 20px; font-weight: 800; text-shadow: 1px 1px 4px rgba(0,0,0,0.05); animation: fadeInUp 1s var(--transition-timing) forwards; opacity: 0; line-height: 1.2; }
+        .hero-subheadline { font-size: 1.9rem; font-weight: 700; color: var(--light-color); background: linear-gradient(90deg, var(--accent-color), #ff4d4d); margin-bottom: 40px; display: inline-block; padding: 10px 30px; border-radius: 50px; animation: fadeInUp 1s var(--transition-timing) 0.15s forwards, scalePulse 2.8s infinite ease-in-out 1.5s; opacity: 0; box-shadow: 0 6px 20px rgba(255, 99, 71, 0.35); border: 2px solid rgba(255, 255, 255, 0.6); }
+        .hero-subheadline i { font-size: 0.85em; margin: 0 10px; vertical-align: middle; }
+        .hero-section p.hero-description { font-size: 1.3rem; color: var(--dark-color); max-width: 780px; margin: 0 auto 55px auto; animation: fadeInUp 1s var(--transition-timing) 0.3s forwards; opacity: 0; }
+        .cta-button { display: inline-flex; align-items: center; gap: 15px; background: linear-gradient(90deg, var(--success-color) 0%, #25a25a 100%); color: white; padding: 22px 60px; font-size: 1.35rem; font-weight: 700; border: none; border-radius: 50px; cursor: pointer; text-decoration: none; transition: all var(--transition-speed) var(--transition-timing); box-shadow: 0 12px 35px rgba(40, 167, 69, 0.4); animation: pulseButtonGreen 3s infinite ease-in-out, fadeInUp 1s var(--transition-timing) 0.45s forwards; opacity: 0; }
+        .cta-button i { font-size: 1.25rem; transition: transform var(--transition-speed) var(--transition-timing); }
+        .cta-button:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 20px 45px rgba(40, 167, 69, 0.5); filter: brightness(1.1); } .cta-button:hover i { transform: translateX(8px); } .cta-button:active { transform: translateY(-2px) scale(1.02); box-shadow: 0 10px 30px rgba(40, 167, 69, 0.4); }
+        /* Section Wrapper */
+        .section-container { max-width: 1100px; margin: 80px auto; padding: 70px 40px; background-color: var(--light-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow-light); border: 1px solid var(--border-color); } .section-container.alt-bg { background-color: var(--bg-section-alt); }
+        .section-title { text-align: center; font-size: 2.6rem; color: var(--primary-color); margin-bottom: 60px; font-weight: 700; position: relative; padding-bottom: 20px; } .section-title i { margin-right: 12px; font-size: 0.9em; color: var(--secondary-color); } .section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 90px; height: 5px; background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); border-radius: 3px; }
+        /* Intro Section */
+        .intro-section { text-align: center; max-width: 850px; margin: -60px auto 80px auto; position: relative; z-index: 2; background: var(--light-color); padding: 45px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); border: 1px solid var(--border-color); opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out; } .intro-section.animate-in { opacity: 1; transform: translateY(0); } .intro-section h2 { font-size: 1.9rem; color: var(--dark-color); margin-bottom: 18px; font-weight: 600; } .intro-section p { font-size: 1.15rem; color: var(--gray-color); line-height: 1.8; }
+        /* Features Section */
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 45px; }
+        .feature-card { background: var(--light-color); padding: 45px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--box-shadow-light); transition: transform var(--transition-speed) var(--transition-timing), box-shadow var(--transition-speed) var(--transition-timing), border-color var(--transition-speed) ease; border: 1px solid var(--border-color); border-bottom: 6px solid var(--secondary-color); opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out, border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; } .feature-card.animate-in { opacity: 1; transform: translateY(0); } .feature-card:hover { transform: translateY(-15px); box-shadow: var(--box-shadow); border-bottom-color: var(--primary-color); } .feature-icon { font-size: 3.2rem; color: var(--primary-color); margin-bottom: 30px; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(90, 141, 238, 0.1), rgba(61, 220, 151, 0.1)); width: 100px; height: 100px; border-radius: 50%; transition: transform var(--transition-speed) var(--transition-timing); } .feature-card:hover .feature-icon { transform: scale(1.15) rotate(-10deg); } .feature-card h3 { font-size: 1.6rem; margin-bottom: 18px; color: var(--dark-color); font-weight: 600; } .feature-card p { color: var(--gray-color); font-size: 1.05rem; line-height: 1.8; }
+        /* How It Works Section */
+        .steps-container { display: flex; justify-content: space-around; align-items: stretch; gap: 40px; flex-wrap: wrap; position: relative; z-index: 1; }
+        .step { flex: 1; min-width: 230px; max-width: 290px; position: relative; opacity: 0; transform: translateY(30px); display: flex; flex-direction: column; transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out; } .step.animate-in { opacity: 1; transform: translateY(0); } .step:hover { transform: translateY(-10px) scale(1.03); } .step-header { display: flex; align-items: center; justify-content: center; margin-bottom: -30px; position: relative; z-index: 2; } .step-number { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; width: 65px; height: 65px; border-radius: 50%; font-size: 1.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(90, 141, 238, 0.3); border: 4px solid var(--bg-section-alt); } .step-content { background-color: var(--light-color); padding: 55px 30px 35px; border-radius: var(--border-radius); border: 1px solid var(--border-color); margin-top: 0; text-align: center; flex-grow: 1; box-shadow: var(--box-shadow-light); transition: box-shadow var(--transition-speed) var(--transition-timing), background-color var(--transition-speed) ease; } .step:hover .step-content { box-shadow: 0 15px 35px rgba(0,0,0,0.08); background-color: #fff; } .step-icon { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 20px; display: block; } .step h4 { font-size: 1.3rem; margin-bottom: 15px; color: var(--primary-color); font-weight: 600; } .step p { font-size: 1rem; color: var(--gray-color); line-height: 1.7; }
+        /* Testimonials Section */
+        .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
+        .testimonial-card { background-color: var(--light-color); border: 1px solid var(--border-color); border-left: 6px solid var(--secondary-color); border-radius: var(--border-radius); padding: 40px; box-shadow: var(--box-shadow-light); position: relative; opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out, border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; } .testimonial-card.animate-in { opacity: 1; transform: translateY(0); } .testimonial-card:hover { transform: translateY(-12px); box-shadow: var(--box-shadow); border-left-color: var(--primary-color); } .testimonial-quote { font-size: 1.15rem; color: var(--dark-color); margin-bottom: 30px; font-style: italic; position: relative; padding-left: 40px; line-height: 1.8; } .testimonial-quote::before { content: '\f10d'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; left: 0; top: -5px; font-size: 2rem; color: var(--secondary-color); opacity: 0.25; } .testimonial-author { display: flex; align-items: center; gap: 18px; } .author-avatar img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-color); } .author-info h5 { font-size: 1.15rem; font-weight: 600; color: var(--dark-color); margin: 0 0 2px 0; } .author-info p { font-size: 0.95rem; color: var(--gray-color); margin: 0; }
+        /* Coming Soon Section */
+        .coming-soon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 40px; }
+        .coming-soon-card { background-color: var(--light-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 40px 30px; opacity: 0.7; position: relative; overflow: hidden; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05); opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out, box-shadow var(--transition-speed) ease, background-color var(--transition-speed) ease; } .coming-soon-card.animate-in { opacity: 0.7; transform: translateY(0); } .coming-soon-card:hover { transform: translateY(-10px); box-shadow: 0 14px 35px rgba(0, 0, 0, 0.08); opacity: 0.95; background-color: #fdfdff; } .coming-soon-card::after { content: 'Soon!'; position: absolute; top: 12px; right: -28px; background-color: var(--warning-color); color: white; padding: 5px 30px; font-size: 0.9rem; font-weight: 700; transform: rotate(45deg); box-shadow: 0 3px 8px rgba(0,0,0,0.2); z-index: 1; transition: background-color var(--transition-speed) ease; } .coming-soon-card:hover::after { background-color: #f08c00; } .coming-soon-icon { font-size: 3rem; color: var(--gray-color); margin-bottom: 25px; } .coming-soon-card h4 { font-size: 1.35rem; color: var(--dark-color); font-weight: 600; margin-bottom: 15px; } .coming-soon-card p { font-size: 1rem; color: var(--gray-color); }
+        /* Footer */
+        footer { text-align: center; padding: 60px 20px; margin-top: 80px; background-color: #eef4fa; color: var(--gray-color); font-size: 1rem; border-top: 1px solid var(--border-color); }
+        .footer-socials { margin: 20px 0 25px; } .footer-socials a { color: var(--gray-color); font-size: 1.6rem; margin: 0 12px; transition: color var(--transition-speed) ease, transform var(--transition-speed) ease; display: inline-block; } .footer-socials a:hover { color: var(--primary-color); transform: translateY(-4px); }
+        .footer-links a { color: var(--primary-color); text-decoration: none; font-weight: 600; transition: color var(--transition-speed) ease; margin: 0 12px; } .footer-links a:hover { color: var(--dark-purple); text-decoration: underline; }
+        .footer-copy { font-size: 0.9rem; margin-top: 25px; opacity: 0.8; }
+        /* Keyframes */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } } @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } } @keyframes pulseButtonGreen { 0% { transform: scale(1); box-shadow: 0 12px 35px rgba(40, 167, 69, 0.4); } 50% { transform: scale(1.02); box-shadow: 0 16px 40px rgba(40, 167, 69, 0.45); } 100% { transform: scale(1); box-shadow: 0 12px 35px rgba(40, 167, 69, 0.4); } } @keyframes scalePulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
+        /* Responsive */
+        @media (max-width: 1200px) { .section-container { max-width: 960px; } }
+        @media (max-width: 992px) { .hero-section h1 { font-size: 3.4rem; } .hero-subheadline { font-size: 1.7rem; } .hero-section p.hero-description { font-size: 1.2rem; } .steps-container { flex-direction: column; align-items: center; } .step { max-width: 85%; min-width: auto; margin-bottom: 60px; } .step:last-child { margin-bottom: 0; } .section-container { margin: 80px auto; padding: 60px 30px; } .section-title { font-size: 2.4rem; margin-bottom: 50px; } .testimonials-grid { grid-template-columns: 1fr; gap: 35px; } }
+        @media (max-width: 768px) { header.main-header { padding: 0.75rem 1.5rem; height: 65px; } .hero-section { padding: 90px 20px 110px; clip-path: polygon(0 0, 100% 0, 100% 92%, 50% 100%, 0 92%); padding-bottom: 140px; } .hero-section h1 { font-size: 2.8rem; } .hero-subheadline { font-size: 1.4rem; } .hero-section p.hero-description { font-size: 1.1rem; } .cta-button { padding: 18px 40px; font-size: 1.15rem; } .intro-section { margin: -50px auto 60px auto; padding: 35px 25px; } .intro-section h2 { font-size: 1.7rem;} .intro-section p { font-size: 1.05rem;} .features-grid { grid-template-columns: 1fr; gap: 35px; } .section-container { margin: 70px auto; padding: 50px 20px; } .section-title { font-size: 2.2rem; } .how-it-works-section { padding: 70px 25px; } .coming-soon-section { padding: 70px 25px; } .coming-soon-grid { grid-template-columns: 1fr; gap: 30px;} footer { padding: 50px 15px; } }
+        @media (max-width: 480px) { .hero-section h1 { font-size: 2.4rem; } .hero-subheadline { font-size: 1.2rem; padding: 8px 20px; } .hero-section p.hero-description { font-size: 1rem; } .cta-button { padding: 16px 35px; font-size: 1.1rem; } .intro-section { padding: 30px 20px; margin-bottom: 50px; } .intro-section h2 { font-size: 1.6rem; } .intro-section p { font-size: 1rem; } .feature-card { padding: 35px 30px; } .feature-card h3 { font-size: 1.4rem; } .section-title { font-size: 2rem; margin-bottom: 40px; } .how-it-works-section { padding: 60px 20px; } .step-content { padding: 50px 25px 30px; } .coming-soon-section { padding: 60px 20px; } .coming-soon-card { padding: 35px 25px; } footer { padding: 50px 15px; font-size: 0.95rem;} }
+
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="main-header">
+        <div class="header-logo">
+            <img src="https://imgur.com/bXjTJAj.png" alt="Fireship Logo">
+            <span>Fireship</span>
+        </div>
+        <!-- Sign In Link (default, potentially hidden by JS) -->
+        <a href="welcome.html?source=signIn" id="signInLink">Sign In</a>
+         <!-- User Profile Area (default hidden, shown by JS) -->
+        <div class="user-profile-header" id="user-profile-header">
+             <span class="user-name-header" id="userNameHeader">User</span>
+             <img src="placeholder-avatar.png" alt="User Avatar" class="user-avatar" id="userAvatarHeader">
+             <div class="notification-dot" id="notificationDot"></div> <!-- Notification dot -->
+             <div class="profile-dropdown" id="profileDropdown">
+                 <a href="profile.html"><i class="fas fa-user-circle"></i> My Profile</a>
+                 <a href="lessons.html"><i class="fas fa-calendar-check"></i> My Lessons <span class="notification-dot" id="lessonsNotificationDot" style="position: static; display: inline-block; margin-left: 5px; width: 8px; height: 8px; vertical-align: middle;"></span></a>
+                 <div class="dropdown-divider"></div>
+                 <button id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+             </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1>Unlock Your English Potential</h1>
+                <p class="hero-subheadline" id="heroSubheadline"> <i class="fas fa-star"></i> Your First 1-on-1 Session is 100% FREE! <i class="fas fa-star"></i> </p>
+                <p class="hero-description" id="heroDescription">Experience personalized lessons with expert tutors, tailored to your unique learning style. Start speaking confidently today!</p>
+                <a href="welcome.html" id="ctaButton" class="cta-button">
+                    <span id="ctaButtonText">Claim Your Free Session!</span> <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </section>
+
+        <!-- Intro Section -->
+        <section class="intro-section">
+            <h2>Personalized English Learning, Simplified.</h2>
+            <p>We believe the best way to improve is through focused, 1-on-1 interaction. Our platform connects you with expert tutors for lessons designed just for you. Ready to see the difference?</p>
+        </section>
+
+         <!-- Features Section (Keep As Is) -->
+         <div class="section-container">
+            <section class="features-section" id="features"> <h2 class="section-title"><i class="fas fa-check-circle"></i> Why Fireship English?</h2> <div class="features-grid"> <div class="feature-card"> <div class="feature-icon"><i class="fas fa-user-tie"></i></div> <h3>Expert Native Tutors</h3> <p>Learn from certified, experienced teachers dedicated to your success.</p> </div> <div class="feature-card"> <div class="feature-icon"><i class="fas fa-drafting-compass"></i></div> <h3>Tailored Learning Path</h3> <p>Lessons designed around your specific needs, level, and goals.</p> </div> <div class="feature-card"> <div class="feature-icon"><i class="fas fa-calendar-check"></i></div> <h3>Flexible Scheduling</h3> <p>Book sessions easily to fit your busy life, anytime, anywhere.</p> </div> </div> </section>
+        </div>
+
+         <!-- How It Works Section (Keep As Is) -->
+        <div class="section-container alt-bg">
+            <section class="how-it-works-section"> <h2 class="section-title"><i class="fas fa-shoe-prints"></i> Start Learning in 3 Easy Steps</h2> <div class="steps-container"> <div class="step"> <div class="step-header"><div class="step-number">1</div></div> <div class="step-content"> <i class="fas fa-user-plus step-icon"></i> <h4>Sign Up & Tell Us</h4> <p>Quickly create your account and share your learning goals.</p> </div> </div> <div class="step"> <div class="step-header"><div class="step-number">2</div></div> <div class="step-content"> <i class="fas fa-calendar-day step-icon"></i> <h4>Claim Your Free Session</h4> <p>Book your complimentary 1-on-1 lesson using our easy calendar.</p> </div> </div> <div class="step"> <div class="step-header"><div class="step-number">3</div></div> <div class="step-content"> <i class="fas fa-chalkboard-teacher step-icon"></i> <h4>Learn & Grow!</h4> <p>Join via Zoom and start improving with your dedicated tutor.</p> </div> </div> </div> </section>
+        </div>
+
+         <!-- Testimonials Section (Keep As Is) -->
+        <div class="section-container">
+            <section class="testimonials-section" id="testimonials"> <h2 class="section-title"><i class="fas fa-comments"></i> Hear From Our Students</h2> <div class="testimonials-grid"> <div class="testimonial-card"> <p class="testimonial-quote"> The personalized approach made all the difference. My confidence in speaking has soared! Absolutely recommend the free trial. </p> <div class="testimonial-author"> <div class="author-avatar"> <img src="https://i.pravatar.cc/100?img=11" alt="Ahmed M."> </div> <div class="author-info"> <h5>Ahmed M.</h5> <p>Riyadh, KSA</p> </div> </div> </div> <div class="testimonial-card"> <p class="testimonial-quote"> I needed help preparing for my IELTS exam, and my tutor was fantastic. The focused sessions were exactly what I needed. Highly effective! </p> <div class="testimonial-author"> <div class="author-avatar"> <img src="https://i.pravatar.cc/100?img=48" alt="Fatima A."> </div> <div class="author-info"> <h5>Fatima A.</h5> <p>Dubai, UAE</p> </div> </div> </div> <div class="testimonial-card"> <p class="testimonial-quote"> Booking was simple, and the tutor immediately understood my learning style. The free session convinced me this was the right choice! </p> <div class="testimonial-author"> <div class="author-avatar"> <img src="https://i.pravatar.cc/100?img=32" alt="Sohaila T."> </div> <div class="author-info"> <h5>Sohaila T.</h5> <p>Doha, Qatar</p> </div> </div> </div> </div> </section>
+        </div>
+
+         <!-- Coming Soon Section (Keep As Is) -->
+        <div class="section-container alt-bg">
+            <section class="coming-soon-section"> <h2 class="section-title"><i class="fas fa-rocket"></i> More Ways to Learn (Coming Soon!)</h2> <div class="coming-soon-grid"> <div class="coming-soon-card"> <div class="coming-soon-icon"><i class="fas fa-layer-group"></i></div> <h4>Level Courses</h4> <p>Structured lessons from Beginner to Advanced.</p> </div> <div class="coming-soon-card"> <div class="coming-soon-icon"><i class="fas fa-puzzle-piece"></i></div> <h4>Practice Activities</h4> <p>Interactive exercises to reinforce your learning.</p> </div> <div class="coming-soon-card"> <div class="coming-soon-icon"><i class="fas fa-certificate"></i></div> <h4>Skill Certificates</h4> <p>Earn certificates as you master new skills.</p> </div> <div class="coming-soon-card"> <div class="coming-soon-icon"><i class="fas fa-users"></i></div> <h4>Group Workshops</h4> <p>Join themed workshops on specific topics.</p> </div> </div> </section>
+        </div>
+    </main>
+
+    <!-- Footer (Keep As Is) -->
+    <footer>
+        <div class="footer-socials"> <a href="#" aria-label="Facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a> <a href="#" aria-label="Twitter" title="Twitter"><i class="fab fa-twitter"></i></a> <a href="#" aria-label="Instagram" title="Instagram"><i class="fab fa-instagram"></i></a> <a href="#" aria-label="LinkedIn" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a> </div>
+        <div class="footer-links"> <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> | <a href="#">Contact Us</a> </div>
+        <div class="footer-copy"> © 2024 Fireship English. All rights reserved. Learn English Your Way. </div>
+    </footer>
+
+    <script>
+        // --- DOM Elements ---
+        const signInLink = document.getElementById('signInLink');
+        const userProfileHeader = document.getElementById('user-profile-header');
+        const userNameHeader = document.getElementById('userNameHeader');
+        const userAvatarHeader = document.getElementById('userAvatarHeader');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const notificationDot = document.getElementById('notificationDot'); // Main dot on avatar
+        const lessonsNotificationDot = document.getElementById('lessonsNotificationDot'); // Dot in dropdown
+        const ctaButton = document.getElementById('ctaButton');
+        const ctaButtonText = document.getElementById('ctaButtonText');
+        const heroSubheadline = document.getElementById('heroSubheadline');
+        const heroDescription = document.getElementById('heroDescription');
+
+        // --- Utility Functions ---
+        async function apiRequest(url, options) {
+           // (Keep existing apiRequest function)
+             try {
+                 const response = await fetch(url, options);
+                 if (!response.ok) {
+                     let errorMsg = `Request failed with status: ${response.status}`;
+                     try {
+                         const errorData = await response.json();
+                         errorMsg = errorData.message || errorMsg;
+                     } catch (e) { /* Ignore */ }
+                     // Specific handling for 401 Unauthorized (treat as logged out)
+                      if (response.status === 401) {
+                           console.log("User not authenticated.");
+                           return null; // Indicate logged out state
+                      }
+                     throw new Error(errorMsg);
+                 }
+                 const contentType = response.headers.get("content-type");
+                 if (contentType && contentType.indexOf("application/json") !== -1) {
+                      return await response.json();
+                 } else {
+                      return {};
+                 }
+             } catch (error) {
+                 console.error(`API Request Error (${url}):`, error);
+                 throw error;
+             }
+        }
+
+         // --- UI Update Functions ---
+         function updateHeaderUI(userData, hasBooking) {
+             if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) {
+                 // Logged In State
+                 signInLink.style.display = 'none';
+                 userProfileHeader.style.display = 'flex';
+                 userNameHeader.textContent = userData.name || 'User';
+                 userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png'; // Use placeholder if no avatar
+
+                 // Show notification dot if booking exists
+                  if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none';
+                  if (lessonsNotificationDot) lessonsNotificationDot.style.display = hasBooking ? 'inline-block' : 'none';
+
+             } else if (signInLink && userProfileHeader) {
+                 // Logged Out State
+                 signInLink.style.display = 'block';
+                 userProfileHeader.style.display = 'none';
+                  if (notificationDot) notificationDot.style.display = 'none';
+                  if (lessonsNotificationDot) lessonsNotificationDot.style.display = 'none';
+             }
+         }
+
+         function updateHeroUI(isLoggedIn, hasBooking, setupStatus) {
+             if (!ctaButton || !ctaButtonText || !heroSubheadline || !heroDescription) return;
+
+             if (isLoggedIn && hasBooking) {
+                 // Logged in WITH booking
+                 heroSubheadline.textContent = "You have a session booked!";
+                 heroSubheadline.style.background = 'linear-gradient(90deg, var(--primary-color), var(--secondary-color))'; // Change color
+                 heroDescription.textContent = "View your upcoming lesson details or manage your profile.";
+                 ctaButtonText.textContent = "View My Lesson";
+                 ctaButton.href = "lessons.html"; // Link to lessons page
+                 ctaButton.style.background = 'linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%)'; // Different button color
+             } else if (isLoggedIn && !hasBooking) {
+                  // Logged in, NO booking - determine next step
+                  let nextUrl = 'aboutyourself.html';
+                  let buttonText = 'Continue Your Setup';
+                   if (setupStatus?.about && setupStatus?.learningStyle && setupStatus?.proficiency) {
+                       nextUrl = 'booking.html';
+                       buttonText = 'Book Your Free Session!';
+                   } // Add other checks if needed (learningstyle, etc.)
+
+                   heroSubheadline.textContent = "Ready to Start Learning?";
+                   heroSubheadline.style.background = 'linear-gradient(90deg, var(--accent-color), #ff4d4d)'; // Default color
+                   heroDescription.textContent = "Complete your profile setup or book your free 1-on-1 session now!";
+                   ctaButtonText.textContent = buttonText;
+                   ctaButton.href = nextUrl;
+                   ctaButton.style.background = 'linear-gradient(90deg, var(--success-color) 0%, #25a25a 100%)'; // Default green
+
+             } else {
+                 // Logged Out State (Default)
+                 heroSubheadline.innerHTML = '<i class="fas fa-star"></i> Your First 1-on-1 Session is 100% FREE! <i class="fas fa-star"></i>';
+                 heroSubheadline.style.background = 'linear-gradient(90deg, var(--accent-color), #ff4d4d)'; // Default color
+                 heroDescription.textContent = "Experience personalized lessons with expert tutors, tailored to your unique learning style. Start speaking confidently today!";
+                 ctaButtonText.textContent = "Claim Your Free Session!";
+                 ctaButton.href = "welcome.html"; // Default link to welcome/login
+                 ctaButton.style.background = 'linear-gradient(90deg, var(--success-color) 0%, #25a25a 100%)'; // Default green
+             }
+         }
+
+
+         // --- Event Listeners ---
+         function setupDropdown() {
+             const profileArea = document.getElementById('user-profile-header'); // Click area
+             if (profileArea && profileDropdown) {
+                 profileArea.addEventListener('click', (event) => {
+                     event.stopPropagation(); // Prevent triggering window listener immediately
+                     profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
+                 });
+                 // Close dropdown if clicking outside
+                 window.addEventListener('click', (event) => {
+                      if (!profileArea.contains(event.target)) {
+                         profileDropdown.style.display = 'none';
+                      }
+                 });
+             }
+         }
+
+        async function handleSignOut() {
+             console.log("Signing out...");
+             try {
+                  // TODO: Replace with your actual backend logout endpoint
+                  await apiRequest('/api/auth/logout', { method: 'POST' });
+                  console.log("Logout successful on backend.");
+                   // Clear local state and redirect (or just refresh)
+                  updateHeaderUI(null, false); // Update header to logged-out state
+                  updateHeroUI(false, false, {}); // Update hero to logged-out state
+                   // Optionally redirect to home or login page:
+                   // window.location.href = '/';
+             } catch (error) {
+                  console.error("Sign out failed:", error);
+                  alert(`Sign out failed: ${error.message}`);
+             }
+        }
+
+
+        // --- Initial Load ---
+        window.addEventListener('DOMContentLoaded', async function() {
+            console.log("Index page loaded. Checking user status...");
+             let userData = null;
+             let hasBooking = false;
+             let setupStatus = {};
+             let isLoggedIn = false;
+
+             try {
+                 // TODO: Replace with your actual backend endpoint
+                 const status = await apiRequest('/api/user/status', { method: 'GET' });
+
+                  if (status) { // apiRequest returns null for 401
+                       isLoggedIn = true;
+                       userData = status.user || {}; // Assuming backend returns user details in status
+                       hasBooking = status.hasBooking || false;
+                       setupStatus = status.setupComplete || {};
+                       console.log("User is logged in. Status:", status);
+                  } else {
+                       console.log("User is not logged in.");
+                       isLoggedIn = false;
+                  }
+
+             } catch (error) {
+                 console.warn("Could not fetch user status:", error.message);
+                 isLoggedIn = false; // Assume logged out on error
+             }
+
+             // Update UI based on fetched status
+             updateHeaderUI(isLoggedIn ? userData : null, hasBooking);
+             updateHeroUI(isLoggedIn, hasBooking, setupStatus);
+             setupDropdown(); // Setup dropdown interactivity
+
+            if (signOutBtn) {
+                 signOutBtn.addEventListener('click', handleSignOut);
+             }
+
+             // --- Scroll Header Effect ---
+              window.addEventListener('scroll', function() {
+                 document.body.classList.toggle('scrolled', window.scrollY > 50);
+              }, { passive: true });
+
+             // --- Intersection Observer for Animations (Keep As Is) ---
+              const elementsToAnimate = document.querySelectorAll('.feature-card, .step, .testimonial-card, .coming-soon-card, .intro-section');
+              const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+              const observerCallback = (entries, observer) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('animate-in'); observer.unobserve(entry.target); } }); };
+              const observer = new IntersectionObserver(observerCallback, observerOptions);
+              elementsToAnimate.forEach((el, index) => { const stagger = 0.1; el.style.setProperty('--animation-delay', `${index * stagger}s`); observer.observe(el); });
+
+        }); // End DOMContentLoaded
+
+    </script>
+
+</body>
+</html>

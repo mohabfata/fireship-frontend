@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | Fireship English Lessons</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+     /* --- Base Style Variables --- */
+     :root {
+      --primary-color: #4361ee; --accent-color: #3a0ca3; --light-color: #f8f9fa; --dark-color: #212529; --success-color: #4cc9f0; --danger-color: #f72585; --border-radius: 8px; --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); --border-color: #e9ecef; --transition-speed: 0.3s; --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: linear-gradient(to bottom, #ffffff, #e0eafc); min-height: 100vh; color: var(--dark-color); padding: 0; margin: 0; padding-top: 70px; } /* Increased padding */
+
+    /* --- Header Styles --- */
+    header.main-header {
+        background-color: white; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); padding: 0 2rem; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; height: 70px; border-bottom: 1px solid var(--border-color);
+    }
+     body.scrolled header.main-header { background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06); }
+    .header-logo-link { display: flex; align-items: center; text-decoration: none; height: 100%; }
+    .header-logo { display: flex; align-items: center; height: 40px; overflow: visible; }
+    .header-logo img { height: 80px; margin-right: 0.8rem; transform: translateY(-7px); }
+    .header-logo span { font-weight: 700; font-size: 1.3rem; color: var(--primary-color); }
+    /* User Profile Header */
+    .user-profile-header { display: none; align-items: center; gap: 12px; position: relative; cursor: pointer; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border-color); object-fit: cover; background-color: #eee; }
+    .user-name-header { font-weight: 600; color: var(--dark-color); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .notification-dot { width: 10px; height: 10px; background-color: var(--accent-color); border-radius: 50%; position: absolute; top: 0; right: 0; border: 1.5px solid white; display: none; }
+    .profile-dropdown { display: none; position: absolute; top: calc(100% + 10px); right: 0; background-color: white; border-radius: var(--border-radius); box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid var(--border-color); z-index: 1010; min-width: 200px; overflow: hidden; list-style: none; padding: 8px 0; }
+    .profile-dropdown a, .profile-dropdown button { display: flex; align-items: center; width: 100%; text-align: left; padding: 10px 18px; color: var(--dark-color); text-decoration: none; font-size: 0.9rem; font-weight: 500; background: none; border: none; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+    .profile-dropdown a:hover, .profile-dropdown button:hover { background-color: var(--bg-light); color: var(--primary-color); }
+    .profile-dropdown a i, .profile-dropdown button i { margin-right: 12px; color: var(--gray-color); transition: color 0.2s ease; width: 16px; text-align: center; }
+    .profile-dropdown a:hover i, .profile-dropdown button:hover i { color: var(--primary-color); }
+    .dropdown-divider { height: 1px; background-color: var(--border-color); margin: 8px 0; }
+    .lessons-link span { flex-grow: 1; }
+    .lessons-link .notification-dot { position: static; display: inline-block; margin-left: 8px; width: 8px; height: 8px; vertical-align: middle; background-color: var(--accent-color); border-radius: 50%; border: 1px solid white; visibility: hidden; }
+    .lessons-link .notification-dot.visible { visibility: visible; }
+    #signInLink { display: none; /* Hidden by default */ color: var(--primary-color); text-decoration: none; font-weight: 600; padding: 8px 18px; border: 2px solid var(--primary-color); border-radius: 50px; transition: all var(--transition-speed) var(--transition-timing); }
+    #signInLink:hover { background-color: var(--primary-color); color: white; }
+
+    /* --- Main Profile Content Styles --- */
+    .profile-container { max-width: 900px; margin: 40px auto; background-color: white; border-radius: var(--border-radius); box-shadow: var(--box-shadow); overflow: hidden; }
+    .profile-header { background-color: var(--primary-color); color: white; padding: 2rem; display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; /* Added gap */ }
+    .profile-avatar { width: 80px; height: 80px; border-radius: 50%; border: 3px solid white; background-color: #ccc; object-fit: cover; flex-shrink: 0; }
+    .profile-info { flex-grow: 1; min-width: 200px; /* Prevent extreme squishing */ }
+    .profile-info h1 { font-size: 1.8rem; margin-bottom: 0.3rem; color: white; word-break: break-word; }
+    .profile-info p { color: rgba(255, 255, 255, 0.9); margin: 0; font-size: 0.95rem; word-break: break-all; }
+    .profile-actions { margin-left: auto; /* Push actions to the right */ flex-shrink: 0; }
+    .edit-profile-btn { background-color: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.7); color: white; padding: 8px 15px; border-radius: var(--border-radius); font-weight: 500; font-size: 0.9rem; transition: all 0.2s ease; text-decoration: none; display: inline-flex; align-items: center; }
+    .edit-profile-btn i { margin-right: 6px; }
+    .edit-profile-btn:hover { background-color: rgba(255, 255, 255, 0.3); border-color: white; }
+
+    /* --- Other Profile Sections --- */
+    .profile-section { padding: 2rem; border-bottom: 1px solid var(--border-color); }
+    .profile-section:last-child { border-bottom: none; }
+    .section-title { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--dark-color); display: flex; align-items: center; font-weight: 600; }
+    .section-title i { margin-right: 0.75rem; color: var(--primary-color); width: 20px; text-align: center; }
+
+    /* Details Grid */
+    .details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+    .detail-item { background-color: var(--light-color); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
+    .detail-label { font-size: 0.8rem; color: var(--gray-color); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .detail-value { font-size: 1rem; font-weight: 500; color: var(--dark-color); word-break: break-word; }
+    .detail-value.placeholder { color: var(--gray-color); font-style: italic; }
+
+    /* Lessons List Styles (Keep as before) */
+    .lessons-list { display: flex; flex-direction: column; gap: 1rem; min-height: 150px; position: relative; }
+    .list-loading-spinner { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 40px; height: 40px; border: 4px solid var(--border-color); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; display: none; }
+    @keyframes spin { 0% { transform: translateX(-50%) rotate(0deg); } 100% { transform: translateX(-50%) rotate(360deg); } }
+    .lesson-card { background-color: var(--light-color); border-radius: var(--border-radius); padding: 1.5rem; transition: transform 0.3s, box-shadow 0.3s; border-left: 4px solid var(--primary-color); display: flex; justify-content: space-between; align-items: center; /* Align items vertically */ flex-wrap: wrap; /* Allow wrap on small screens */ gap: 1rem; border: 1px solid var(--border-color); opacity: 0; animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .lesson-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08); }
+    .lesson-details { flex-grow: 1; min-width: 200px;} /* Allow details to grow */
+    .lesson-details h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--dark-color); font-weight: 600; }
+    .lesson-details p { color: #6c757d; margin-bottom: 0.5rem; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+    .lesson-details p i { color: var(--primary-color); width: 14px; text-align: center; }
+    .lesson-details .teacher { display: flex; align-items: center; font-size: 0.85rem; margin-top: 0.5rem; }
+    .teacher-avatar { width: 20px; height: 20px; border-radius: 50%; margin-right: 0.5rem; background-color: #eee; }
+    .lesson-actions { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap; /* Allow buttons to wrap */ }
+    .btn { background-color: white; color: var(--primary-color); border: 1px solid var(--primary-color); padding: 8px 12px; border-radius: var(--border-radius); cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 0.85rem; transition: all 0.3s; display: inline-flex; align-items: center; text-decoration: none; margin-top: 5px; /* Add margin for wrap */ }
+    .btn i { margin-right: 6px; }
+    .btn-primary { background-color: var(--primary-color); color: white; }
+    .btn-secondary { background-color: var(--success-color); color: white; border-color: var(--success-color); } .btn-secondary:hover { background-color: #3ab0c9; border-color: #3ab0c9; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+    .btn-primary:hover { background-color: var(--accent-color); border-color: var(--accent-color); }
+    .btn-danger { color: #dc3545; border-color: #dc3545; } .btn-danger:hover { background-color: rgba(220, 53, 69, 0.1); }
+    .empty-state, .error-state { text-align: center; padding: 3rem 1rem; color: #6c757d; border: 1px dashed var(--border-color); border-radius: var(--border-radius); background-color: var(--light-color); display: none; }
+    .empty-state i.icon, .error-state i.icon { font-size: 3rem; color: #d1d9e6; margin-bottom: 1rem; display: block; }
+    .error-state i.icon { color: var(--danger-color); }
+    .empty-state h3, .error-state h3 { font-size: 1.3rem; color: var(--dark-color); margin-bottom: 0.5rem; font-weight: 600; }
+    .empty-state p, .error-state p { margin-bottom: 1.5rem; }
+    .error-state p { color: var(--danger-color); }
+
+    /* Responsive */
+    @media (max-width: 768px) { body{ padding-top: 70px;} header.main-header{height: 70px; padding: 0 1.5rem;} .profile-container { margin: 20px; } .profile-header { flex-direction: column; text-align: center; padding: 1.5rem; } .profile-avatar { margin-right: 0; margin-bottom: 1rem; width: 70px; height: 70px; } .profile-info h1 { font-size: 1.5rem; } .profile-actions { margin-left: 0; margin-top: 1rem; } .profile-section { padding: 1.5rem; } .section-title {font-size: 1.3rem;} .details-grid {grid-template-columns: 1fr;} }
+    @media (max-width: 480px) { .lesson-card { padding: 1rem; } .lesson-details h3 { font-size: 1rem; } .lesson-actions { justify-content: center; } .btn { width: calc(50% - 0.5rem); justify-content: center; font-size: 0.8rem; padding: 6px 10px;} }
+
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="main-header">
+    <a href="Index.html" class="header-logo-link"> <!-- Logo Link -->
+        <div class="header-logo">
+            <img src="https://imgur.com/bXjTJAj.png" alt="Fireship Logo">
+            <span>Fireship</span>
+        </div>
+    </a>
+    <!-- Sign In Link (Hidden by default on this page) -->
+    <a href="welcome.html?source=signIn" id="signInLink" style="display: none;">Sign In</a>
+    <!-- User Profile Area -->
+    <div class="user-profile-header" id="user-profile-header">
+         <span class="user-name-header" id="userNameHeader">User</span>
+         <img src="placeholder-avatar.png" alt="User Avatar" class="user-avatar" id="userAvatarHeader">
+         <div class="notification-dot" id="notificationDot"></div>
+         <div class="profile-dropdown" id="profileDropdown">
+             <a href="profile.html"><i class="fas fa-user-circle"></i> My Profile</a>
+             <a href="lessons.html" class="lessons-link">
+                 <i class="fas fa-calendar-check"></i>
+                 <span>My Lessons</span>
+                 <span class="notification-dot" id="lessonsNotificationDot"></span>
+             </a>
+             <div class="dropdown-divider"></div>
+             <button id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+         </div>
+    </div>
+  </header>
+
+  <!-- Main Profile Content -->
+  <div class="profile-container">
+    <!-- Profile Header Section -->
+    <div class="profile-header">
+       <img id="profile-avatar" class="profile-avatar" src="placeholder-avatar.png" alt="User Avatar">
+      <div class="profile-info">
+        <h1 id="profile-name">Loading...</h1>
+        <p id="profile-email">Loading...</p>
+      </div>
+       <div class="profile-actions">
+           <a href="aboutyourself.html" class="edit-profile-btn"> <!-- Link to the edit page -->
+               <i class="fas fa-pencil-alt"></i> Edit Info
+           </a>
+       </div>
+    </div>
+
+    <!-- Account Details Section -->
+    <div class="profile-section">
+        <h2 class="section-title"> <i class="fas fa-user-cog"></i> Account Details </h2>
+        <div class="details-grid">
+            <div class="detail-item">
+                <div class="detail-label">Date of Birth</div>
+                <div class="detail-value" id="profile-dob">--</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Gender</div>
+                <div class="detail-value" id="profile-gender">--</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Nationality</div>
+                <div class="detail-value" id="profile-nationality">--</div>
+            </div>
+             <div class="detail-item">
+                <div class="detail-label">Native Language</div>
+                <div class="detail-value" id="profile-native-language">--</div>
+            </div>
+        </div>
+    </div>
+
+     <!-- Learning Preferences Section -->
+    <div class="profile-section">
+        <h2 class="section-title"> <i class="fas fa-graduation-cap"></i> Learning Preferences </h2>
+         <div class="details-grid">
+            <div class="detail-item">
+                <div class="detail-label">Proficiency Level</div>
+                <div class="detail-value" id="profile-proficiency">--</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Learning Path</div>
+                <div class="detail-value" id="profile-learning-path">--</div>
+            </div>
+             <div class="detail-item" style="grid-column: span 2;"> <!-- Span across columns -->
+                 <a href="learningstyle.html" class="btn btn-primary" style="width: auto; padding: 10px 20px;">
+                      <i class="fas fa-redo-alt"></i> Retake Learning Style Quiz
+                 </a>
+                 <a href="languageproficiency.html" class="btn btn-primary" style="width: auto; padding: 10px 20px; margin-left: 10px;">
+                      <i class="fas fa-tasks"></i> Update Proficiency
+                 </a>
+             </div>
+        </div>
+    </div>
+
+
+    <!-- Lessons Section -->
+    <div class="lessons-section">
+      <h2 class="section-title"> <i class="fas fa-calendar-check"></i> My Booked Lessons </h2>
+      <div class="lessons-list" id="lessons-list">
+         <div class="list-loading-spinner" id="loadingSpinner"></div>
+        <div class="empty-state" id="empty-state">
+          <i class="fas fa-calendar-xmark icon"></i> <h3>No lessons booked yet</h3>
+          <p>Book your English lesson to get started!</p>
+          <a href="booking.html" class="btn btn-primary"> <i class="fas fa-plus"></i> Book a Lesson </a>
+        </div>
+        <div class="error-state" id="error-state">
+            <i class="fas fa-exclamation-circle icon"></i> <h3>Could not load lessons</h3>
+            <p>There was an error fetching data. Please try refreshing.</p>
+            <button class="btn btn-primary" onclick="fetchProfileData()"> <i class="fas fa-sync-alt"></i> Retry </button>
+        </div>
+        <!-- Lesson cards added by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- DOM Elements ---
+    const profileNameEl = getElement('profile-name');
+    const profileEmailEl = getElement('profile-email');
+    const profileAvatarEl = getElement('profile-avatar');
+    const profileDobEl = getElement('profile-dob');
+    const profileGenderEl = getElement('profile-gender');
+    const profileNationalityEl = getElement('profile-nationality');
+    const profileNativeLangEl = getElement('profile-native-language');
+    const profileProficiencyEl = getElement('profile-proficiency');
+    const profileLearningPathEl = getElement('profile-learning-path');
+    const lessonsListContainer = getElement('lessons-list');
+    const emptyStateDiv = getElement('empty-state');
+    const errorStateDiv = getElement('error-state');
+    const loadingSpinner = getElement('loadingSpinner');
+    // Header Elements
+    const signInLink = getElement('signInLink');
+    const userProfileHeader = getElement('user-profile-header');
+    const userNameHeader = getElement('userNameHeader');
+    const userAvatarHeader = getElement('userAvatarHeader');
+    const profileDropdown = getElement('profileDropdown');
+    const signOutBtn = getElement('signOutBtn');
+    const notificationDot = getElement('notificationDot');
+    const lessonsNotificationDot = getElement('lessonsNotificationDot');
+
+    // --- Utilities & Lesson Logic (Keep from lessons.html) ---
+    async function apiRequest(url, options) { /* ... Keep existing ... */ try { const response = await fetch(url, options); if (!response.ok) { let errorMsg = `API Error (${response.status})`; let errorData=null; try { errorData = await response.json(); errorMsg = errorData.message || errorMsg;} catch (e) {} console.error(`API Fail: ${response.status} ${response.statusText} @ ${url}`, errorData); if (response.status === 401) { console.warn("API 401 -> Welcome"); window.location.href = 'welcome.html'; return null;} throw new Error(errorData?.message || `Request failed: ${response.status}`); } const contentType = response.headers.get("content-type"); if (contentType?.includes("application/json")) { const d=await response.json(); console.debug(`API OK JSON @ ${url}:`, d); return d;} else { console.debug(`API OK NoJSON @ ${url}`); return {}; } } catch (error) { console.error(`API Excep (${url}):`, error); if (error.message.toLowerCase().includes('failed to fetch')) throw new Error("Network error."); throw error; } }
+    function showLoadingState(isLoading) { /* ... Keep existing ... */ if (loadingSpinner) loadingSpinner.style.display = isLoading ? 'block' : 'none'; if (!isLoading) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
+    function displayLessons(lessons) { /* ... Keep existing ... */ if (!lessonsListContainer) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (lessons?.length > 0) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; lessons.sort((a, b) => new Date(a.utcStartTime) - new Date(b.utcStartTime)); lessons.forEach((lesson, index) => { const lessonCard = createLessonCardElement(lesson); lessonCard.style.animationDelay = `${index * 0.05}s`; lessonsListContainer.appendChild(lessonCard); }); } else { if (emptyStateDiv) emptyStateDiv.style.display = 'block'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
+    function displayErrorState(isProfileError = false) { if (!lessonsListContainer || !errorStateDiv) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (emptyStateDiv) emptyStateDiv.style.display = 'none'; const errorMsgElement = errorStateDiv.querySelector('p'); if(errorMsgElement) { errorMsgElement.textContent = isProfileError ? "Error fetching profile data. Please refresh." : "Error fetching lessons. Please refresh."; } errorStateDiv.style.display = 'block'; }
+    function createLessonCardElement(lesson) { /* ... Keep existing ... */ const card = document.createElement('div'); card.className = 'lesson-card'; card.dataset.lessonId = lesson.id; const startTime = new Date(lesson.utcStartTime); const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 20) * 60 * 1000); const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }; const formattedDate = startTime.toLocaleDateString(undefined, dateOptions); const formattedStartTime = startTime.toLocaleTimeString(undefined, timeOptions); const formattedEndTime = endTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); card.innerHTML = `<div class="lesson-details"><h3>${lesson.title || 'Personalized Session'}</h3><p><i class="far fa-calendar-alt"></i> ${formattedDate}</p><p><i class="far fa-clock"></i> ${formattedStartTime} - ${formattedEndTime}</p><div class="teacher"><img class="teacher-avatar" src="${lesson.instructor?.avatarUrl || 'placeholder-avatar.png'}" alt="Teacher"><span>${lesson.instructor?.name || 'To be decided'}</span></div></div><div class="lesson-actions"><button class="btn" onclick="rescheduleLesson('${lesson.id}')"><i class="fas fa-edit"></i> Reschedule</button><a href="confirmation.html?lessonId=${lesson.id}" class="btn btn-secondary"><i class="fas fa-video"></i> Join/View</a><button class="btn btn-danger" onclick="cancelLesson('${lesson.id}')"><i class="fas fa-times-circle"></i> Cancel</button></div>`; return card; }
+    function rescheduleLesson(lessonId) { /* ... Keep existing ... */ console.log("Reschedule lesson:", lessonId); alert(`Rescheduling requires integration.`); }
+    async function cancelLesson(lessonId) { /* ... Keep existing ... */ console.log("Cancel lesson:", lessonId); if (confirm(`Are you sure you want to cancel lesson ${lessonId}?`)) { alert(`Cancellation requires backend integration.`); } }
+
+    // --- Header Logic (Keep from lessons.html) ---
+    function updateHeaderUI(userData, hasBooking) { if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) { signInLink.style.display = 'none'; userProfileHeader.style.display = 'flex'; userNameHeader.textContent = userData.name || 'User'; userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png'; userAvatarHeader.onerror = () => { userAvatarHeader.src = 'placeholder-avatar.png'; }; if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.toggle('visible', hasBooking); } else if (signInLink && userProfileHeader) { signInLink.style.display = 'block'; userProfileHeader.style.display = 'none'; if (notificationDot) notificationDot.style.display = 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.remove('visible'); } }
+    function setupDropdown() { const profileArea = userProfileHeader; if (profileArea && profileDropdown) { profileArea.addEventListener('click', (event) => { event.stopPropagation(); profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block'; }); window.addEventListener('click', (event) => { if (profileDropdown.style.display === 'block' && !profileArea.contains(event.target)) { profileDropdown.style.display = 'none'; } }); } }
+    async function handleSignOut() { console.log("Signing out..."); try { await apiRequest('/api/auth/logout', { method: 'POST' }); window.location.href = 'welcome.html'; } catch (error) { console.error("Sign out failed:", error); alert(`Sign out failed: ${error.message}`); } }
+    async function checkAuthAndSetupHeader() { console.log("[Header Auth Check] Checking..."); try { const status = await apiRequest('/api/user/status', { method: 'GET' }); if (status && status.user) { updateHeaderUI(status.user, status.hasBooking || false); } else { updateHeaderUI(null, false); } } catch (error) { console.warn("[Header Auth Check] Failed:", error.message); updateHeaderUI(null, false); } }
+
+    // --- Populate Profile Details ---
+    function populateProfileDetails(profileData) {
+        if (!profileData) {
+            // Handle case where profile data couldn't be fetched
+             if (profileNameEl) profileNameEl.textContent = 'Error Loading';
+             if (profileEmailEl) profileEmailEl.textContent = 'Error Loading';
+             if (profileDobEl) profileDobEl.textContent = '--';
+             // ... reset other fields ...
+             return;
+        }
+
+        // Header part already updated by checkAuthAndSetupHeader
+        if (profileNameEl) profileNameEl.textContent = profileData.name || 'Name Not Set';
+        if (profileEmailEl) profileEmailEl.textContent = profileData.email || 'Email Not Found';
+        if (profileAvatarEl && profileData.avatarUrl) {
+             profileAvatarEl.src = profileData.avatarUrl;
+             profileAvatarEl.onerror = () => { profileAvatarEl.src = 'placeholder-avatar.png'; };
+        } else if (profileAvatarEl) {
+             profileAvatarEl.src = 'placeholder-avatar.png';
+        }
+
+        // Account Details Section
+        if (profileDobEl) {
+            profileDobEl.textContent = profileData.dob ? new Date(profileData.dob + 'T00:00:00Z').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '--'; // Display UTC date nicely
+             profileDobEl.classList.toggle('placeholder', !profileData.dob);
+        }
+        if (profileGenderEl) {
+            profileGenderEl.textContent = profileData.gender ? profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1) : '--';
+             profileGenderEl.classList.toggle('placeholder', !profileData.gender);
+        }
+        if (profileNationalityEl) {
+            let natDisplay = '--';
+             if (profileData.nationality) {
+                 natDisplay = profileData.nationality === 'Other' && profileData.country_other
+                     ? `Other (${profileData.country_other})` // Show selected country if 'Other'
+                     : profileData.nationality; // Show code like 'SA', 'AE' etc.
+             }
+             profileNationalityEl.textContent = natDisplay;
+             profileNationalityEl.classList.toggle('placeholder', !profileData.nationality);
+        }
+         if (profileNativeLangEl) {
+             profileNativeLangEl.textContent = profileData.native_language ? profileData.native_language.charAt(0).toUpperCase() + profileData.native_language.slice(1) : '--';
+              profileNativeLangEl.classList.toggle('placeholder', !profileData.native_language);
+         }
+
+
+        // Learning Preferences Section
+        if (profileProficiencyEl) {
+             profileProficiencyEl.textContent = profileData.proficiency_level || '--';
+             profileProficiencyEl.classList.toggle('placeholder', !profileData.proficiency_level);
+        }
+        if (profileLearningPathEl) {
+            let pathDisplay = '--';
+             if (profileData.learning_focus && profileData.learning_approach && profileData.learning_specialization) {
+                 // Simple concatenation - adjust formatting as needed
+                 pathDisplay = `${profileData.learning_focus} > ${profileData.learning_approach} > ${profileData.learning_specialization}`;
+             }
+             profileLearningPathEl.textContent = pathDisplay;
+             profileLearningPathEl.classList.toggle('placeholder', pathDisplay === '--');
+        }
+    }
+
+
+    // --- Data Fetching for Profile Page ---
+    async function fetchProfilePageData() {
+        showLoadingState(true); // Show spinner for lessons list
+        try {
+            // Setup header first using status check
+            await checkAuthAndSetupHeader();
+
+            // Fetch full profile details
+            const profileData = await apiRequest('/api/user/profile', { method: 'GET' });
+            if (profileData === null) { // Redirect happened in apiRequest
+                 displayErrorState(true); // Show profile error
+                 return;
+            }
+            console.log("Fetched profile data:", profileData);
+            populateProfileDetails(profileData); // Populate profile sections
+
+            // Fetch lessons
+            const lessonsResponse = await apiRequest('/api/user/lessons', { method: 'GET' });
+             if (lessonsResponse === null) { // Redirect happened
+                 displayErrorState(false); // Show lesson error
+                 return;
+             }
+            const lessons = Array.isArray(lessonsResponse?.lessons) ? lessonsResponse.lessons : [];
+            console.log("Fetched lessons:", lessons);
+            displayLessons(lessons);
+
+        } catch (error) {
+            console.error("Error fetching profile page data:", error);
+            displayErrorState(true); // Show general error covering both profile/lessons
+            // Clear profile fields on error
+             if (profileNameEl) profileNameEl.textContent = 'Error';
+             if (profileEmailEl) profileEmailEl.textContent = 'Could not load';
+             populateProfileDetails(null); // Reset other fields
+        } finally {
+            showLoadingState(false);
+        }
+    }
+
+    // --- Initialization ---
+     window.addEventListener('DOMContentLoaded', function() {
+        console.log("Profile Page DOM Loaded");
+        fetchProfilePageData(); // Fetch profile and lessons
+        setupDropdown(); // Setup dropdown click listener
+        if(signOutBtn) {
+             signOutBtn.addEventListener('click', handleSignOut); // Setup signout listener
+        }
+        // Scroll listener for header style change
+        window.addEventListener('scroll', function() {
+            document.body.classList.toggle('scrolled', window.scrollY > 50);
+        }, { passive: true });
+     });
+
+     // Helper function
+     function getElement(id) {
+         const el = document.getElementById(id);
+         if (!el) console.error(`Element with ID "${id}" not found.`);
+         return el;
+     }
+
+  </script>
+</body>
+</html>

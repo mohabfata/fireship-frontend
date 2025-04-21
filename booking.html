@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Book Your Session | Fireship English</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- Style Variables --- */
+        :root {
+            /* Keep existing booking.html color definitions */
+            --primary-color: #5A8DEE;
+            --secondary-color: #3DDC97;
+            --dark-purple: #4B0082; /* Used by header */
+            --accent-color: #FF6347; /* Used by header */
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --light-color: #ffffff;
+            --bg-light: #f8faff; /* Used by header dropdown */
+            --bg-section-alt: #f5f8fd;
+            --dark-color: #34495e; /* Used by header text */
+            --gray-color: #8492a6; /* Used by header icons */
+            --border-color: #eef2f7; /* Used by header border */
+            --input-bg-color: #f7faff;
+            --border-radius: 16px;
+            --box-shadow: 0 22px 55px rgba(90, 141, 238, 0.18);
+            --box-shadow-light: 0 10px 30px rgba(0, 0, 0, 0.06);
+            --transition-speed: 0.3s;
+            --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+            --animation-speed: 0.4s;
+            --danger-color: #f72585; /* Added from profile header */
+
+            /* Keep existing booking.html availability/day colors */
+            --avail-soldout-light: #ECEFF1; --avail-soldout-dark: #546E7A;
+            --avail-available-light: var(--input-bg-color); --avail-available-dark: #37474F;
+            --disabled-day-bg: #f8f9fa; --disabled-day-text: #ced4da;
+            --disabled-day-bg-dark: #272c3f; --disabled-day-text-dark: #55627c;
+            --viewable-day-bg-dark: #2f3651; --viewable-day-text-dark: #90a4ae;
+            --bookable-day-bg-dark: #3a4363; --bookable-day-text-dark: #cdd5e0;
+            --bookable-day-hover-bg-dark: #404a69;
+        }
+        /* --- Base Styles --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='hexagons' fill='%23eaf2ff' fill-opacity='0.4' fill-rule='nonzero'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.99-7.5L26 15v1 S9 22.5 9 22.5h10v-1.5S23 15 23 15L12.99 7.5zM28 19.09v15l-14 8.08L0 34.09v-15L14 5.91 28 19.09z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); min-height: 100vh; color: var(--dark-color); line-height: 1.7; overflow-x: hidden; padding-top: 90px; padding-bottom: 60px; }
+
+        /* --- Header Styles (Imported and adapted from Profile.html) --- */
+        header.main-header {
+            background-color: white; /* Solid white initially */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+            padding: 0 2rem; /* Use profile padding */
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between; /* Space between logo and profile */
+            align-items: center;
+            height: 70px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
+        }
+        body.scrolled header.main-header {
+            background-color: rgba(255, 255, 255, 0.97); /* Slightly transparent on scroll */
+            backdrop-filter: blur(10px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header-logo-link { /* Added from profile */
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            height: 100%;
+        }
+        .header-logo {
+            display: flex;
+            align-items: center;
+            height: 40px;
+            overflow: visible;
+        }
+        .header-logo img {
+            height: 80px; /* Profile header uses 80px */
+            margin-right: 0.8rem;
+            transform: translateY(-7px); /* Profile header transform */
+        }
+        .header-logo span {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+        /* User Profile Header (Copied from Profile.html) */
+        .user-profile-header {
+            display: none; /* Initially hidden, shown by JS if logged in */
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            cursor: pointer;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            object-fit: cover;
+            background-color: #eee;
+        }
+        .user-name-header {
+            font-weight: 600;
+            color: var(--dark-color);
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .notification-dot {
+            width: 10px;
+            height: 10px;
+            /* Use a distinct color like accent or dark purple if primary is used elsewhere */
+            background-color: var(--dark-purple); /* Adjusted color */
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            right: 0;
+            border: 1.5px solid white;
+            display: none; /* Shown by JS */
+        }
+        .profile-dropdown {
+            display: none; /* Toggled by JS */
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background-color: white;
+            border-radius: 8px; /* Use profile border-radius */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            z-index: 1010;
+            min-width: 200px;
+            overflow: hidden;
+            list-style: none;
+            padding: 8px 0;
+        }
+        .profile-dropdown a, .profile-dropdown button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            text-align: left;
+            padding: 10px 18px;
+            color: var(--dark-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .profile-dropdown a:hover, .profile-dropdown button:hover {
+            background-color: var(--bg-light); /* Use this page's variable */
+            color: var(--primary-color);
+        }
+        .profile-dropdown a i, .profile-dropdown button i {
+            margin-right: 12px;
+            color: var(--gray-color); /* Use this page's variable */
+            transition: color 0.2s ease;
+            width: 16px;
+            text-align: center;
+        }
+        .profile-dropdown a:hover i, .profile-dropdown button:hover i {
+            color: var(--primary-color);
+        }
+        .dropdown-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 8px 0;
+        }
+        .lessons-link span { flex-grow: 1; }
+        .lessons-link .notification-dot { /* Style for dot inside link */
+            position: static;
+            display: inline-block;
+            margin-left: 8px;
+            width: 8px;
+            height: 8px;
+            vertical-align: middle;
+            background-color: var(--dark-purple); /* Match header dot */
+            border-radius: 50%;
+            border: 1px solid white;
+            visibility: hidden; /* Toggled by JS */
+        }
+        .lessons-link .notification-dot.visible { visibility: visible; }
+        #signInLink {
+            display: none; /* Hidden by default, shown by JS if logged out */
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 18px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50px;
+            transition: all var(--transition-speed) var(--transition-timing);
+        }
+        #signInLink:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        /* --- End Header Styles --- */
+
+        /* --- Page Structure (Keep Existing) --- */
+        .page-title { font-size: 2.8rem; color: var(--primary-color); text-align: center; margin-bottom: 40px; font-weight: 700; }
+        .booking-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 40px; max-width: 1000px; width: 100%; margin: 0 auto; padding: 0 15px; }
+        .calendar-container { background: var(--light-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow-light); border: 1px solid var(--border-color); padding: 25px; width: 100%; max-width: 450px; min-height: 490px; position: relative; overflow: hidden; flex-grow: 1; transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease; }
+        .calendar-disabled-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(248, 250, 255, 0.8); backdrop-filter: blur(3px); z-index: 5; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; font-size: 1.1rem; color: var(--dark-color); font-weight: 500; border-radius: var(--border-radius); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .calendar-disabled-overlay.visible { opacity: 1; pointer-events: auto; }
+
+        /* --- Calendar View (Keep Existing) --- */
+        .month-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; transition: border-color 0.5s ease;}
+        .month-title { font-size: 1.6rem; font-weight: 600; color: var(--dark-color); transition: color 0.5s ease;}
+        .nav-button { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: var(--gray-color); transition: all 0.2s ease; padding: 5px; border-radius: 50%; line-height: 1;} .nav-button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .nav-button:not(:disabled):hover { transform: scale(1.1); color: var(--primary-color); background-color: rgba(90, 141, 238, 0.1); }
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 12px; color: var(--gray-color); font-size: 0.9em; flex-shrink: 0; transition: color 0.5s ease;}
+        .view-wrapper { position: absolute; top: 90px; /* Adjust based on month-header + weekdays height */ left: 0; right: 0; bottom: 0; display: flex; }
+        .calendar-view, .time-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: transform var(--animation-speed) var(--transition-timing), opacity var(--animation-speed) ease, background-color 0.5s ease; background-color: var(--light-color); display: flex; flex-direction: column; padding: 0 25px 25px 25px; }
+        .calendar-view { opacity: 1; transform: translateX(0); visibility: visible; }
+        .time-view { opacity: 0; transform: translateX(100%); visibility: hidden; }
+        .calendar-view.hidden { transform: translateX(-100%); opacity: 0; visibility: hidden; }
+        .time-view.visible { transform: translateX(0); opacity: 1; visibility: visible; }
+        .calendar-days-wrapper { position: relative; flex-grow: 1; overflow-y: auto; padding-right: 8px; margin-right: -8px; scrollbar-width: thin; scrollbar-color: var(--gray-color) transparent; }
+         .calendar-days-wrapper::-webkit-scrollbar { width: 6px; } .calendar-days-wrapper::-webkit-scrollbar-track { background: transparent; } .calendar-days-wrapper::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 3px; } .calendar-days-wrapper::-webkit-scrollbar-thumb:hover { background-color: var(--gray-color); }
+        .calendar-days-loading { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-style: italic; color: var(--gray-color); display: none; z-index: 2; }
+        .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; opacity: 1; transition: opacity 0.3s ease; padding-bottom: 10px; }
+        .calendar-days.loading { opacity: 0.3; pointer-events: none; }
+
+        /* Day Styling (Keep Existing) */
+        .day { aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; border-radius: 10px; transition: all var(--transition-speed) var(--transition-timing); font-size: 0.95em; border: 1px solid var(--border-color); font-weight: 500; position: relative; background-color: var(--input-bg-color); color: var(--dark-color); /* Default text color */ }
+        .day.empty { background-color: transparent !important; border-color: transparent; cursor: default;}
+        .day.disabled-day { color: var(--disabled-day-text) !important; background-color: var(--disabled-day-bg) !important; cursor: not-allowed !important; border-color: transparent !important; opacity: 0.7; pointer-events: none; }
+        .day.viewable-only { background-color: var(--input-bg-color); color: var(--dark-color); border-color: var(--border-color); cursor: pointer; } /* Clickable, standard text color */
+        .day.viewable-only:hover { background-color: var(--bg-section-alt); }
+        .day.bookable { background-color: var(--input-bg-color); color: var(--dark-color); cursor: pointer; }
+        .day.bookable:hover { background: var(--bg-section-alt); transform: scale(1.05) translateY(-2px); border-color: var(--border-color); box-shadow: var(--box-shadow-light); color: var(--primary-color); }
+        .day.today { font-weight: 700; border-color: var(--secondary-color) !important; color: var(--secondary-color) !important; }
+        .day.today:not(.disabled-day) { background-color: rgba(61, 220, 151, 0.05); }
+        .day.selected { background: var(--primary-color) !important; color: white !important; transform: scale(1.1); font-weight: 700; box-shadow: 0 5px 15px rgba(90, 141, 238, 0.3); border-color: var(--primary-color) !important; z-index: 2; }
+
+        /* --- Time View & Slots (Keep Existing) --- */
+        .time-view-content { display: flex; flex-direction: column; height: 100%; padding: 0 25px 25px 25px; }
+        .time-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; transition: border-color 0.5s ease; }
+        .selected-date { font-weight: 600; color: var(--dark-color); font-size: 1.1rem; transition: color 0.5s ease;}
+        .back-to-calendar { cursor: pointer; font-weight: 600; color: var(--primary-color); display: flex; align-items: center; gap: 5px; transition: all 0.2s ease; font-size: 0.95em; padding: 5px 10px; border-radius: 8px; border: 1px solid transparent; }
+        .back-to-calendar:hover { color: var(--dark-purple); background-color: var(--bg-section-alt); border-color: var(--border-color); }
+        .time-slots-container { flex-grow: 1; overflow-y: auto; padding: 10px 10px 10px 0; margin-right: -10px; text-align: center; }
+        .time-slots-container::-webkit-scrollbar { width: 6px; } .time-slots-container::-webkit-scrollbar-track { background: transparent; } .time-slots-container::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 3px; } .time-slots-container::-webkit-scrollbar-thumb:hover { background-color: var(--gray-color); }
+        .time-slots-loading { padding: 30px; color: var(--gray-color); font-style: italic; }
+        .time-slots-error { padding: 30px; color: var(--accent-color); font-weight: 500; }
+        .time-period { margin-bottom: 20px; }
+        .period-label { font-weight: 600; margin-bottom: 12px; padding: 8px 0px; border-bottom: 1px solid var(--border-color); color: var(--primary-color); font-size: 1.1em; text-align: left; transition: color 0.5s ease, border-color 0.5s ease; }
+        .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+        .time-slot { padding: 12px; text-align: center; border-radius: 10px; transition: all var(--transition-speed) var(--transition-timing); border: 1px solid var(--border-color); position: relative; font-size: 0.95rem; color: var(--dark-color); font-weight: 500; opacity: 0; transform: scale(0.9); line-height: 1.3; background-color: var(--avail-available-light); }
+        .time-slot.animate-in { opacity: 1; transform: scale(1); transition-property: opacity, transform; transition-duration: var(--animation-speed); transition-timing-function: ease-out; transition-delay: var(--slot-animation-delay, 0s); }
+        .time-slot.available { cursor: pointer; }
+        .time-slot.available:hover { transform: translateY(-4px) scale(1.03); box-shadow: var(--box-shadow-light); border-color: var(--secondary-color); background-color: var(--light-color); }
+        .time-slot.sold-out { background: var(--avail-soldout-light) !important; color: #9e9e9e !important; border-color: #cfd8dc !important; cursor: not-allowed; opacity: 0.65; transform: none !important; pointer-events: none; position: relative; text-decoration: none; box-shadow: none !important; }
+        .time-slot.sold-out::after { content: ''; position: absolute; top: 50%; left: 15%; right: 15%; border-top: 1.5px solid #b0bec5; transform: translateY(-50%); opacity: 0.9; }
+        .time-slot.selected { background: var(--secondary-color); color: white; transform: translateY(-4px) scale(1.05); box-shadow: 0 6px 18px rgba(61, 220, 151, 0.4); border-color: var(--secondary-color); font-weight: 700; z-index: 2;}
+
+        /* --- Clock, Summary, Legend, Modal (Keep Existing) --- */
+        .clock-container { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 350px; flex-grow: 1; }
+        canvas#clock { background: radial-gradient(circle, #ffffff 60%, #f8faff 100%); box-shadow: 0 15px 40px rgba(0,0,0,0.12), inset 0 4px 10px rgba(0,0,0,0.06); border-radius: 50%; margin-bottom: 25px; width: 100%; max-width: 300px; height: auto; aspect-ratio: 1 / 1; border: 8px solid var(--light-color); transition: background 0.5s ease, border-color 0.5s ease; }
+        .selected-time-display { text-align: center; font-size: 1.1rem; font-weight: 600; margin-top: 0; padding: 15px 18px; background: var(--light-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow-light); width: 100%; max-width: 300px; color: var(--primary-color); border: 1px solid var(--border-color); min-height: 60px; display: flex; align-items: center; justify-content: center; line-height: 1.4; transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;}
+        .booking-summary { background: var(--light-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow); border: 1px solid var(--border-color); padding: 30px; margin-top: 40px; width: 100%; max-width: 920px; text-align: center; display: none; animation: fadeInUp 0.5s var(--transition-timing) forwards; opacity: 0; margin-left: auto; margin-right: auto; transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease; }
+        .summary-title { font-weight: 700; margin-bottom: 20px; font-size: 1.5rem; color: var(--primary-color); transition: color 0.5s ease;}
+        .summary-details { display: flex; justify-content: center; gap: 25px; margin: 25px 0; flex-wrap: wrap; }
+        .summary-item { background: var(--bg-section-alt); padding: 15px 25px; border-radius: 12px; border: 1px solid var(--border-color); color: var(--dark-color); font-size: 1rem; font-weight: 500; display: inline-flex; align-items: center; gap: 10px; line-height: 1.4; transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;}
+        .summary-item i { color: var(--secondary-color); font-size: 1.1em; margin-right: 5px; transition: color 0.5s ease;}
+        .book-button { padding: 14px 35px; background: linear-gradient(90deg, var(--success-color), #25a25a); color: white; font-weight: 700; font-size: 1.15rem; box-shadow: 0 6px 20px rgba(40, 167, 69, 0.35); border: none; border-radius: 50px; cursor: pointer; transition: all var(--transition-speed) var(--transition-timing); display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-width: 180px; }
+        .book-button .btn-text { display: inline-block; } /* Ensure visible */
+        .book-button .btn-loader { display: none; margin-left: 8px; }
+        .book-button.loading .btn-text { display: none; } .book-button.loading .btn-loader { display: inline-block; }
+        .book-button:hover:not(:disabled) { background: linear-gradient(90deg, #2aaf5d, #27ae60); transform: translateY(-4px) scale(1.03); box-shadow: 0 10px 25px rgba(40, 167, 69, 0.45); filter: brightness(1.05); }
+        .book-button:active:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3); }
+        .book-button:disabled { background: #bdc3c7; color: #ecf0f1; cursor: not-allowed; box-shadow: none; filter: grayscale(80%); pointer-events: none; }
+        .availability-legend { display: flex; justify-content: center; gap: 15px 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; width: 100%; flex-shrink: 0; transition: border-color 0.5s ease;}
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--gray-color); transition: color 0.5s ease;}
+        .legend-color { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); transition: background-color 0.5s ease, border-color 0.5s ease;}
+        .legend-available { background: var(--avail-available-light); border-color: var(--border-color);}
+        .legend-sold-out { background: var(--avail-soldout-light); border-color: #ccc;}
+        .day-night-toggle { position: fixed; top: 85px; right: 25px; z-index: 1001; cursor: pointer; background-color: rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.1); border: 1px solid var(--border-color); transition: all var(--transition-speed) ease; }
+        .day-night-toggle i { font-size: 1.3rem; color: var(--warning-color); position: absolute; transition: transform 0.4s ease, opacity 0.4s ease; } .day-night-toggle i.fa-moon { color: var(--primary-color); opacity: 0; transform: scale(0) rotate(-90deg); } body.night-mode .day-night-toggle i.fa-sun { opacity: 0; transform: scale(0) rotate(90deg); } body.night-mode .day-night-toggle i.fa-moon { opacity: 1; transform: scale(1) rotate(0deg); } body:not(.night-mode) .day-night-toggle i.fa-sun { opacity: 1; transform: scale(1) rotate(0deg); } body:not(.night-mode) .day-night-toggle i.fa-moon { opacity: 0; transform: scale(0) rotate(-90deg); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1500; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; } .modal-overlay.visible { display: flex; opacity: 1; pointer-events: auto; } .modal-content { background: var(--light-color); padding: 35px 40px; border-radius: var(--border-radius); box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; max-width: 450px; width: 90%; transform: scale(0.95); transition: transform 0.3s ease, background-color 0.5s ease, border-color 0.5s ease; } .modal-overlay.visible .modal-content { transform: scale(1); } .modal-title { font-size: 1.6rem; font-weight: 600; color: var(--primary-color); margin-bottom: 15px; transition: color 0.5s ease; } #modalMessage { font-size: 1.1rem; color: var(--dark-color); margin-bottom: 30px; line-height: 1.6; transition: color 0.5s ease; } #modalFeedback { margin-top: 15px; font-weight: 500; font-size: 0.95rem; display: none; } #modalFeedback.error { color: var(--accent-color); } .modal-actions { display: flex; justify-content: center; gap: 15px; } .modal-button { padding: 10px 25px; border-radius: 50px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 100px; } .modal-button .btn-text { display: inline; } .modal-button .btn-loader { display: none; } .modal-button.loading .btn-text { display: none; } .modal-button.loading .btn-loader { display: inline-block; } .modal-button.confirm { background: var(--primary-color); color: white; box-shadow: 0 4px 15px rgba(90, 141, 238, 0.3); } .modal-button.confirm:hover:not(:disabled) { background: #4a7bd8; box-shadow: 0 6px 20px rgba(90, 141, 238, 0.4); transform: translateY(-2px); } .modal-button.confirm:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; } .modal-button.cancel { background: var(--bg-section-alt); color: var(--dark-color); border: 1px solid var(--border-color); } .modal-button.cancel:hover:not(:disabled) { background: var(--border-color); } .modal-button.cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* --- Night Mode Styles (Keep Existing) --- */
+        body.night-mode { background-color: #1a1f36; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='hexagons' fill='%23303852' fill-opacity='0.4' fill-rule='nonzero'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.99-7.5L26 15v1 S9 22.5 9 22.5h10v-1.5S23 15 23 15L12.99 7.5zM28 19.09v15l-14 8.08L0 34.09v-15L14 5.91 28 19.09z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); color: #cdd5e0; }
+        body.night-mode header.main-header { background-color: rgba(26, 31, 54, 0.9); border-bottom-color: #303852; } body.night-mode .header-logo span { color: var(--light-color); } body.night-mode .page-title { color: var(--light-color); } body.night-mode .user-name-header { color: #e5e7eb; } /* Adjust header text color in night mode */
+        body.night-mode .calendar-container, body.night-mode .time-view, body.night-mode canvas#clock, body.night-mode .selected-time-display, body.night-mode .booking-summary { background-color: #242a44; border-color: #303852; color: #cdd5e0; box-shadow: 0 15px 40px rgba(0,0,0,0.25);}
+        body.night-mode .month-header { border-bottom-color: #303852; } body.night-mode .month-title { color: #e5e7eb; } body.night-mode .nav-button { color: #90a4ae; } body.night-mode .nav-button:not(:disabled):hover { color: var(--secondary-color); background-color: rgba(61, 220, 151, 0.1); } body.night-mode .weekdays { color: #90a4ae; }
+        body.night-mode .day { background-color: var(--avail-available-dark); color: #9aa5b3; border-color: #4a5568; }
+        body.night-mode .day.disabled-day { background-color: var(--disabled-day-bg-dark) !important; color: var(--disabled-day-text-dark) !important; border-color: transparent !important; opacity: 0.6;}
+        body.night-mode .day.viewable-only { background-color: #2f3651; color: #90a4ae; border-color: #4a5568; opacity: 0.8;}
+        body.night-mode .day.viewable-only:hover { background-color: #3a4363; opacity: 1;}
+        body.night-mode .day.bookable { background-color: var(--avail-available-dark); color: #e5e7eb; border-color: #4a5568; }
+        body.night-mode .day.bookable:hover { background: #404a69; border-color: #5a6882; color: var(--secondary-color); }
+        body.night-mode .day.today:not(.disabled-day) { border-color: var(--secondary-color) !important; color: var(--secondary-color) !important; background-color: rgba(61, 220, 151, 0.08); }
+        body.night-mode .day.selected { background: var(--primary-color) !important; color: white !important; box-shadow: 0 5px 15px rgba(90, 141, 238, 0.4); border-color: var(--primary-color) !important; }
+        body.night-mode .time-header { border-bottom-color: #303852; } body.night-mode .selected-date { color: #e5e7eb; } body.night-mode .back-to-calendar { color: var(--primary-color); } body.night-mode .back-to-calendar:hover { color: var(--secondary-color); background-color: rgba(61, 220, 151, 0.1); border-color: rgba(61, 220, 151, 0.2); }
+        body.night-mode .period-label { color: #e5e7eb; border-bottom-color: #303852; }
+        body.night-mode .time-slot { background: var(--avail-available-dark); border-color: #4a5568; color: #cdd5e0; }
+        body.night-mode .time-slot.available:hover { border-color: var(--secondary-color); background: #404a69;}
+        body.night-mode .time-slot.sold-out { background: var(--avail-soldout-dark) !important; color: #757575 !important; border-color: #546E7A !important; }
+        body.night-mode .time-slot.sold-out::after { border-top-color: #757575; }
+        body.night-mode .time-slot.selected { background: var(--secondary-color); color: #1a1f36; box-shadow: 0 6px 18px rgba(61, 220, 151, 0.5); border-color: var(--secondary-color); }
+        body.night-mode .summary-item { background: #2a314f; border-color: #303852; color: #cdd5e0;} body.night-mode .summary-item i { color: var(--secondary-color); } body.night-mode canvas#clock { background: radial-gradient(circle, #2a314f 60%, #242a44 100%); box-shadow: 0 15px 40px rgba(0,0,0,0.35), inset 0 4px 10px rgba(0,0,0,0.25); border-color: #242a44;} body.night-mode .selected-time-display { background: #2a314f; border-color: #303852; color: var(--light-color); } body.night-mode .day-night-toggle { background-color: rgba(42, 49, 79, 0.8); border-color: #303852; }
+        body.night-mode .calendar-days-wrapper::-webkit-scrollbar-thumb { background-color: #4a5568; } body.night-mode .calendar-days-wrapper::-webkit-scrollbar-thumb:hover { background-color: #718096; }
+        body.night-mode .time-slots-container::-webkit-scrollbar-track { background: #303852; } body.night-mode .time-slots-container::-webkit-scrollbar-thumb { border-color: #303852; background-color: #4a5568;} body.night-mode .time-slots-container::-webkit-scrollbar-thumb:hover { background-color: #718096; }
+        body.night-mode .legend-available { background: var(--avail-available-dark); border-color: #3a4363;} body.night-mode .legend-sold-out { background: var(--avail-soldout-dark); border-color: #757575;} body.night-mode .legend-item { color: #9aa5b3; }
+        body.night-mode .modal-content { background: #242a44; border: 1px solid #303852; } body.night-mode .modal-title { color: var(--light-color); } body.night-mode #modalMessage { color: #cdd5e0; } body.night-mode .modal-button.confirm:hover:not(:disabled) { background: #7aa4f3; } body.night-mode .modal-button.confirm:disabled { background: #556; color: #aaa; } body.night-mode .modal-button.cancel { background: #303852; color: #cdd5e0; border-color: #404a69; } body.night-mode .modal-button.cancel:hover:not(:disabled) { background: #404a69; }
+
+        /* --- Animations & Responsive (Keep Existing) --- */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @media (max-width: 992px) { /* Adjust for potential layout shifts if needed */ }
+        @media (max-width: 768px) { header.main-header { padding: 0 1.5rem; } /* Adjust header padding */ /* Keep other 768 rules */ .page-title { font-size: 2.4rem; margin-bottom: 30px;} .booking-container { flex-direction: column; align-items: center; gap: 30px; } .calendar-container, .clock-container { max-width: 500px; } .view-wrapper { top: 85px; } }
+        @media (max-width: 480px) { header.main-header { padding: 0 1rem; } .user-name-header { display: none; } /* Keep other 480 rules */ .page-title { font-size: 2rem; } .booking-container { padding: 0 10px; } .calendar-container, .clock-container { padding: 15px; } .month-title { font-size: 1.4rem; } .day { font-size: 0.9em; } .time-header { flex-direction: column; gap: 10px; } .time-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); } .time-slot { font-size: 0.9rem; padding: 10px; } .clock-container { max-width: 100%; } canvas#clock { max-width: 250px; } .selected-time-display { font-size: 1rem; } .booking-summary { padding: 20px; } .summary-title { font-size: 1.3rem; } .summary-details { gap: 15px; } .summary-item { font-size: 0.9rem; padding: 10px 15px; } .book-button { font-size: 1.1rem; padding: 12px 30px; } }
+
+    </style>
+</head>
+<body>
+    <!-- Header (Imported from Profile.html) -->
+     <header class="main-header">
+        <a href="Index.html" class="header-logo-link">
+            <div class="header-logo"> <img src="https://imgur.com/bXjTJAj.png" alt="Fireship Logo"> <span>Fireship</span> </div>
+        </a>
+        <!-- Sign In Link (Shown/Hidden by JS) -->
+        <a href="welcome.html?source=signIn" id="signInLink" style="display: none;">Sign In</a>
+        <!-- User Profile Area (Shown/Hidden by JS) -->
+        <div class="user-profile-header" id="user-profile-header">
+             <span class="user-name-header" id="userNameHeader">User</span>
+             <img src="placeholder-avatar.png" alt="User Avatar" class="user-avatar" id="userAvatarHeader">
+             <div class="notification-dot" id="notificationDot"></div>
+             <div class="profile-dropdown" id="profileDropdown">
+                 <a href="profile.html"><i class="fas fa-user-circle"></i> My Profile</a>
+                 <a href="lessons.html" class="lessons-link">
+                     <i class="fas fa-calendar-check"></i>
+                     <span>My Lessons</span>
+                     <span class="notification-dot" id="lessonsNotificationDot"></span>
+                 </a>
+                 <div class="dropdown-divider"></div>
+                 <button id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+             </div>
+        </div>
+      </header>
+      <!-- End Header -->
+
+    <div class="day-night-toggle" id="dayNightToggle" title="Toggle Theme"> <i class="fas fa-sun"></i> <i class="fas fa-moon"></i> </div>
+    <h1 class="page-title">Book Your Session</h1>
+    <div class="booking-container">
+        <div class="calendar-container">
+             <div class="calendar-disabled-overlay" id="calendarDisabledOverlay"> <p>Checking status...</p> </div>
+            <div class="view-wrapper">
+                <div class="calendar-view" id="calendarView">
+                     <div class="month-header"> <button class="nav-button prev-month" id="prevMonthBtn" aria-label="Previous month" disabled><i class="fas fa-chevron-left"></i></button> <div class="month-title">Month Year</div> <button class="nav-button next-month" id="nextMonthBtn" aria-label="Next month" disabled><i class="fas fa-chevron-right"></i></button> </div>
+                    <div class="weekdays"> <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div> <div>Thu</div><div>Fri</div><div>Sat</div> </div>
+                     <div class="calendar-days-wrapper">
+                         <div class="calendar-days-loading" id="calendarDaysLoading">Loading...</div>
+                         <div class="calendar-days" id="calendarDays"></div>
+                     </div>
+                </div>
+                <div class="time-view" id="timeView">
+                    <div class="time-view-content">
+                        <div class="time-header"> <button class="back-to-calendar" id="backToCalendar"><i class="fas fa-arrow-left"></i> Back</button> <div class="selected-date" id="selectedDateDisplay">Select Date</div> </div>
+                        <div class="time-slots-container" id="timeSlotsContainer"> <div class="time-slots-loading">Select a date...</div> </div>
+                        <div class="availability-legend">
+                            <div class="legend-item"> <div class="legend-color legend-available"></div> <span>Available</span> </div>
+                            <div class="legend-item"> <div class="legend-color legend-sold-out"></div> <span>Sold Out</span> </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="clock-container"> <canvas id="clock" width="300" height="300"></canvas> <div class="selected-time-display" id="selectedTime">Please select a time</div> </div>
+    </div>
+    <div class="booking-summary" id="bookingSummary">
+        <div class="summary-title">Your Session Details</div>
+        <div class="summary-details"> <div class="summary-item" id="summaryDate"><i class="fas fa-calendar-alt"></i><span>Date: --</span></div> <div class="summary-item" id="summaryTime"><i class="fas fa-clock"></i><span>Time: --</span></div> </div>
+        <button class="book-button" id="bookButton" disabled> <span class="btn-text">Confirm Booking</span> <i class="fas fa-spinner fa-spin btn-loader" style="display: none;"></i> </button>
+    </div>
+    <div id="confirmationModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title">Confirm Booking</h3> <p id="modalMessage">Date: [Date]<br>Time: [Time Range]</p> <div id="modalFeedback"></div>
+            <div class="modal-actions"> <button id="modalCancelBtn" class="modal-button cancel">Cancel</button> <button id="modalConfirmBtn" class="modal-button confirm"> <span class="btn-text">Confirm</span> <i class="fas fa-spinner fa-spin btn-loader" style="display: none;"></i> </button> </div>
+        </div>
+    </div>
+
+    <script>
+        // --- JS ---
+        // Includes: Global Error Handling, DOM Elements, State, Constants, Utilities,
+        // Core Logic (checkUserStatus, fetchMonthStatus, renderCalendar, selectDate,
+        // view switching, fetchAndGenerateTimeSlots, generateTimeSlotsUI,
+        // createTimeSlotElement, selectTimeSlot, updateSummary),
+        // Event Listeners, Clock Functionality, Day/Night Mode, Modal & Booking, Init
+        // --- Start Script ---
+
+        window.onerror = function (m, s, l, c, e) { console.error("Global Error:", m, "@", s, l, c, e); try{document.getElementById('calendarDisabledOverlay').querySelector('p').textContent = 'Error. Refresh.';document.getElementById('calendarDisabledOverlay').classList.add('visible');}catch{} return true; };
+        window.onunhandledrejection = function (e) { console.error("Unhandled Promise Rejection:", e.reason); try{document.getElementById('calendarDisabledOverlay').querySelector('p').textContent = 'Load Error. Refresh.'; document.getElementById('calendarDisabledOverlay').classList.add('visible');}catch{} };
+
+        // --- DOM Elements ---
+        const els = { // Group elements
+            calendarView: getElement('calendarView'),
+            timeView: getElement('timeView'),
+            calendarDays: getElement('calendarDays'),
+            calendarDaysLoading: getElement('calendarDaysLoading'),
+            monthTitle: querySelector('.month-title'),
+            prevMonthBtn: getElement('prevMonthBtn'),
+            nextMonthBtn: getElement('nextMonthBtn'),
+            backToCalendarBtn: getElement('backToCalendar'),
+            selectedDateDisplay: getElement('selectedDateDisplay'),
+            timeSlotsContainer: getElement('timeSlotsContainer'),
+            bookingSummary: getElement('bookingSummary'),
+            summaryDateSpan: querySelector('#summaryDate span'),
+            summaryTimeSpan: querySelector('#summaryTime span'),
+            selectedTimeDisplay: getElement('selectedTime'),
+            bookButton: getElement('bookButton'),
+            dayNightToggle: getElement('dayNightToggle'),
+            confirmationModal: getElement('confirmationModal'),
+            modalMessage: getElement('modalMessage'),
+            modalConfirmBtn: getElement('modalConfirmBtn'),
+            modalCancelBtn: getElement('modalCancelBtn'),
+            modalFeedback: getElement('modalFeedback'),
+            calendarDisabledOverlay: getElement('calendarDisabledOverlay'),
+            clockCanvas: getElement("clock"),
+            // Header Elements
+            signInLink: document.getElementById('signInLink'),
+            userProfileHeader: document.getElementById('user-profile-header'),
+            userNameHeader: document.getElementById('userNameHeader'),
+            userAvatarHeader: document.getElementById('userAvatarHeader'),
+            profileDropdown: document.getElementById('profileDropdown'),
+            signOutBtn: document.getElementById('signOutBtn'),
+            notificationDot: document.getElementById('notificationDot'),
+            lessonsNotificationDot: document.getElementById('lessonsNotificationDot')
+        };
+        const clockCtx = els.clockCanvas?.getContext("2d");
+
+        // --- State ---
+        let currentCalendarDate = new Date();
+        let selectedDate = null;
+        let selectedTimeSlotInfo = null;
+        let viewState = 'calendar';
+        let availabilityCache = {};
+        let monthStatusCache = {};
+        let hasBooking = false;
+
+        // --- Constants ---
+        const MONTH_NAMES_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const LESSON_DURATION_MINUTES = 20;
+
+        // --- Utilities ---
+        function getElement(id) { const el = document.getElementById(id); if (!el) console.error(`DOM ID "${id}" not found!`); return el; }
+        function querySelector(sel) { const el = document.querySelector(sel); if (!el) console.warn(`DOM Selector "${sel}" not found.`); return el; }
+        async function apiRequest(url, options) {
+            // (Keep existing apiRequest - ensure 401 handling is present)
+            console.debug(`API Req: ${options?.method || 'GET'} ${url}`);
+            try {
+                const r = await fetch(url, options);
+                if (!r.ok) {
+                    let m = `API Error (${r.status})`; let d=null;
+                    try { d=await r.json(); m=d.message||m;} catch (e) {}
+                    console.error(`API Fail: ${r.status} ${r.statusText} @ ${url}`, d);
+                    if(r.status===401 && !url.includes('/api/auth/logout')){
+                        console.warn("API 401 -> Welcome");
+                        window.location.href='welcome.html';
+                        return null; // Prevent further processing
+                    }
+                    throw new Error(d?.message||`Request failed: ${r.status}`);
+                }
+                const ct = r.headers.get("content-type");
+                if (ct?.includes("application/json")) {
+                    const d = await r.json(); console.debug(`API OK JSON @ ${url}:`, d); return d;
+                } else {
+                    console.debug(`API OK NoJSON @ ${url}`); return { success: true }; // Indicate success for non-json
+                }
+            } catch (e) {
+                console.error(`API Excep (${url}):`, e);
+                if (e.message.toLowerCase().includes('failed to fetch')) throw new Error("Network error.");
+                throw e;
+            }
+        }
+        function showButtonLoading(b, l) { if(!b)return; const t=b.querySelector('.btn-text'); const o=b.querySelector('.btn-loader'); b.disabled=l; b.classList.toggle('loading',l); if(t)t.style.display=l?'none':'inline'; if(o)o.style.display=l?'inline-block':'none'; }
+        function showModalFeedback(m, e=false) { if (!els.modalFeedback) return; els.modalFeedback.textContent = m; els.modalFeedback.className = e ? 'error' : ''; els.modalFeedback.style.display = 'block'; }
+        function clearModalFeedback() { if (!els.modalFeedback) return; els.modalFeedback.textContent = ''; els.modalFeedback.style.display = 'none'; }
+        function getLocalDateString(d) { if (!d) return ''; const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const D=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${D}`; }
+        function getLocalTimeZoneName() { try { const f=new Intl.DateTimeFormat(undefined,{timeZoneName:'shortOffset'}); const p=f.formatToParts(new Date()); const t=p.find(p=>p.type==='timeZoneName'); return t?t.value:''; } catch(e) { const o=new Date().getTimezoneOffset(); const h=Math.abs(o/60); const s=o<=0?'+':'-'; return `GMT${s}${String(Math.floor(h)).padStart(2,'0')}`; } }
+        function formatTimeRangeForDisplay(u) { if (!u) return 'N/A'; try { const s = new Date(u); if (isNaN(s)) return 'Invalid'; const e=new Date(s.getTime()+LESSON_DURATION_MINUTES*60*1000); const o={hour:'numeric',minute:'2-digit',hour12:true}; return `${s.toLocaleTimeString(undefined,o)} - ${e.toLocaleTimeString(undefined,o)}`; } catch(e){ return "Error"; } }
+        function formatDateTimeForSummary(u) { if (!u) return 'Not selected'; try { const s=new Date(u); if(isNaN(s)) return 'Invalid'; const e=new Date(s.getTime()+LESSON_DURATION_MINUTES*60*1000); const dO={weekday:'short',month:'short',day:'numeric',year:'numeric'}; const tO={hour:'numeric',minute:'2-digit',hour12:true}; const tz=getLocalTimeZoneName(); const ds=s.toLocaleDateString(undefined,dO); const st=s.toLocaleTimeString(undefined,tO); const et=e.toLocaleTimeString(undefined,tO); return `${ds} at ${st} - ${et} ${tz}`; } catch(e){ return "Error"; } }
+        function setOverlay(v, m='') { if (!els.calendarDisabledOverlay) return; const p=els.calendarDisabledOverlay.querySelector('p'); if(p) p.innerHTML=m; els.calendarDisabledOverlay.classList.toggle('visible', v); }
+
+        // --- Header Logic ---
+        function updateHeaderUI(userData, userHasBooking) {
+             const { signInLink, userProfileHeader, userNameHeader, userAvatarHeader, notificationDot, lessonsNotificationDot } = els;
+             if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) {
+                 signInLink.style.display = 'none';
+                 userProfileHeader.style.display = 'flex';
+                 userNameHeader.textContent = userData.name || 'User';
+                 userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png';
+                 userAvatarHeader.onerror = () => { userAvatarHeader.src = 'placeholder-avatar.png'; };
+                 if (notificationDot) notificationDot.style.display = userHasBooking ? 'block' : 'none'; // Use main dot for booking status
+                 if (lessonsNotificationDot) lessonsNotificationDot.classList.toggle('visible', userHasBooking); // Also toggle lessons dot
+             } else if (signInLink && userProfileHeader) {
+                 signInLink.style.display = 'block';
+                 userProfileHeader.style.display = 'none';
+                 if (notificationDot) notificationDot.style.display = 'none';
+                 if (lessonsNotificationDot) lessonsNotificationDot.classList.remove('visible');
+             }
+        }
+        function setupDropdown() {
+            const { userProfileHeader, profileDropdown } = els;
+            if (userProfileHeader && profileDropdown) {
+                userProfileHeader.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
+                });
+                window.addEventListener('click', (event) => {
+                    if (profileDropdown.style.display === 'block' && !userProfileHeader.contains(event.target)) {
+                        profileDropdown.style.display = 'none';
+                    }
+                });
+            } else {
+                 console.warn("Could not set up dropdown - elements missing.");
+            }
+        }
+        async function handleSignOut() {
+            console.log("Signing out...");
+            try {
+                const result = await apiRequest('/api/auth/logout', { method: 'POST' });
+                 if (result === null) return; // Redirect happened
+                window.location.href = 'welcome.html';
+            } catch (error) {
+                console.error("Sign out failed:", error);
+                alert(`Sign out failed: ${error.message}`);
+            }
+        }
+        async function checkAuthAndSetupHeader() { // Renamed to avoid conflict with checkUserStatus
+            console.log("[Header Auth Check] Checking...");
+            try {
+                const status = await apiRequest('/api/user/status', { method: 'GET' });
+                if (status === null) return null; // Redirect happened, signal to stop init
+
+                if (status && status.user) {
+                    console.log("[Header Auth Check] User logged in:", status.user);
+                    updateHeaderUI(status.user, status.hasBooking || false);
+                    return status; // Return status for checkUserStatus to use
+                } else {
+                    console.log("[Header Auth Check] User not logged in.");
+                    updateHeaderUI(null, false);
+                    // If not logged in, booking page should likely redirect or show a message
+                    setOverlay(true, `Please <a href="welcome.html?source=signIn" style="font-weight:600;color:var(--primary-color);">Sign In</a> to book.`);
+                    if(els.bookButton) els.bookButton.disabled = true;
+                    if(els.prevMonthBtn) els.prevMonthBtn.disabled = true;
+                    if(els.nextMonthBtn) els.nextMonthBtn.disabled = true;
+                    return null; // Indicate not logged in
+                }
+            } catch (error) {
+                console.warn("[Header Auth Check] Failed:", error.message);
+                updateHeaderUI(null, false);
+                 setOverlay(true, `Authentication Error. Please try refreshing. <br><small>(${error.message})</small>`);
+                return null; // Indicate error
+            }
+        }
+
+        // --- Core Booking Logic ---
+        async function checkUserStatus(initialStatus) {
+            console.log("[Booking Status Check] Using initial status:", initialStatus);
+            setOverlay(true, 'Checking booking status...');
+            try {
+                // Use the status already fetched by the header check if available
+                const status = initialStatus || await apiRequest('/api/user/status', { method: 'GET' });
+                if (status === null) { // Redirect or major error happened
+                    throw new Error("User status check failed or redirected.");
+                }
+
+                hasBooking = status.hasBooking || false;
+                console.log("[Booking Status Check] Received:", status, "Has booking:", hasBooking);
+
+                if (hasBooking) {
+                    setOverlay(true, `Session booked. <a href="profile.html" style="font-weight:600;color:var(--primary-color);">View Lesson</a>`);
+                    if (els.bookButton) els.bookButton.disabled = true;
+                    // Disable calendar nav if booked
+                     if(els.prevMonthBtn) els.prevMonthBtn.disabled = true;
+                     if(els.nextMonthBtn) els.nextMonthBtn.disabled = true;
+                } else {
+                    setOverlay(false);
+                    if (els.bookButton) els.bookButton.disabled = true; // Disabled until time selected
+                    console.log("[Booking Status Check] User can book.");
+                    // Enable calendar nav if not booked (renderCalendar will handle limits)
+                     if(els.prevMonthBtn) els.prevMonthBtn.disabled = false;
+                     if(els.nextMonthBtn) els.nextMonthBtn.disabled = false;
+                }
+                 return true; // Indicate status check was successful (even if booked)
+
+            } catch (e) {
+                console.error("[Booking Status Check] Failed:", e);
+                setOverlay(true, `Could not verify booking status. Refresh. <br><small>(${e.message})</small>`);
+                if (els.bookButton) els.bookButton.disabled = true;
+                if (els.prevMonthBtn) els.prevMonthBtn.disabled = true;
+                if (els.nextMonthBtn) els.nextMonthBtn.disabled = true;
+                 return false; // Indicate failure
+            }
+        }
+        async function fetchMonthStatus(y, m) { /* (Keep existing function) */ if (!y||m===undefined||m<0||m>11) return {}; const k=`${y}-${String(m+1).padStart(2,'0')}`; if (monthStatusCache[k]) { console.debug(`[Month Status] Cache hit: ${k}.`); return monthStatusCache[k]; } console.log(`[Month Status] Fetching ${k}...`); if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='block'; if(els.calendarDays) els.calendarDays.classList.add('loading'); try { const d = await apiRequest(`/api/booking/month-status?year=${y}&month=${m+1}`, {method:'GET'}); if(d===null) return {}; const s=d.dayStatus||{}; monthStatusCache[k]=s; console.log(`[Month Status] Received for ${k}.`); return s; } catch (e) { console.error(`[Month Status] Error for ${k}:`, e); if(els.monthTitle) els.monthTitle.textContent="Load Error"; return {}; } finally { if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='none'; if(els.calendarDays) els.calendarDays.classList.remove('loading'); } }
+        async function renderCalendar() { /* (Keep existing function) */ if (!els.calendarDays || !els.monthTitle || !els.prevMonthBtn || !els.nextMonthBtn) return; const year = currentCalendarDate.getFullYear(); const month = currentCalendarDate.getMonth(); console.log(`[Render Calendar] Rendering ${year}-${month + 1}`); els.monthTitle.textContent = `${MONTH_NAMES_SHORT[month]} ${year}`; els.calendarDays.innerHTML = '<div style="grid-column: span 7; text-align: center; padding: 20px; color: var(--gray-color);">Loading days...</div>'; els.calendarDays.classList.add('loading'); if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='block'; const dayStatuses = await fetchMonthStatus(year, month); els.calendarDays.innerHTML = ''; if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='none'; els.calendarDays.classList.remove('loading'); const today = new Date(); today.setHours(0, 0, 0, 0); const firstDayOfMonth = new Date(year, month, 1); const firstDayWeekday = firstDayOfMonth.getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate(); const firstDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1); els.prevMonthBtn.disabled = hasBooking || (firstDayOfMonth <= firstDayOfCurrentMonth); const maxNavDate = new Date(today.getFullYear(), today.getMonth() + 6, 0); els.nextMonthBtn.disabled = hasBooking || (new Date(year, month, daysInMonth) >= maxNavDate); for (let i = 0; i < firstDayWeekday; i++) { const empty = document.createElement('div'); empty.className = 'day empty'; els.calendarDays.appendChild(empty); } for (let day = 1; day <= daysInMonth; day++) { const dayElem = document.createElement('div'); dayElem.className = 'day'; dayElem.textContent = day; dayElem.dataset.day = day; const checkDate = new Date(year, month, day); checkDate.setHours(0, 0, 0, 0); const backendStatus = dayStatuses[day] || 'unavailable_window'; let canClick = false; if (hasBooking) { dayElem.classList.add('disabled-day'); } else if (backendStatus === 'past' || backendStatus === 'unavailable_window') { dayElem.classList.add('disabled-day'); } else { canClick = true; dayElem.addEventListener('click', () => selectDate(day)); if (backendStatus === 'potentially_available') { dayElem.classList.add('bookable'); } else { dayElem.classList.add('viewable-only'); } } if (!canClick) { dayElem.style.cursor = 'not-allowed'; } else { dayElem.style.cursor = 'pointer'; } dayElem.removeAttribute('title'); /* Remove tooltip */ if (checkDate.getTime() === today.getTime()) dayElem.classList.add('today'); if (selectedDate && selectedDate.getTime() === checkDate.getTime()) dayElem.classList.add('selected'); els.calendarDays.appendChild(dayElem); } console.log(`[Render Calendar] Finished rendering ${year}-${month + 1}`); }
+        function selectDate(day) { /* (Keep existing function) */ if (hasBooking || !els.calendarDays || !els.selectedDateDisplay || !els.timeSlotsContainer) return; const year = currentCalendarDate.getFullYear(); const month = currentCalendarDate.getMonth(); selectedDate = new Date(year, month, day); console.log("[Date Select] Selected:", selectedDate.toLocaleDateString()); selectedTimeSlotInfo = null; if (els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; if (els.bookButton) els.bookButton.disabled = true; if (els.bookingSummary) els.bookingSummary.style.display = 'none'; renderCalendar(); const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' }; els.selectedDateDisplay.textContent = selectedDate.toLocaleDateString(undefined, options); switchToTimeView(); updateClockToCurrentAnimated(); fetchAndGenerateTimeSlots(selectedDate); }
+        function switchToTimeView() { /* (Keep existing function) */ if (!els.calendarView || !els.timeView) return; if (viewState === 'calendar' && selectedDate) { viewState = 'time'; els.calendarView.classList.add('hidden'); els.timeView.classList.add('visible'); console.log("[View Switch] To Time"); } }
+        function switchToCalendarView() { /* (Keep existing function) */ if (!els.calendarView || !els.timeView) return; if (viewState === 'time') { viewState = 'calendar'; els.timeView.classList.remove('visible'); els.calendarView.classList.remove('hidden'); console.log("[View Switch] To Calendar"); } }
+        async function fetchAndGenerateTimeSlots(date) { /* (Keep existing function) */ if (!els.timeSlotsContainer || !date) return; const localDateString = getLocalDateString(date); console.log(`[Time Slots] Requesting for: ${localDateString}`); els.timeSlotsContainer.innerHTML = `<div class="time-slots-loading"><i class="fas fa-spinner fa-spin"></i> Loading times...</div>`; try { let slots; const cacheKey = localDateString; if (availabilityCache[cacheKey]) { console.debug(`[Time Slots] Cache hit: ${cacheKey}.`); slots = availabilityCache[cacheKey]; } else { console.log(`[Time Slots] Cache miss: ${cacheKey}. Fetching...`); const apiUrl = `/api/booking/availability?date=${localDateString}`; const data = await apiRequest(apiUrl, { method: 'GET' }); if (data === null) throw new Error("API error."); slots = data.slots || []; availabilityCache[cacheKey] = slots; console.log(`[Time Slots] Received ${slots.length} slots from API.`); } generateTimeSlotsUI(slots); } catch (error) { console.error(`[Time Slots] Error fetching/processing:`, error); els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">Load failed: ${error.message || 'Could not fetch times.'}</div>`; } }
+        function generateTimeSlotsUI(slots) { /* (Keep existing function) */ if (!els.timeSlotsContainer) return; els.timeSlotsContainer.innerHTML = ''; if (!slots || slots.length === 0) { els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">No time slots found for this date.</div>`; return; } const periods = { morning: [], afternoon: [], evening: [] }; slots.forEach(slot => { try { const utcDate = new Date(slot.time); if (isNaN(utcDate)) return; const localHour = utcDate.getHours(); const displayTimeRange = formatTimeRangeForDisplay(slot.time); const slotData = { utcTime: slot.time, status: slot.status, displayTimeRange: displayTimeRange }; if (localHour < 12) periods.morning.push(slotData); else if (localHour < 17) periods.afternoon.push(slotData); else periods.evening.push(slotData); } catch (e) {} }); let slotDelay = 0; const stagger = 0.03; let slotsAdded = 0; const addPeriodSection = (pSlots, lbl) => { if (pSlots.length > 0) { const pC = document.createElement('div'); pC.className = 'time-period'; pC.innerHTML = `<div class="period-label">${lbl} (Your Time)</div><div class="time-grid"></div>`; const g = pC.querySelector('.time-grid'); pSlots.sort((a,b) => new Date(a.utcTime) - new Date(b.utcTime)); pSlots.forEach(sd => { const sE = createTimeSlotElement(sd, slotDelay); g.appendChild(sE); slotDelay += stagger; slotsAdded++; }); els.timeSlotsContainer.appendChild(pC); } }; addPeriodSection(periods.morning, 'Morning'); addPeriodSection(periods.afternoon, 'Afternoon'); addPeriodSection(periods.evening, 'Evening'); if (slotsAdded === 0) { els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">No time slots available for this date.</div>`; } else { requestAnimationFrame(() => { els.timeSlotsContainer.querySelectorAll('.time-slot').forEach(el => el.classList.add('animate-in')); }); } if (selectedTimeSlotInfo) { const ps = els.timeSlotsContainer.querySelector(`.time-slot[data-utc-time="${selectedTimeSlotInfo.utcTime}"]`); if (ps?.classList.contains('available')) { ps.classList.add('selected'); const sld = new Date(selectedTimeSlotInfo.utcTime); updateClockAnimated(sld.getHours(), sld.getMinutes()); if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = `Selected: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}`; updateSummary(); if(els.bookingSummary) els.bookingSummary.style.display = 'block'; if(els.bookButton) els.bookButton.disabled = false;} else { selectedTimeSlotInfo = null; if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; updateClockToCurrentAnimated(); updateSummary(); if(els.bookingSummary) els.bookingSummary.style.display = 'none'; if(els.bookButton) els.bookButton.disabled = true; } } }
+        function createTimeSlotElement(slotData, delay) { /* (Keep existing function) */ const slot = document.createElement('div'); slot.className = `time-slot ${slotData.status}`; slot.dataset.utcTime = slotData.utcTime; slot.textContent = slotData.displayTimeRange; slot.style.setProperty('--slot-animation-delay', `${delay}s`); if (slotData.status === 'available') { slot.addEventListener('click', () => selectTimeSlot(slot, slotData)); slot.style.cursor = 'pointer'; } else { slot.style.cursor = 'not-allowed'; } return slot; }
+        function selectTimeSlot(slotElem, slotData) { /* (Keep existing function) */ if (hasBooking || slotData.status !== 'available') return; els.timeSlotsContainer?.querySelectorAll('.time-slot.selected').forEach(el => el.classList.remove('selected')); slotElem.classList.add('selected'); try { const startDate = new Date(slotData.utcTime); if (isNaN(startDate)) throw new Error("Invalid date"); const endDate = new Date(startDate.getTime() + LESSON_DURATION_MINUTES * 60 * 1000); const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true }; const tzName = getLocalTimeZoneName(); selectedTimeSlotInfo = { utcTime: slotData.utcTime, localStartTimeLabel: startDate.toLocaleTimeString(undefined, timeOptions), localEndTimeLabel: endDate.toLocaleTimeString(undefined, timeOptions), localTimeZoneName: tzName }; console.log("[Time Select] Info:", selectedTimeSlotInfo); updateClockAnimated(startDate.getHours(), startDate.getMinutes()); if (els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = `Selected: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${tzName}`; updateSummary(); if (els.bookingSummary) { els.bookingSummary.style.display = 'block'; els.bookingSummary.style.opacity = 0; requestAnimationFrame(() => { els.bookingSummary.style.opacity = 1; }); } if (els.bookButton) els.bookButton.disabled = false; } catch (e) { console.error("Error selecting slot:", e); selectedTimeSlotInfo = null; if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; if(els.bookButton) els.bookButton.disabled = true; if(els.bookingSummary) els.bookingSummary.style.display = 'none'; updateClockToCurrentAnimated(); } }
+        function updateSummary() { /* (Keep existing function) */ if (!els.summaryDateSpan || !els.summaryTimeSpan) return; els.summaryDateSpan.textContent = selectedDate ? `Date: ${selectedDate.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric', year:'numeric' })}` : 'Date: --'; if (selectedTimeSlotInfo) { els.summaryTimeSpan.textContent = `Time: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}`; } else { els.summaryTimeSpan.textContent = 'Time: --'; } }
+
+        // --- Event Listeners (Keep Existing) ---
+        els.backToCalendarBtn?.addEventListener('click', switchToCalendarView);
+        els.prevMonthBtn?.addEventListener('click', () => { if (viewState === 'calendar' && !hasBooking && !els.prevMonthBtn.disabled) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); delete monthStatusCache[getLocalDateString(currentCalendarDate).substring(0,7)]; renderCalendar(); updateClockToCurrentAnimated(); } });
+        els.nextMonthBtn?.addEventListener('click', () => { if (viewState === 'calendar' && !hasBooking && !els.nextMonthBtn.disabled) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); delete monthStatusCache[getLocalDateString(currentCalendarDate).substring(0,7)]; renderCalendar(); updateClockToCurrentAnimated(); } });
+
+        // --- Clock Functionality (Keep Existing) ---
+        let clockRadius, centerX, centerY; let currentHourAngle = -Math.PI / 2; let currentMinuteAngle = -Math.PI / 2; let targetHourAngle = -Math.PI / 2; let targetMinuteAngle = -Math.PI / 2; let animationReqId = null; const ANIMATION_DURATION = 500; let animationStartTime = 0; let startHourAngle = currentHourAngle; let startMinuteAngle = currentMinuteAngle;
+        function resizeClock() { if (!els.clockCanvas || !els.clockCanvas.parentElement) return; const contW = els.clockCanvas.parentElement.offsetWidth; const sCW = contW > 0 ? contW : 300; const nS = Math.min(300, sCW * 0.85); els.clockCanvas.width = nS; els.clockCanvas.height = nS; clockRadius = nS / 2 * 0.9; centerX = els.clockCanvas.width / 2; centerY = els.clockCanvas.height / 2; drawClockFace(); updateClockDisplay(); }
+        function drawClockFace() { if (!clockCtx || !els.clockCanvas) return; clockCtx.clearRect(0, 0, els.clockCanvas.width, els.clockCanvas.height); const iN=document.body.classList.contains('night-mode'); const gr=clockCtx.createRadialGradient(centerX, centerY, clockRadius * 0.8, centerX, centerY, clockRadius * 1.1); gr.addColorStop(0, iN ? '#2a314f' : '#ffffff'); gr.addColorStop(1, iN ? '#242a44' : '#f8faff'); clockCtx.beginPath(); clockCtx.arc(centerX, centerY, clockRadius, 0, 2 * Math.PI); clockCtx.fillStyle = gr; clockCtx.fill(); clockCtx.beginPath(); clockCtx.arc(centerX, centerY, clockRadius, 0, 2 * Math.PI); clockCtx.strokeStyle = iN ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)'; clockCtx.lineWidth = clockRadius * 0.03; clockCtx.stroke(); clockCtx.beginPath(); clockCtx.arc(centerX, centerY, clockRadius * 0.04, 0, 2*Math.PI); clockCtx.fillStyle = iN ? '#aaa' : '#555'; clockCtx.fill(); clockCtx.font = `bold ${clockRadius * 0.14}px Poppins`; clockCtx.fillStyle = iN ? '#cdd5e0' : 'var(--dark-color)'; clockCtx.textAlign = "center"; clockCtx.textBaseline = "middle"; for (let n=1; n<=12; n++) { const a=n*Math.PI/6-Math.PI/2; const x=centerX+clockRadius*0.8*Math.cos(a); const y=centerY+clockRadius*0.8*Math.sin(a); clockCtx.fillText(n, x, y); } clockCtx.lineWidth=1.5; for(let m=0; m<60; m++) { const a=m*Math.PI/30-Math.PI/2; const iH=m%5===0; const oR=clockRadius*(iH?0.95:0.93); const iR=clockRadius*0.9; clockCtx.strokeStyle=iH?(iN?'#667':'#bbb'):(iN?'#445':'#ddd'); clockCtx.beginPath(); clockCtx.moveTo(centerX+oR*Math.cos(a), centerY+oR*Math.sin(a)); clockCtx.lineTo(centerX+iR*Math.cos(a), centerY+iR*Math.sin(a)); clockCtx.stroke(); } }
+        function drawHand(a, lR, wR, c) { if (!clockCtx || !els.clockCanvas) return; clockCtx.beginPath(); clockCtx.lineWidth = clockRadius * wR; clockCtx.lineCap = "round"; clockCtx.moveTo(centerX, centerY); const length = clockRadius * lR; const x = centerX + length * Math.cos(a); const y = centerY + length * Math.sin(a); clockCtx.lineTo(x, y); clockCtx.strokeStyle = c; clockCtx.stroke(); }
+        function drawSelectedSlotMarker() { if (!clockCtx || !els.clockCanvas || !selectedTimeSlotInfo?.utcTime) return; try { const sd=new Date(selectedTimeSlotInfo.utcTime); if(isNaN(sd)) return; const mA=sd.getMinutes()*Math.PI/30-Math.PI/2; const mR=clockRadius*1.02; const mX=centerX+mR*Math.cos(mA); const mY=centerY+mR*Math.sin(mA); clockCtx.beginPath(); clockCtx.arc(mX, mY, clockRadius * 0.05, 0, 2 * Math.PI); clockCtx.fillStyle = 'rgba(61, 220, 151, 0.85)'; clockCtx.fill(); clockCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)'; clockCtx.lineWidth = 1.5; clockCtx.stroke(); } catch(e){} }
+        function drawHandsAndMarker() { if (!clockCtx || !els.clockCanvas) return; const isNight = document.body.classList.contains('night-mode'); drawHand(currentHourAngle, 0.55, 0.06, isNight ? '#ddd' : '#555'); drawHand(currentMinuteAngle, 0.75, 0.04, isNight ? '#bbb' : '#666'); drawSelectedSlotMarker(); clockCtx.beginPath(); clockCtx.arc(centerX, centerY, clockRadius * 0.025, 0, 2*Math.PI); clockCtx.fillStyle=isNight?'#555':'#fff'; clockCtx.fill(); }
+        function animateClockHands(timestamp) { if (!clockCtx) return; if (!animationStartTime) animationStartTime = timestamp; const elapsedTime = timestamp - animationStartTime; const progress = Math.min(elapsedTime / ANIMATION_DURATION, 1); const easedProgress = 1 - Math.pow(1 - progress, 3); const interpolateAngle = (start, end, progress) => { let diff = end - start; if (diff > Math.PI) diff -= 2 * Math.PI; if (diff < -Math.PI) diff += 2 * Math.PI; return (start + diff * progress + 2 * Math.PI) % (2 * Math.PI); }; currentHourAngle = interpolateAngle(startHourAngle, targetHourAngle, easedProgress); currentMinuteAngle = interpolateAngle(startMinuteAngle, targetMinuteAngle, easedProgress); drawClockFace(); drawHandsAndMarker(); if (progress < 1) { animationReqId = requestAnimationFrame(animateClockHands); } else { currentHourAngle = targetHourAngle; currentMinuteAngle = targetMinuteAngle; drawClockFace(); drawHandsAndMarker(); animationReqId = null; animationStartTime = 0; } }
+        function updateClockAnimated(hour, minute) { if (isNaN(hour) || isNaN(minute)) return; const h12 = hour % 12; targetHourAngle = (h12 + minute/60) * Math.PI/6 - Math.PI/2; targetMinuteAngle = minute * Math.PI/30 - Math.PI/2; targetHourAngle = (targetHourAngle + 2 * Math.PI) % (2 * Math.PI); targetMinuteAngle = (targetMinuteAngle + 2 * Math.PI) % (2 * Math.PI); startHourAngle = (currentHourAngle + 2 * Math.PI) % (2 * Math.PI); startMinuteAngle = (currentMinuteAngle + 2 * Math.PI) % (2 * Math.PI); if (animationReqId) cancelAnimationFrame(animationReqId); animationStartTime = 0; animationReqId = requestAnimationFrame(animateClockHands); }
+        function updateClockToCurrentAnimated() { try { const now = new Date(); updateClockAnimated(now.getHours(), now.getMinutes()); } catch(e) {} }
+        function updateClockDisplay() { if(animationReqId) return; drawClockFace(); drawHandsAndMarker(); }
+
+        // --- Day/Night Mode (Keep Existing) ---
+        function applySavedTheme() { try { if (localStorage.getItem('theme') === 'night') document.body.classList.add('night-mode'); else document.body.classList.remove('night-mode'); } catch (e) {} }
+        els.dayNightToggle?.addEventListener('click', (e) => { if (!document.body) return; e.stopPropagation(); document.body.classList.toggle('night-mode'); try { localStorage.setItem('theme', document.body.classList.contains('night-mode') ? 'night' : 'day'); } catch (e) {} resizeClock(); renderCalendar(); });
+
+        // --- Modal & Booking Confirmation (Keep Existing) ---
+        function setupModal() { if (!els.confirmationModal || !els.modalCancelBtn || !els.modalConfirmBtn || !els.bookButton || !els.modalMessage) return; els.bookButton.addEventListener('click', () => { if (selectedDate && selectedTimeSlotInfo) { const ds = selectedDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); els.modalMessage.innerHTML = `Date: <strong>${ds}</strong><br>Time: <strong>${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}</strong>`; clearModalFeedback(); els.confirmationModal.classList.add('visible'); } else { console.warn("Book button clicked without selection"); } }); els.modalCancelBtn.addEventListener('click', () => { els.confirmationModal.classList.remove('visible'); showButtonLoading(els.modalConfirmBtn, false); els.modalCancelBtn.disabled = false; }); els.modalConfirmBtn.addEventListener('click', async () => { if (!selectedTimeSlotInfo?.utcTime) { showModalFeedback("Details missing.", true); return; } clearModalFeedback(); showButtonLoading(els.modalConfirmBtn, true); els.modalCancelBtn.disabled = true; const bookingData = { utcStartTime: selectedTimeSlotInfo.utcTime }; console.log("[Confirm Booking] Sending:", bookingData); try { const res = await apiRequest('/api/booking/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bookingData) }); if (res === null) throw new Error("API error."); console.log("[Confirm Booking] Success:", res); const newLessonId = res.lessonId; if (!newLessonId) throw new Error("Missing lesson ID."); window.location.href = `confirmation.html?lessonId=${newLessonId}`; } catch (error) { console.error("[Confirm Booking] Failed:", error); let userMessage = error.message || "Unknown error."; if (error.message.includes('409') || error.message.toLowerCase().includes('slot already booked')) { userMessage = "Sorry, slot just booked. Select another."; } else if (error.message.includes('400') || error.message.toLowerCase().includes('booking failed')) { userMessage = error.message.includes('Booking failed:') ? error.message : `Booking validation failed: ${error.message}`; } else if (error.message.includes('Network error')) { userMessage = "Booking failed: Network error."; } showModalFeedback(userMessage, true); if (error.message.includes('409') || error.message.includes('400')) { if (selectedDate) { const dateKey = getLocalDateString(selectedDate); delete availabilityCache[dateKey]; delete monthStatusCache[dateKey.substring(0,7)]; console.log(`[Confirm Booking] Cache invalidated for ${dateKey}.`); fetchAndGenerateTimeSlots(selectedDate); } switchToTimeView(); } } finally { showButtonLoading(els.modalConfirmBtn, false); els.modalCancelBtn.disabled = false; } }); }
+
+        // --- Initialization ---
+        async function initializeBookingPage() {
+            console.log("[Booking Page] Initializing...");
+            if (!els.clockCanvas || !clockCtx) { console.error("Canvas/context error. Halting."); return; }
+
+            applySavedTheme(); // Apply theme first
+
+            // 1. Setup Header & Auth - this also gets initial user status
+            const initialStatus = await checkAuthAndSetupHeader();
+            setupDropdown(); // Setup dropdown interactivity
+            if(els.signOutBtn) {
+                els.signOutBtn.addEventListener('click', handleSignOut); // Setup signout listener
+            }
+
+            // 2. If header auth failed or user not logged in, stop further init
+            if (initialStatus === null) {
+                 console.log("[Booking Page] Halting initialization due to auth failure or user not logged in.");
+                 resizeClock(); updateClockToCurrentAnimated(); // Init clock even if stopped
+                 return;
+            }
+
+             // 3. Setup Modal (needs to be done before checkUserStatus modifies buttons)
+             setupModal();
+
+            // 4. Check Booking Status (using data from header check)
+            const canProceed = await checkUserStatus(initialStatus);
+
+             // 5. If user can proceed (not already booked, status check ok)
+            if (canProceed) {
+                 // Setup remaining event listeners that depend on user being able to interact
+                els.backToCalendarBtn?.addEventListener('click', switchToCalendarView);
+                els.prevMonthBtn?.addEventListener('click', () => { if (viewState === 'calendar' && !hasBooking && !els.prevMonthBtn.disabled) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1); delete monthStatusCache[getLocalDateString(currentCalendarDate).substring(0,7)]; renderCalendar(); updateClockToCurrentAnimated(); } });
+                els.nextMonthBtn?.addEventListener('click', () => { if (viewState === 'calendar' && !hasBooking && !els.nextMonthBtn.disabled) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1); delete monthStatusCache[getLocalDateString(currentCalendarDate).substring(0,7)]; renderCalendar(); updateClockToCurrentAnimated(); } });
+
+                 // Render initial calendar
+                 await renderCalendar();
+                 console.log("[Booking Page] Initial render complete.");
+            } else {
+                 console.log("[Booking Page] Halting further calendar setup due to booking status or error.");
+            }
+
+            // 6. Setup listeners that run regardless
+            window.addEventListener('resize', resizeClock, { passive: true });
+            window.addEventListener('scroll', () => { document.body.classList.toggle('scrolled', window.scrollY > 30); }, { passive: true });
+
+            // 7. Initialize Clock
+            resizeClock();
+            updateClockToCurrentAnimated();
+
+            console.log("[Booking Page] Initialization sequence finished.");
+        }
+        document.addEventListener('DOMContentLoaded', initializeBookingPage);
+
+        // --- End Script ---
+    </script>
+
+</body>
+</html>
