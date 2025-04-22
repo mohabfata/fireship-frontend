@@ -312,31 +312,45 @@
     // --- Header Logic ---
     function updateHeaderUI(userData, hasBooking) { if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) { signInLink.style.display = 'none'; userProfileHeader.style.display = 'flex'; userNameHeader.textContent = userData.name || 'User'; userAvatarHeader.src = userData.avatarUrl || 'placeholder-avatar.png'; userAvatarHeader.onerror = () => { userAvatarHeader.src = 'placeholder-avatar.png'; }; if (notificationDot) notificationDot.style.display = hasBooking ? 'block' : 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.toggle('visible', hasBooking); } else if (signInLink && userProfileHeader) { signInLink.style.display = 'block'; userProfileHeader.style.display = 'none'; if (notificationDot) notificationDot.style.display = 'none'; if (lessonsNotificationDot) lessonsNotificationDot.classList.remove('visible'); } }
     function setupDropdown() { const profileArea = userProfileHeader; if (profileArea && profileDropdown) { profileArea.addEventListener('click', (event) => { event.stopPropagation(); profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block'; }); window.addEventListener('click', (event) => { if (profileDropdown.style.display === 'block' && !profileArea.contains(event.target)) { profileDropdown.style.display = 'none'; } }); } }
-    async function handleSignOut() { console.log("Signing out..."); try { const result = await apiRequest('/api/auth/logout', { method: 'POST' }); if (result === null) return; // Redirect happened window.location.href = 'welcome.html'; } catch (error) { console.error("Sign out failed:", error); if (error.message !== "Redirecting") { alert(`Sign out failed: ${error.message}`); } } }
+    async function handleSignOut() {
+        console.log("Signing out...");
+        try {
+            // Use updated apiRequest
+            const result = await apiRequest('/api/auth/logout', { method: 'POST' });
+            if (result === null) return; // Redirect happened
+            window.location.href = 'welcome.html';
+        } catch (error) {
+            console.error("Sign out failed:", error);
+            if (error.message !== "Redirecting") {
+                alert(`Sign out failed: ${error.message}`);
+            }
+        }
+    }
     async function checkAuthAndSetupHeader() {
-        console.log("[Header Auth Check] Checking...");
+        console.log("[Profile Header Auth Check] Checking...");
         try {
             // Use updated apiRequest
             const status = await apiRequest('/api/user/status', { method: 'GET' });
             if (status === null) return false; // Redirect happened or fatal API error
 
             if (status && status.user) {
-                console.log("[Header Auth Check] User logged in:", status.user);
+                console.log("[Profile Header Auth Check] User logged in:", status.user);
                 updateHeaderUI(status.user, status.hasBooking || false);
                 return true; // Auth OK
             } else {
-                console.log("[Header Auth Check] User not logged in.");
+                // This case means user is not logged in (or status endpoint returned incorrectly)
+                console.log("[Profile Header Auth Check] User not logged in.");
                 updateHeaderUI(null, false);
                  // Redirect if not logged in for profile page
-                 console.warn("User not logged in on profile page. Redirecting...");
+                 console.warn("User not logged in on profile page. Redirecting to welcome.");
                  window.location.href = 'welcome.html';
                  return false; // Auth failed
             }
         } catch (error) {
-            console.warn("[Header Auth Check] Failed:", error.message);
+            console.warn("[Profile Header Auth Check] Failed:", error.message);
             updateHeaderUI(null, false);
              // Redirect on error for profile page
-             console.error("Auth check failed. Redirecting...");
+             console.error("Auth check failed. Redirecting to welcome.");
              window.location.href = 'welcome.html';
              return false; // Auth failed
         }
@@ -344,6 +358,7 @@
 
     // --- Populate Profile Details (More Robust) ---
     function populateProfileDetails(profileData) {
+        console.log("[Populate] Received profile data:", profileData); // Log received data
         // Default values for error/loading state
         const defaultVal = '--';
         const nameDefault = 'Loading...';
@@ -352,9 +367,12 @@
         // --- Helper to update element text and placeholder class ---
         function updateDetail(element, value, placeholderValue = defaultVal) {
             if (element) {
-                const displayValue = value || placeholderValue;
+                const displayValue = (value !== null && value !== undefined && value !== '') ? value : placeholderValue;
                 element.textContent = displayValue;
-                element.classList.toggle('placeholder', !value); // Add placeholder class if value is missing
+                // Add placeholder class only if the value is actually missing or empty
+                element.classList.toggle('placeholder', (value === null || value === undefined || value === ''));
+            } else {
+                 console.warn(`[Populate] Element not found for value: ${value}`);
             }
         }
 
@@ -368,9 +386,12 @@
 
         // --- Update Account Details ---
         let dobDisplay = defaultVal;
+        // Use the correct field name 'dob' as potentially returned by /profile/all
         if (profileData?.dob) {
             try {
-                 if (profileData.dob && /^\d{4}-\d{2}-\d{2}$/.test(profileData.dob)) {
+                 // Check if it looks like YYYY-MM-DD format
+                 if (/^\d{4}-\d{2}-\d{2}$/.test(profileData.dob)) {
+                     // Add time part and Z to correctly interpret as UTC date part only
                      const utcDate = new Date(profileData.dob + 'T00:00:00Z');
                      if (!isNaN(utcDate)) {
                          dobDisplay = utcDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
@@ -380,9 +401,11 @@
         }
         updateDetail(profileDobEl, dobDisplay, defaultVal);
 
+        // Use 'gender' field
         updateDetail(profileGenderEl, profileData?.gender ? profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1) : null, defaultVal);
 
         let natDisplay = defaultVal;
+         // Use 'nationality_choice' and 'country' fields based on backend aliases
         if (profileData?.nationality_choice) {
             natDisplay = profileData.nationality_choice === 'other' && profileData.country
                 ? `Other (${profileData.country})`
@@ -390,14 +413,17 @@
         }
         updateDetail(profileNationalityEl, natDisplay, defaultVal);
 
+        // Use 'native_language' field
         updateDetail(profileNativeLangEl, profileData?.native_language ? profileData.native_language.charAt(0).toUpperCase() + profileData.native_language.slice(1) : null, defaultVal);
 
 
         // --- Update Learning Preferences ---
-        updateDetail(profileProficiencyEl, profileData?.level, defaultVal); // Use alias 'level'
+        // Use 'level' field based on backend alias
+        updateDetail(profileProficiencyEl, profileData?.level, defaultVal);
 
         let pathDisplay = defaultVal;
-        if (profileData?.step1 && profileData?.step2 && profileData?.step3) { // Use aliases 'step1', 'step2', 'step3'
+        // Use 'step1', 'step2', 'step3' fields based on backend aliases
+        if (profileData?.step1 && profileData?.step2 && profileData?.step3) {
             pathDisplay = `${profileData.step1} > ${profileData.step2} > ${profileData.step3}`;
         }
         updateDetail(profileLearningPathEl, pathDisplay, defaultVal);
@@ -406,44 +432,66 @@
 
     // --- Data Fetching for Profile Page ---
     async function fetchProfilePageData() {
+        console.log("[Fetch] Starting profile page data fetch sequence.");
         showLoadingState(true);
         let profileFetchSuccess = false;
         let lessonsFetchSuccess = false;
 
         try {
-            // Check Auth and Setup Header
+            // 1. Check Auth and Setup Header
+            console.log("[Fetch] Checking authentication...");
             const isAuthOk = await checkAuthAndSetupHeader();
-            if (!isAuthOk) return; // Stop if redirected
+            if (!isAuthOk) {
+                 console.log("[Fetch] Auth check failed or redirected. Halting data fetch.");
+                 // No need to show error state here, redirect should have happened.
+                 // Ensure loading spinner is hidden if redirect takes time.
+                 showLoadingState(false);
+                 return;
+            }
+            console.log("[Fetch] Auth check successful.");
 
-            // Fetch full profile details (now uses updated apiRequest)
+            // 2. Fetch Profile Data (Only if Auth OK)
+            console.log("[Fetch] Fetching profile data...");
             const profileData = await apiRequest('/api/user/profile/all', { method: 'GET' });
-            if (profileData === null) throw new Error("Profile data fetch resulted in redirect."); // Handle null from apiRequest
-
-            console.log("Fetched combined profile data:", profileData);
-            populateProfileDetails(profileData); // Populate profile sections
+            if (profileData === null) { // Should be handled by apiRequest 401, but double-check
+                 throw new Error("Profile data fetch returned null (likely redirect).");
+            }
+            console.log("[Fetch] Profile data received.");
+            populateProfileDetails(profileData);
             profileFetchSuccess = true;
 
-            // Fetch lessons (now uses updated apiRequest)
+            // 3. Fetch Lessons Data (Only if Auth OK)
+            console.log("[Fetch] Fetching lessons data...");
             const lessonsResponse = await apiRequest('/api/user/lessons', { method: 'GET' });
-             if (lessonsResponse === null) throw new Error("Lessons fetch resulted in redirect."); // Handle null
-
+             if (lessonsResponse === null) { // Should be handled by apiRequest 401
+                 throw new Error("Lessons fetch returned null (likely redirect).");
+             }
             const lessons = Array.isArray(lessonsResponse?.lessons) ? lessonsResponse.lessons : [];
-            console.log("Fetched lessons:", lessons);
+            console.log("[Fetch] Lessons data received.");
             displayLessons(lessons);
             lessonsFetchSuccess = true;
 
+            console.log("[Fetch] All data fetched and displayed successfully.");
+
         } catch (error) {
-            console.error("Error fetching profile page data:", error);
-            // Only display error if the specific fetch failed, otherwise rely on auth redirect
-            if (!profileFetchSuccess) {
-                displayErrorState(true); // Show profile-specific error
-                populateProfileDetails(null); // Reset profile fields on error
+            console.error("[Fetch] Error during profile page data fetch:", error.message);
+            // If the error is NOT a redirect (handled by apiRequest/checkAuth) show an error state
+             if (!window.location.pathname.endsWith('welcome.html')) { // Avoid showing error if redirect is happening
+                if (!profileFetchSuccess) {
+                    console.log("[Fetch] Displaying profile fetch error state.");
+                    displayErrorState(true); // Show profile-specific error
+                    populateProfileDetails(null); // Reset profile fields
+                } else if (!lessonsFetchSuccess) {
+                    console.log("[Fetch] Displaying lessons fetch error state.");
+                    displayErrorState(false); // Show lessons-specific error
+                } else {
+                     // Should not happen if both succeeded, but maybe a populate error?
+                     console.log("[Fetch] Displaying generic error state after fetches.");
+                     displayErrorState(true); // Default to profile error
+                }
             }
-            if (!lessonsFetchSuccess && profileFetchSuccess) { // Only show lesson error if profile was okay
-                 displayErrorState(false);
-            }
-             // If auth check failed, the page should have already redirected.
         } finally {
+            console.log("[Fetch] Finalizing fetch sequence, hiding loading state.");
             showLoadingState(false);
         }
     }
