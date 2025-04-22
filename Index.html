@@ -24,15 +24,18 @@
         #signInLink:hover { background-color: var(--primary-color); color: white; box-shadow: 0 5px 15px rgba(90, 141, 238, 0.2); transform: translateY(-2px); }
         /* User Profile Header - Default hidden */
         .user-profile-header { display: none; align-items: center; gap: 12px; position: relative; }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border-color); cursor: pointer; background-color: #eee; /* Placeholder */ }
-        .user-name-header { font-weight: 600; color: var(--dark-color); cursor: pointer; }
-        .profile-dropdown { display: none; /* Hidden by default */ position: absolute; top: calc(100% + 10px); right: 0; background-color: white; border-radius: var(--border-radius); box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid var(--border-color); z-index: 1010; min-width: 180px; overflow: hidden; }
-        .profile-dropdown a, .profile-dropdown button { display: block; width: 100%; text-align: left; padding: 12px 20px; color: var(--dark-color); text-decoration: none; font-size: 0.95rem; font-weight: 500; background: none; border: none; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border-color); cursor: pointer; background-color: #eee; /* Placeholder */ object-fit: cover; }
+        .user-name-header { font-weight: 600; color: var(--dark-color); cursor: pointer; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .profile-dropdown { display: none; /* Hidden by default */ position: absolute; top: calc(100% + 10px); right: 0; background-color: white; border-radius: var(--border-radius); box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid var(--border-color); z-index: 1010; min-width: 180px; overflow: hidden; padding: 8px 0; list-style: none;}
+        .profile-dropdown a, .profile-dropdown button { display: flex; align-items: center; width: 100%; text-align: left; padding: 12px 20px; color: var(--dark-color); text-decoration: none; font-size: 0.95rem; font-weight: 500; background: none; border: none; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; white-space: nowrap; }
         .profile-dropdown a:hover, .profile-dropdown button:hover { background-color: var(--bg-light); color: var(--primary-color); }
-        .profile-dropdown a i, .profile-dropdown button i { margin-right: 10px; color: var(--gray-color); transition: color 0.2s ease; }
+        .profile-dropdown a i, .profile-dropdown button i { margin-right: 10px; color: var(--gray-color); transition: color 0.2s ease; width: 16px; text-align: center; }
         .profile-dropdown a:hover i, .profile-dropdown button:hover i { color: var(--primary-color); }
         .dropdown-divider { height: 1px; background-color: var(--border-color); margin: 5px 0; }
-        .notification-dot { width: 10px; height: 10px; background-color: var(--accent-color); border-radius: 50%; position: absolute; top: 0; right: 0; border: 1px solid white; display: none; /* Hidden by default */ }
+        .notification-dot { width: 10px; height: 10px; background-color: var(--accent-color); border-radius: 50%; position: absolute; top: 0; right: 0; border: 1.5px solid white; display: none; /* Hidden by default */ }
+        .lessons-link span { flex-grow: 1; }
+        .lessons-link .notification-dot { position: static; display: inline-block; margin-left: 8px; width: 8px; height: 8px; vertical-align: middle; background-color: var(--accent-color); border-radius: 50%; border: 1px solid white; visibility: hidden; /* Hidden by default */ }
+        .lessons-link .notification-dot.visible { visibility: visible; }
 
         /* Main Content */
         main { padding: 0 20px 80px; }
@@ -50,19 +53,19 @@
         .section-container { max-width: 1100px; margin: 80px auto; padding: 70px 40px; background-color: var(--light-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow-light); border: 1px solid var(--border-color); } .section-container.alt-bg { background-color: var(--bg-section-alt); }
         .section-title { text-align: center; font-size: 2.6rem; color: var(--primary-color); margin-bottom: 60px; font-weight: 700; position: relative; padding-bottom: 20px; } .section-title i { margin-right: 12px; font-size: 0.9em; color: var(--secondary-color); } .section-title::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 90px; height: 5px; background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); border-radius: 3px; }
         /* Intro Section */
-        .intro-section { text-align: center; max-width: 850px; margin: -60px auto 80px auto; position: relative; z-index: 2; background: var(--light-color); padding: 45px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); border: 1px solid var(--border-color); opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out; } .intro-section.animate-in { opacity: 1; transform: translateY(0); } .intro-section h2 { font-size: 1.9rem; color: var(--dark-color); margin-bottom: 18px; font-weight: 600; } .intro-section p { font-size: 1.15rem; color: var(--gray-color); line-height: 1.8; }
+        .intro-section { text-align: center; max-width: 850px; margin: -60px auto 80px auto; position: relative; z-index: 2; background: var(--light-color); padding: 45px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); border: 1px solid var(--border-color); opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out var(--animation-delay, 0s), transform var(--animation-speed) ease-out var(--animation-delay, 0s); } .intro-section.animate-in { opacity: 1; transform: translateY(0); } .intro-section h2 { font-size: 1.9rem; color: var(--dark-color); margin-bottom: 18px; font-weight: 600; } .intro-section p { font-size: 1.15rem; color: var(--gray-color); line-height: 1.8; }
         /* Features Section */
         .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 45px; }
-        .feature-card { background: var(--light-color); padding: 45px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--box-shadow-light); transition: transform var(--transition-speed) var(--transition-timing), box-shadow var(--transition-speed) var(--transition-timing), border-color var(--transition-speed) ease; border: 1px solid var(--border-color); border-bottom: 6px solid var(--secondary-color); opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out, border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; } .feature-card.animate-in { opacity: 1; transform: translateY(0); } .feature-card:hover { transform: translateY(-15px); box-shadow: var(--box-shadow); border-bottom-color: var(--primary-color); } .feature-icon { font-size: 3.2rem; color: var(--primary-color); margin-bottom: 30px; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(90, 141, 238, 0.1), rgba(61, 220, 151, 0.1)); width: 100px; height: 100px; border-radius: 50%; transition: transform var(--transition-speed) var(--transition-timing); } .feature-card:hover .feature-icon { transform: scale(1.15) rotate(-10deg); } .feature-card h3 { font-size: 1.6rem; margin-bottom: 18px; color: var(--dark-color); font-weight: 600; } .feature-card p { color: var(--gray-color); font-size: 1.05rem; line-height: 1.8; }
+        .feature-card { background: var(--light-color); padding: 45px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--box-shadow-light); transition: transform var(--transition-speed) var(--transition-timing), box-shadow var(--transition-speed) var(--transition-timing), border-color var(--transition-speed) ease; border: 1px solid var(--border-color); border-bottom: 6px solid var(--secondary-color); opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out var(--animation-delay, 0s), transform var(--animation-speed) ease-out var(--animation-delay, 0s), border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; } .feature-card.animate-in { opacity: 1; transform: translateY(0); } .feature-card:hover { transform: translateY(-15px); box-shadow: var(--box-shadow); border-bottom-color: var(--primary-color); } .feature-icon { font-size: 3.2rem; color: var(--primary-color); margin-bottom: 30px; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(90, 141, 238, 0.1), rgba(61, 220, 151, 0.1)); width: 100px; height: 100px; border-radius: 50%; transition: transform var(--transition-speed) var(--transition-timing); } .feature-card:hover .feature-icon { transform: scale(1.15) rotate(-10deg); } .feature-card h3 { font-size: 1.6rem; margin-bottom: 18px; color: var(--dark-color); font-weight: 600; } .feature-card p { color: var(--gray-color); font-size: 1.05rem; line-height: 1.8; }
         /* How It Works Section */
         .steps-container { display: flex; justify-content: space-around; align-items: stretch; gap: 40px; flex-wrap: wrap; position: relative; z-index: 1; }
-        .step { flex: 1; min-width: 230px; max-width: 290px; position: relative; opacity: 0; transform: translateY(30px); display: flex; flex-direction: column; transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out; } .step.animate-in { opacity: 1; transform: translateY(0); } .step:hover { transform: translateY(-10px) scale(1.03); } .step-header { display: flex; align-items: center; justify-content: center; margin-bottom: -30px; position: relative; z-index: 2; } .step-number { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; width: 65px; height: 65px; border-radius: 50%; font-size: 1.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(90, 141, 238, 0.3); border: 4px solid var(--bg-section-alt); } .step-content { background-color: var(--light-color); padding: 55px 30px 35px; border-radius: var(--border-radius); border: 1px solid var(--border-color); margin-top: 0; text-align: center; flex-grow: 1; box-shadow: var(--box-shadow-light); transition: box-shadow var(--transition-speed) var(--transition-timing), background-color var(--transition-speed) ease; } .step:hover .step-content { box-shadow: 0 15px 35px rgba(0,0,0,0.08); background-color: #fff; } .step-icon { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 20px; display: block; } .step h4 { font-size: 1.3rem; margin-bottom: 15px; color: var(--primary-color); font-weight: 600; } .step p { font-size: 1rem; color: var(--gray-color); line-height: 1.7; }
+        .step { flex: 1; min-width: 230px; max-width: 290px; position: relative; opacity: 0; transform: translateY(30px); display: flex; flex-direction: column; transition: opacity var(--animation-speed) ease-out var(--animation-delay, 0s), transform var(--animation-speed) ease-out var(--animation-delay, 0s); } .step.animate-in { opacity: 1; transform: translateY(0); } .step:hover { transform: translateY(-10px) scale(1.03); } .step-header { display: flex; align-items: center; justify-content: center; margin-bottom: -30px; position: relative; z-index: 2; } .step-number { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; width: 65px; height: 65px; border-radius: 50%; font-size: 1.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(90, 141, 238, 0.3); border: 4px solid var(--bg-section-alt); } .step-content { background-color: var(--light-color); padding: 55px 30px 35px; border-radius: var(--border-radius); border: 1px solid var(--border-color); margin-top: 0; text-align: center; flex-grow: 1; box-shadow: var(--box-shadow-light); transition: box-shadow var(--transition-speed) var(--transition-timing), background-color var(--transition-speed) ease; } .step:hover .step-content { box-shadow: 0 15px 35px rgba(0,0,0,0.08); background-color: #fff; } .step-icon { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 20px; display: block; } .step h4 { font-size: 1.3rem; margin-bottom: 15px; color: var(--primary-color); font-weight: 600; } .step p { font-size: 1rem; color: var(--gray-color); line-height: 1.7; }
         /* Testimonials Section */
         .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
-        .testimonial-card { background-color: var(--light-color); border: 1px solid var(--border-color); border-left: 6px solid var(--secondary-color); border-radius: var(--border-radius); padding: 40px; box-shadow: var(--box-shadow-light); position: relative; opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out, border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; } .testimonial-card.animate-in { opacity: 1; transform: translateY(0); } .testimonial-card:hover { transform: translateY(-12px); box-shadow: var(--box-shadow); border-left-color: var(--primary-color); } .testimonial-quote { font-size: 1.15rem; color: var(--dark-color); margin-bottom: 30px; font-style: italic; position: relative; padding-left: 40px; line-height: 1.8; } .testimonial-quote::before { content: '\f10d'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; left: 0; top: -5px; font-size: 2rem; color: var(--secondary-color); opacity: 0.25; } .testimonial-author { display: flex; align-items: center; gap: 18px; } .author-avatar img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-color); } .author-info h5 { font-size: 1.15rem; font-weight: 600; color: var(--dark-color); margin: 0 0 2px 0; } .author-info p { font-size: 0.95rem; color: var(--gray-color); margin: 0; }
+        .testimonial-card { background-color: var(--light-color); border: 1px solid var(--border-color); border-left: 6px solid var(--secondary-color); border-radius: var(--border-radius); padding: 40px; box-shadow: var(--box-shadow-light); position: relative; opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out var(--animation-delay, 0s), transform var(--animation-speed) ease-out var(--animation-delay, 0s), border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; } .testimonial-card.animate-in { opacity: 1; transform: translateY(0); } .testimonial-card:hover { transform: translateY(-12px); box-shadow: var(--box-shadow); border-left-color: var(--primary-color); } .testimonial-quote { font-size: 1.15rem; color: var(--dark-color); margin-bottom: 30px; font-style: italic; position: relative; padding-left: 40px; line-height: 1.8; } .testimonial-quote::before { content: '\f10d'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; left: 0; top: -5px; font-size: 2rem; color: var(--secondary-color); opacity: 0.25; } .testimonial-author { display: flex; align-items: center; gap: 18px; } .author-avatar img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-color); } .author-info h5 { font-size: 1.15rem; font-weight: 600; color: var(--dark-color); margin: 0 0 2px 0; } .author-info p { font-size: 0.95rem; color: var(--gray-color); margin: 0; }
         /* Coming Soon Section */
         .coming-soon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 40px; }
-        .coming-soon-card { background-color: var(--light-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 40px 30px; opacity: 0.7; position: relative; overflow: hidden; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05); opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out, transform var(--animation-speed) ease-out, box-shadow var(--transition-speed) ease, background-color var(--transition-speed) ease; } .coming-soon-card.animate-in { opacity: 0.7; transform: translateY(0); } .coming-soon-card:hover { transform: translateY(-10px); box-shadow: 0 14px 35px rgba(0, 0, 0, 0.08); opacity: 0.95; background-color: #fdfdff; } .coming-soon-card::after { content: 'Soon!'; position: absolute; top: 12px; right: -28px; background-color: var(--warning-color); color: white; padding: 5px 30px; font-size: 0.9rem; font-weight: 700; transform: rotate(45deg); box-shadow: 0 3px 8px rgba(0,0,0,0.2); z-index: 1; transition: background-color var(--transition-speed) ease; } .coming-soon-card:hover::after { background-color: #f08c00; } .coming-soon-icon { font-size: 3rem; color: var(--gray-color); margin-bottom: 25px; } .coming-soon-card h4 { font-size: 1.35rem; color: var(--dark-color); font-weight: 600; margin-bottom: 15px; } .coming-soon-card p { font-size: 1rem; color: var(--gray-color); }
+        .coming-soon-card { background-color: var(--light-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 40px 30px; opacity: 0.7; position: relative; overflow: hidden; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05); opacity: 0; transform: translateY(30px); transition: opacity var(--animation-speed) ease-out var(--animation-delay, 0s), transform var(--animation-speed) ease-out var(--animation-delay, 0s), box-shadow var(--transition-speed) ease, background-color var(--transition-speed) ease; } .coming-soon-card.animate-in { opacity: 0.7; transform: translateY(0); } .coming-soon-card:hover { transform: translateY(-10px); box-shadow: 0 14px 35px rgba(0, 0, 0, 0.08); opacity: 0.95; background-color: #fdfdff; } .coming-soon-card::after { content: 'Soon!'; position: absolute; top: 12px; right: -28px; background-color: var(--warning-color); color: white; padding: 5px 30px; font-size: 0.9rem; font-weight: 700; transform: rotate(45deg); box-shadow: 0 3px 8px rgba(0,0,0,0.2); z-index: 1; transition: background-color var(--transition-speed) ease; } .coming-soon-card:hover::after { background-color: #f08c00; } .coming-soon-icon { font-size: 3rem; color: var(--gray-color); margin-bottom: 25px; } .coming-soon-card h4 { font-size: 1.35rem; color: var(--dark-color); font-weight: 600; margin-bottom: 15px; } .coming-soon-card p { font-size: 1rem; color: var(--gray-color); }
         /* Footer */
         footer { text-align: center; padding: 60px 20px; margin-top: 80px; background-color: #eef4fa; color: var(--gray-color); font-size: 1rem; border-top: 1px solid var(--border-color); }
         .footer-socials { margin: 20px 0 25px; } .footer-socials a { color: var(--gray-color); font-size: 1.6rem; margin: 0 12px; transition: color var(--transition-speed) ease, transform var(--transition-speed) ease; display: inline-block; } .footer-socials a:hover { color: var(--primary-color); transform: translateY(-4px); }
@@ -95,7 +98,11 @@
              <div class="notification-dot" id="notificationDot"></div> <!-- Notification dot -->
              <div class="profile-dropdown" id="profileDropdown">
                  <a href="profile.html"><i class="fas fa-user-circle"></i> My Profile</a>
-                 <a href="lessons.html"><i class="fas fa-calendar-check"></i> My Lessons <span class="notification-dot" id="lessonsNotificationDot" style="position: static; display: inline-block; margin-left: 5px; width: 8px; height: 8px; vertical-align: middle;"></span></a>
+                 <a href="lessons.html" class="lessons-link"> <!-- Added class -->
+                     <i class="fas fa-calendar-check"></i>
+                     <span>My Lessons</span> <!-- Wrapped text -->
+                     <span class="notification-dot" id="lessonsNotificationDot"></span> <!-- Specific dot -->
+                 </a>
                  <div class="dropdown-divider"></div>
                  <button id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
              </div>
@@ -168,22 +175,30 @@
         const API_BASE_URL = 'https://api.fireship.org'; // <-- USE YOUR LIVE API DOMAIN
 
         // --- Utility Functions ---
-        async function apiRequest(url, options) {
-             // Construct the full URL if the provided URL starts with '/'
-             const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
-             console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+        async function apiRequest(url, options = {}) { // Default options to {}
+             const fullUrl = url.startsWith('/') ? API_BASE_URL + url : url; // Use constant
+
+             // Create opts object including credentials
+             const opts = {
+                 credentials: 'include', // <-- Add credentials: 'include'
+                 ...options, // Merge other passed options
+             };
+
+             console.debug(`API Req: ${opts.method || 'GET'} ${fullUrl}`); // Log method and fullUrl
+
              try {
-                 // Use fullUrl in the fetch call
-                 const r = await fetch(fullUrl, options); // Use the new variable 'r' for response
+                 // Use fullUrl and opts in the fetch call
+                 const r = await fetch(fullUrl, opts);
 
                  if (!r.ok) {
                      let errorMsg = `API Error (${r.status})`;
                      let errorData=null;
                      try { errorData = await r.json(); errorMsg = errorData.message || errorMsg;} catch (e) {}
                      console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+
+                     // Special 401 handling for Index page (return null, don't redirect)
                      if(r.status===401){
                          console.warn("API 401 received on Index page, treating as logged out.");
-                         // Don't redirect from index, just return null
                          return null;
                      }
                      throw new Error(errorData?.message || `Request failed: ${r.status}`);
@@ -300,6 +315,7 @@
         async function handleSignOut() {
              console.log("Signing out...");
              try {
+                  // Use updated apiRequest
                   await apiRequest('/api/auth/logout', { method: 'POST' });
                   console.log("Logout successful on backend.");
                   // Update UI immediately to reflect logout
@@ -327,6 +343,7 @@
              let isLoggedIn = false;
 
              try {
+                  // Use updated apiRequest
                  const status = await apiRequest('/api/user/status', { method: 'GET' });
 
                   if (status && status.user) { // Check for user object specifically
@@ -336,6 +353,7 @@
                        setupStatus = status.setupComplete || {};
                        console.log("User logged in. Status:", status);
                   } else {
+                       // This includes the case where apiRequest returned null due to 401
                        console.log("User not logged in or invalid status response.");
                        isLoggedIn = false;
                   }
