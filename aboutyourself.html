@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* --- Base Style Variables --- */
+    /* --- STYLES (Keep Existing Styles) --- */
      :root {
         --primary-color: #5A8DEE; --secondary-color: #3DDC97; --dark-purple: #4B0082; --accent-color: #FF6347; --success-color: #28a745; --warning-color: #ffc107; --light-color: #ffffff; --bg-light: #f8faff; --bg-section-alt: #f5f8fd; --dark-color: #34495e; --gray-color: #8492a6; --border-color: #eef2f7; --input-bg-color: #f7faff; --border-radius: 16px; --box-shadow: 0 22px 55px rgba(90, 141, 238, 0.18); --box-shadow-light: 0 10px 30px rgba(0, 0, 0, 0.06); --transition-speed: 0.4s; --transition-timing: cubic-bezier(0.4, 0, 0.2, 1); --animation-speed: 0.5s;
     }
@@ -15,118 +15,513 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; scroll-padding-top: 70px; }
     body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='hexagons' fill='%23eaf2ff' fill-opacity='0.4' fill-rule='nonzero'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.99-7.5L26 15v1 S9 22.5 9 22.5h10v-1.5S23 15 23 15L12.99 7.5zM28 19.09v15l-14 8.08L0 34.09v-15L14 5.91 28 19.09z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); min-height: 100vh; color: var(--dark-color); line-height: 1.7; overflow-x: hidden; padding-top: 70px; }
-
-    /* --- Header Styles --- */
-    header.main-header {
-        background-color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px); box-shadow: none; padding: 0 2rem; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; height: 70px; border-bottom: 1px solid transparent; transition: all var(--transition-speed) ease;
-    }
-    body.scrolled header.main-header { background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06); border-bottom-color: var(--border-color); }
-    .header-logo-link { display: flex; align-items: center; text-decoration: none; height: 100%; }
-    .header-logo { display: flex; align-items: center; height: 40px; overflow: visible; }
-    .header-logo img { height: 80px; margin-right: 0.8rem; transform: translateY(-7px); }
-    .header-logo span { font-weight: 700; font-size: 1.3rem; color: var(--primary-color); }
-    /* User Profile Header */
-    .user-profile-header { display: none; /* Hidden by default */ align-items: center; gap: 12px; position: relative; cursor: pointer; }
-    .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border-color); object-fit: cover; background-color: #eee; }
-    .user-name-header { font-weight: 600; color: var(--dark-color); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .notification-dot { width: 10px; height: 10px; background-color: var(--accent-color); border-radius: 50%; position: absolute; top: 0; right: 0; border: 1.5px solid white; display: none; }
-    .profile-dropdown { display: none; position: absolute; top: calc(100% + 10px); right: 0; background-color: white; border-radius: var(--border-radius); box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid var(--border-color); z-index: 1010; min-width: 200px; overflow: hidden; list-style: none; padding: 8px 0; }
-    .profile-dropdown a, .profile-dropdown button { display: flex; align-items: center; width: 100%; text-align: left; padding: 10px 18px; color: var(--dark-color); text-decoration: none; font-size: 0.9rem; font-weight: 500; background: none; border: none; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
-    .profile-dropdown a:hover, .profile-dropdown button:hover { background-color: var(--bg-light); color: var(--primary-color); }
-    .profile-dropdown a i, .profile-dropdown button i { margin-right: 12px; color: var(--gray-color); transition: color 0.2s ease; width: 16px; text-align: center; }
-    .profile-dropdown a:hover i, .profile-dropdown button:hover i { color: var(--primary-color); }
-    .dropdown-divider { height: 1px; background-color: var(--border-color); margin: 8px 0; }
-    .lessons-link span { flex-grow: 1; }
-    .lessons-link .notification-dot { position: static; display: inline-block; margin-left: 8px; width: 8px; height: 8px; vertical-align: middle; background-color: var(--accent-color); border-radius: 50%; border: 1px solid white; visibility: hidden; }
-    .lessons-link .notification-dot.visible { visibility: visible; }
-    #signInLink { display: none; /* Hidden by default */ color: var(--primary-color); text-decoration: none; font-weight: 600; padding: 8px 18px; border: 2px solid var(--primary-color); border-radius: 50px; transition: all var(--transition-speed) var(--transition-timing); }
-    #signInLink:hover { background-color: var(--primary-color); color: white; }
-
-    /* --- Page Content Styles (Keep Existing) --- */
+    /* --- Header (Simplified - Logo Only) --- */
+    header.main-header { background-color: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px); box-shadow: none; padding: 0.75rem 2.5rem; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: flex; justify-content: flex-start; align-items: center; height: 70px; border-bottom: 1px solid transparent; transition: background-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease; }
+    body.scrolled header.main-header { background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06); border-bottom: 1px solid var(--border-color); }
+    .header-logo { display: flex; align-items: center; height: 40px; overflow: visible; } .header-logo img { height: 80px; margin-right: 0.8rem; transform: translateY(-7px); } .header-logo span { font-weight: 700; font-size: 1.3rem; color: var(--primary-color); }
+    /* Page Content Wrapper */
     .page-wrapper { width: 100%; padding: 40px 20px; }
+    /* Content Header */
     .content-header { padding: 40px 20px; text-align: center; margin-bottom: 40px; } .titles { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; } .arabic-title { font-family: 'Cairo', sans-serif; font-size: 3.2rem; font-weight: 700; color: var(--primary-color); margin-bottom: 5px; opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s var(--transition-timing) 0.1s forwards; } .english-title { font-size: 1.9rem; font-weight: 600; color: var(--dark-color); letter-spacing: 0.5px; opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s var(--transition-timing) 0.2s forwards; } .intro-text { max-width: 750px; margin: 0 auto; font-size: 1.1rem; line-height: 1.8; color: var(--gray-color); opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s var(--transition-timing) 0.3s forwards; }
+    /* Main Form Area */
     .main-content { padding: 0; max-width: 850px; margin: 0 auto; width: 100%; }
     .form-card { background-color: var(--light-color); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow); border: 1px solid var(--border-color); opacity: 0; transform: translateY(30px); animation: fadeInUp 0.8s var(--transition-timing) 0.4s forwards; } .form-header { background: linear-gradient(135deg, var(--primary-color) 0%, #81adea 100%); padding: 1.8rem 2.5rem; color: var(--light-color); border-bottom: 1px solid rgba(255, 255, 255, 0.2); } .form-title { font-size: 1.6rem; font-weight: 600; } .form-subtitle { font-size: 1rem; opacity: 0.9; margin-top: 8px; } .form-body { padding: 3rem; }
-    /* Form groups, inputs, etc. (unchanged) */
+    /* Input Styles */
+    .input-group { margin-bottom: 2.2rem; position: relative; } .input-group:last-of-type { margin-bottom: 2.5rem; } .input-label { display: block; margin-bottom: 0.8rem; font-weight: 600; color: var(--dark-color); font-size: 1.05rem; } .input-field, .country-dropdown { width: 100%; padding: 1rem 1.2rem; font-size: 1rem; font-family: 'Poppins', sans-serif; background-color: var(--input-bg-color); border: 1px solid var(--border-color); border-radius: 10px; transition: all var(--transition-speed) var(--transition-timing); color: var(--dark-color); } .input-field::placeholder { color: #aab5c4; } .input-field:focus, .country-dropdown:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(90, 141, 238, 0.15); background-color: var(--light-color); } input[type="date"] { color-scheme: light; } input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.6; cursor: pointer; transition: opacity var(--transition-speed); } input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 0.9; }
+    /* Nationality Selection */
+    .nationality-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-top: 0.5rem; } .nationality-option { position: relative; } .nationality-radio { position: absolute; opacity: 0; width: 0; height: 0; } .nationality-label { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.2rem 0.8rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--input-bg-color); cursor: pointer; transition: all var(--transition-speed) var(--transition-timing); height: 100%; } .nationality-label:hover { transform: translateY(-3px); box-shadow: var(--box-shadow-light); border-color: #dce8fa; } .nationality-radio:checked + .nationality-label { border-color: var(--secondary-color); background-color: rgba(61, 220, 151, 0.08); box-shadow: 0 4px 15px rgba(61, 220, 151, 0.15); transform: translateY(-2px); } .nationality-flag { width: 40px; height: 40px; margin-bottom: 1rem; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.1); } .nationality-label svg.nationality-flag { box-shadow: none; } .nationality-name { font-weight: 500; font-size: 0.9rem; text-align: center; color: var(--dark-color); } .country-dropdown { width: 100%; display: none; margin-top: 1.2rem; }
+    /* Gender Selection */
+    .gender-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 0.5rem; } .gender-option { position: relative; } .gender-radio { position: absolute; opacity: 0; width: 0; height: 0; } .gender-label { display: flex; align-items: center; justify-content: center; padding: 1rem; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--input-bg-color); cursor: pointer; transition: all var(--transition-speed) var(--transition-timing); font-weight: 500; font-size: 1rem; text-align: center; height: 100%; } .gender-label:hover { transform: translateY(-3px); box-shadow: var(--box-shadow-light); border-color: #dce8fa; } .gender-radio:checked + .gender-label { border-color: var(--secondary-color); background-color: rgba(61, 220, 151, 0.08); box-shadow: 0 4px 15px rgba(61, 220, 151, 0.15); transform: translateY(-2px); color: var(--primary-color); font-weight: 600; }
+    /* Submit Button */
+    .submit-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 1.1rem; background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: var(--light-color); border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all var(--transition-speed) var(--transition-timing); margin-top: 1.5rem; box-shadow: 0 8px 25px rgba(90, 141, 238, 0.25); } .submit-btn:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(90, 141, 238, 0.35); filter: brightness(1.1); } .submit-btn:active:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(90, 141, 238, 0.2); }
+    /* Validation & Error Messages */
+    .validation-error { color: var(--accent-color); font-size: 0.9rem; font-weight: 500; margin-top: 0.6rem; display: none; padding-left: 5px; }
+    .input-group.error .input-field, .input-group.error .country-dropdown, .input-group.error .nationality-label, .input-group.error .gender-label { border-color: var(--accent-color); }
+    .input-group.error .input-field:focus, .input-group.error .country-dropdown:focus { box-shadow: 0 0 0 3px rgba(255, 99, 71, 0.1); } .input-group.error .validation-error { display: block; }
+    /* Submission Feedback */
+    #submissionFeedback { text-align: center; margin-top: 1rem; font-weight: 500; font-size: 0.95rem; display: none; }
+    #submissionFeedback.success { color: var(--success-color); }
+    #submissionFeedback.error { color: var(--accent-color); }
+    /* Animations */
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
+    /* Responsive Adjustments */
+    @media (max-width: 768px) { .arabic-title { font-size: 2.8rem; } .english-title { font-size: 1.7rem; } .intro-text { font-size: 1.05rem; } .form-card { margin: 0 10px; } .form-body { padding: 2rem; } .nationality-group { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.8rem; } .nationality-label { padding: 1rem 0.5rem; } .nationality-flag { width: 35px; height: 35px; margin-bottom: 0.8rem; } .gender-options { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { body { padding-top: 65px; } header.main-header { padding: 0.75rem 1.5rem; height: 65px; } .page-wrapper { padding: 20px 10px; } .content-header { padding: 25px 10px; margin-bottom: 30px;} .arabic-title { font-size: 2.4rem; } .english-title { font-size: 1.5rem; } .intro-text { font-size: 1rem; } .main-content { max-width: 100%; } .form-header { padding: 1.5rem 1.8rem; } .form-title { font-size: 1.4rem; } .form-body { padding: 1.8rem; } .input-group { margin-bottom: 1.8rem; } .input-label { font-size: 1rem; } .input-field, .country-dropdown { padding: 0.9rem 1rem; font-size: 0.95rem; } .nationality-group { grid-template-columns: repeat(2, 1fr); } .gender-label { padding: 0.9rem; font-size: 0.95rem; } .submit-btn { padding: 1rem; font-size: 1.05rem; } }
+
   </style>
 </head>
 <body>
-  <!-- Header -->
+  <!-- Header (Simplified - Logo only) -->
   <header class="main-header">
-      <a href="Index.html" class="header-logo-link">
-          <div class="header-logo">
-              <img src="https://imgur.com/bXjTJAj.png" alt="Fireship Logo">
-              <span>Fireship</span>
-          </div>
-      </a>
-      <a href="welcome.html?source=signIn" id="signInLink" style="display: none;">Sign In</a>
-      <div class="user-profile-header" id="user-profile-header">
-           <span class="user-name-header" id="userNameHeader">User</span>
-           <img src="placeholder-avatar.png" alt="User Avatar" class="user-avatar" id="userAvatarHeader">
-           <div class="notification-dot" id="notificationDot"></div>
-           <div class="profile-dropdown" id="profileDropdown">
-               <a href="profile.html"><i class="fas fa-user-circle"></i> My Profile</a>
-               <a href="lessons.html" class="lessons-link">
-                   <i class="fas fa-calendar-check"></i>
-                   <span>My Lessons</span>
-                   <span class="notification-dot" id="lessonsNotificationDot"></span>
-               </a>
-               <div class="dropdown-divider"></div>
-               <button id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
-           </div>
+    <div class="header-logo">
+        <img src="https://imgur.com/bXjTJAj.png" alt="Fireship Logo">
+        <span>Fireship</span>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <div class="page-wrapper">
+    <header class="content-header">
+      <div class="titles">
+        <h1 class="arabic-title">عن نفسك</h1>
+        <h2 class="english-title">Tell Us About Yourself</h2>
       </div>
+      <p class="intro-text">
+        Welcome! Just a few more details help us personalize your learning journey. Let's get started! (You must be 18 or older).
+      </p>
     </header>
 
-  <div class="page-wrapper">
-    <!-- Content and form (unchanged structure) -->
+    <main class="main-content">
+      <div class="form-card">
+        <div class="form-header">
+          <h3 class="form-title">Your Information</h3>
+          <p class="form-subtitle">Help us tailor your experience</p>
+        </div>
+
+        <div class="form-body">
+          <!-- No action/method needed, JS handles submission -->
+          <form id="userInfoForm" novalidate>
+            <!-- Name Field -->
+            <div class="input-group" id="name-group">
+              <label for="name" class="input-label">Full Name</label>
+              <input type="text" id="name" name="name" class="input-field" placeholder="Enter your full name" required>
+              <div class="validation-error" id="name-error">Please enter your full name</div>
+            </div>
+
+            <!-- Nationality Field -->
+            <div class="input-group" id="nationality-group">
+              <label class="input-label">Nationality</label>
+              <div class="nationality-group">
+                 <!-- Options -->
+                 <!-- NOTE: The name attribute is nationality_choice for the radio buttons -->
+                <div class="nationality-option"> <input type="radio" id="nationality-sa" name="nationality_choice" value="SA" class="nationality-radio" required> <label for="nationality-sa" class="nationality-label"> <img src="https://flagcdn.com/w80/sa.png" alt="Saudi Arabia flag" class="nationality-flag"> <span class="nationality-name">Saudi Arabia</span> </label> </div>
+                <div class="nationality-option"> <input type="radio" id="nationality-qa" name="nationality_choice" value="QA" class="nationality-radio"> <label for="nationality-qa" class="nationality-label"> <img src="https://flagcdn.com/w80/qa.png" alt="Qatar flag" class="nationality-flag"> <span class="nationality-name">Qatar</span> </label> </div>
+                <div class="nationality-option"> <input type="radio" id="nationality-ae" name="nationality_choice" value="AE" class="nationality-radio"> <label for="nationality-ae" class="nationality-label"> <img src="https://flagcdn.com/w80/ae.png" alt="UAE flag" class="nationality-flag"> <span class="nationality-name">UAE</span> </label> </div>
+                <div class="nationality-option"> <input type="radio" id="nationality-bh" name="nationality_choice" value="BH" class="nationality-radio"> <label for="nationality-bh" class="nationality-label"> <img src="https://flagcdn.com/w80/bh.png" alt="Bahrain flag" class="nationality-flag"> <span class="nationality-name">Bahrain</span> </label> </div>
+                 <div class="nationality-option"> <input type="radio" id="nationality-kw" name="nationality_choice" value="KW" class="nationality-radio"> <label for="nationality-kw" class="nationality-label"> <img src="https://flagcdn.com/w80/kw.png" alt="Kuwait flag" class="nationality-flag"> <span class="nationality-name">Kuwait</span> </label> </div>
+                <div class="nationality-option"> <input type="radio" id="nationality-other" name="nationality_choice" value="other" class="nationality-radio"> <label for="nationality-other" class="nationality-label"> <svg class="nationality-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 40px; height: 40px; color: var(--gray-color);"> <circle cx="12" cy="12" r="10" /> <line x1="12" y1="8" x2="12" y2="16" /> <line x1="8" y1="12" x2="16" y2="12" /> </svg> <span class="nationality-name">Other</span> </label> </div>
+              </div>
+              <!-- Country dropdown - NOTE: name attribute is 'country' -->
+              <select id="country-dropdown" name="country" class="input-field country-dropdown">
+                  <option value="" disabled selected>Please select your country</option>
+                  <!-- Options (Keep existing options) -->
+                   <option value="AF">Afghanistan</option><option value="AL">Albania</option><option value="DZ">Algeria</option><option value="AD">Andorra</option> <option value="AR">Argentina</option> <option value="AU">Australia</option> <option value="AT">Austria</option> <option value="BD">Bangladesh</option> <option value="BE">Belgium</option> <option value="BR">Brazil</option> <option value="BG">Bulgaria</option> <option value="CA">Canada</option> <option value="CL">Chile</option> <option value="CN">China</option> <option value="CO">Colombia</option> <option value="HR">Croatia</option> <option value="CU">Cuba</option> <option value="CZ">Czech Republic</option> <option value="DK">Denmark</option> <option value="EG">Egypt</option> <option value="EE">Estonia</option> <option value="FI">Finland</option> <option value="FR">France</option> <option value="DE">Germany</option> <option value="GR">Greece</option> <option value="HU">Hungary</option> <option value="IS">Iceland</option> <option value="IN">India</option> <option value="ID">Indonesia</option> <option value="IR">Iran</option> <option value="IQ">Iraq</option> <option value="IE">Ireland</option> <option value="IL">Israel</option> <option value="IT">Italy</option> <option value="JM">Jamaica</option> <option value="JP">Japan</option> <option value="JO">Jordan</option> <option value="KZ">Kazakhstan</option> <option value="KE">Kenya</option> <option value="LB">Lebanon</option> <option value="LY">Libya</option> <option value="LT">Lithuania</option> <option value="LU">Luxembourg</option> <option value="MY">Malaysia</option> <option value="MX">Mexico</option> <option value="MD">Moldova</option> <option value="MC">Monaco</option> <option value="MA">Morocco</option> <option value="NL">Netherlands</option> <option value="NZ">New Zealand</option> <option value="NG">Nigeria</option> <option value="KP">North Korea</option> <option value="NO">Norway</option> <option value="OM">Oman</option> <option value="PK">Pakistan</option> <option value="PS">Palestine</option> <option value="PY">Paraguay</option> <option value="PE">Peru</option> <option value="PH">Philippines</option> <option value="PL">Poland</option> <option value="PT">Portugal</option> <option value="RO">Romania</option> <option value="RU">Russia</option> <option value="SG">Singapore</option> <option value="SK">Slovakia</option> <option value="SI">Slovenia</option> <option value="ZA">South Africa</option> <option value="KR">South Korea</option> <option value="ES">Spain</option> <option value="LK">Sri Lanka</option> <option value="SD">Sudan</option> <option value="SE">Sweden</option> <option value="CH">Switzerland</option> <option value="SY">Syria</option> <option value="TW">Taiwan</option> <option value="TH">Thailand</option> <option value="TN">Tunisia</option> <option value="TR">Turkey</option> <option value="UG">Uganda</option> <option value="UA">Ukraine</option> <option value="GB">United Kingdom</option> <option value="US">United States</option> <option value="UY">Uruguay</option> <option value="VE">Venezuela</option> <option value="VN">Vietnam</option> <option value="YE">Yemen</option> <option value="ZM">Zambia</option> <option value="ZW">Zimbabwe</option>
+              </select>
+              <div class="validation-error" id="nationality-error">Please select your nationality</div>
+            </div>
+
+            <!-- Date of Birth Field -->
+            <div class="input-group" id="dob-group">
+              <label for="dob" class="input-label">Date of Birth</label>
+              <input type="date" id="dob" name="dob" class="input-field" required max=" "> <!-- Max date set by JS -->
+              <div class="validation-error" id="dob-error">Please enter a valid date of birth (must be 18+)</div>
+            </div>
+
+            <!-- Gender Selection -->
+            <div class="input-group" id="gender-group">
+              <label class="input-label">Gender</label>
+              <div class="gender-options">
+                 <!-- NOTE: The name attribute is gender -->
+                <div class="gender-option"> <input type="radio" id="gender-male" name="gender" value="male" class="gender-radio" required> <label for="gender-male" class="gender-label">Male</label> </div>
+                <div class="gender-option"> <input type="radio" id="gender-female" name="gender" value="female" class="gender-radio"> <label for="gender-female" class="gender-label">Female</label> </div>
+                <div class="gender-option"> <input type="radio" id="gender-other" name="gender" value="prefer_not" class="gender-radio"> <label for="gender-other" class="gender-label">Prefer not to say</label> </div>
+              </div>
+              <div class="validation-error" id="gender-error">Please select your gender</div>
+            </div>
+
+            <!-- Submission Feedback Area -->
+            <div id="submissionFeedback"></div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submitButton" class="submit-btn">
+                <span class="btn-text">Continue</span>
+                <i class="fas fa-spinner fa-spin btn-loader" style="display: none;"></i>
+                <i class="fas fa-arrow-right btn-icon" style="font-size: 0.9em; margin-left: 5px;"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
   </div>
 
   <!-- JavaScript -->
   <script>
     // --- DOM Elements ---
-    // (same getElement, element refs, etc.)
+    const form = document.getElementById('userInfoForm');
+    const nameInput = document.getElementById('name');
+    const dobInput = document.getElementById('dob');
+    const nationalityRadios = document.querySelectorAll('input[name="nationality_choice"]');
+    const genderRadios = document.querySelectorAll('input[name="gender"]');
+    const otherRadio = document.getElementById('nationality-other');
+    const countryDropdown = document.getElementById('country-dropdown');
+    const submitButton = document.getElementById('submitButton');
+    const submissionFeedback = document.getElementById('submissionFeedback');
 
-    // --- Configuration ---
-    const API_BASE_URL = 'https://api.fireship.org';
+    const nameGroup = document.getElementById('name-group');
+    const nationalityGroup = document.getElementById('nationality-group');
+    const dobGroup = document.getElementById('dob-group');
+    const genderGroup = document.getElementById('gender-group');
 
     // --- Utility Functions ---
-    async function apiRequest(url, options = {}) {
-        const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
-        const opts = { credentials: 'include', ...options };
-        console.debug(`API Req: ${opts.method||'GET'} ${fullUrl}`, opts);
+
+    // Add this line BEFORE the apiRequest function definition
+    const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
+
+    async function apiRequest(url, options = {}) { // Default options to {}
+        const fullUrl = url.startsWith('/') ? API_BASE_URL + url : url; // Use constant
+
+        // Create opts object including credentials
+        const opts = {
+            credentials: 'include', // <-- Add credentials: 'include'
+            ...options, // Merge other passed options
+        };
+
+        console.debug(`API Req: ${opts.method || 'GET'} ${fullUrl}`); // Log method and fullUrl
+
         try {
-            const r = await fetch(fullUrl, opts);
-            if (!r.ok) {
-                let m = `API Error (${r.status})`, d = null;
-                try { d = await r.json(); m = d.message || m; } catch {};
-                console.error(`API Fail: ${r.status}`, d);
-                if (r.status === 401) {
-                    window.location.href = 'welcome.html';
-                    return null;
-                }
-                throw new Error(m);
+            // Use fullUrl and opts in the fetch call
+            const response = await fetch(fullUrl, opts);
+
+            if (!response.ok) {
+                let errorMsg = `Request failed with status: ${response.status}`;
+                try {
+                    // Try to parse error message from backend JSON response
+                    const errorData = await response.json();
+                    errorMsg = errorData.message || errorMsg;
+                } catch (e) { /* Ignore if response body is not JSON */ }
+                // Specific check for 401 within this function or rely on caller?
+                // For now, just throw the error; caller (fetchAndPrefillData) handles 401.
+                console.error(`API Fail: ${response.status} ${response.statusText} @ ${fullUrl}`);
+                throw new Error(errorMsg);
             }
-            const ct = r.headers.get('content-type');
-            if (ct && ct.includes('application/json')) return await r.json();
-            return {};
-        } catch (e) {
-            console.error(`API Exception:`, e);
-            if (e.message.includes('failed to fetch')) throw new Error('Network error.');
-            throw e;
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await response.json();
+                console.debug(`API OK JSON @ ${fullUrl}:`, data);
+                return data;
+            } else {
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${response.status})`);
+                 return {}; // Return empty object if no JSON content (e.g., 204 No Content)
+            }
+        } catch (error) {
+            console.error(`API Excep (${fullUrl}):`, error); // Log fullUrl in exception
+            // Add specific check for network errors
+            if (error.message.toLowerCase().includes('failed to fetch')) {
+                throw new Error("Network error. Please check connection.");
+            }
+            throw error; // Re-throw other errors
         }
     }
 
-    async function handleSignOut() {
+
+    function showLoading(isLoading) {
+        const btnText = submitButton.querySelector('.btn-text');
+        const btnLoader = submitButton.querySelector('.btn-loader');
+        const btnIcon = submitButton.querySelector('.btn-icon');
+
+        if (isLoading) {
+            submitButton.disabled = true;
+            if (btnText) btnText.style.display = 'none';
+            if (btnLoader) btnLoader.style.display = 'inline-block';
+            if (btnIcon) btnIcon.style.display = 'none';
+        } else {
+            submitButton.disabled = false;
+            if (btnText) btnText.style.display = 'inline';
+            if (btnLoader) btnLoader.style.display = 'none';
+            if (btnIcon) btnIcon.style.display = 'inline-block';
+        }
+    }
+
+    function showFeedback(message, isError = false) {
+        if (submissionFeedback) {
+            submissionFeedback.textContent = message;
+            submissionFeedback.className = isError ? 'error' : 'success';
+            submissionFeedback.style.display = 'block';
+        } else {
+            alert(message); // Fallback
+        }
+    }
+
+    function clearFeedback() {
+        if (submissionFeedback) {
+            submissionFeedback.textContent = '';
+            submissionFeedback.style.display = 'none';
+        }
+    }
+
+    // --- Fetch and Pre-fill User Data ---
+    async function fetchAndPrefillData() {
+        console.log("[Prefill] Attempting to fetch existing user profile data...");
         try {
-            await apiRequest('/api/auth/logout', { method: 'POST' });
-            window.location.href = 'welcome.html';
-        } catch (e) {
-            alert(`Sign out failed: ${e.message}`);
+            // Use the updated apiRequest function
+            const userData = await apiRequest('/api/user/profile/about', { method: 'GET' });
+            console.log("[Prefill] Fetched data:", userData);
+
+            // Check if userData is not null and has properties
+            if (userData && Object.keys(userData).length > 0) {
+                if (userData.name) nameInput.value = userData.name;
+
+                // Pre-fill Date of Birth (Check if it's a valid date string first)
+                if (userData.dob && /^\d{4}-\d{2}-\d{2}$/.test(userData.dob)) {
+                    dobInput.value = userData.dob;
+                     console.log("[Prefill] Set DOB to:", userData.dob);
+                } else if (userData.dob) {
+                    console.warn("[Prefill] Received invalid DOB format from backend:", userData.dob);
+                }
+
+
+                // Pre-select Gender
+                if (userData.gender) {
+                    const genderInput = document.querySelector(`input[name="gender"][value="${userData.gender}"]`);
+                    if (genderInput) {
+                        genderInput.checked = true;
+                         console.log("[Prefill] Set Gender to:", userData.gender);
+                    } else {
+                         console.warn("[Prefill] Could not find gender radio for value:", userData.gender);
+                    }
+                }
+
+                // Pre-select Nationality - USE THE CORRECT KEYS FROM BACKEND GET ROUTE
+                if (userData.nationality_choice) {
+                    const natChoiceValue = userData.nationality_choice; // e.g., 'SA' or 'other'
+                    const countryValue = userData.country; // e.g., 'US' or null
+
+                    const nationalityInput = document.querySelector(`input[name="nationality_choice"][value="${natChoiceValue}"]`);
+
+                    if (nationalityInput) {
+                        nationalityInput.checked = true;
+                        console.log(`[Prefill] Checked nationality radio: ${natChoiceValue}`);
+
+                        if (natChoiceValue === 'other' && countryValue) {
+                            countryDropdown.value = countryValue;
+                            console.log(`[Prefill] Set country dropdown to: ${countryValue}`);
+                            toggleCountryDropdown(true); // Show the dropdown
+                        } else {
+                            toggleCountryDropdown(false); // Hide dropdown for non-'other'
+                        }
+                    } else {
+                         console.warn(`[Prefill] Could not find nationality radio for value: ${natChoiceValue}`);
+                         toggleCountryDropdown(false); // Ensure dropdown hidden if radio not found
+                    }
+                } else {
+                     console.log("[Prefill] No nationality_choice data received from backend.");
+                     toggleCountryDropdown(false);
+                }
+
+                 console.log("[Prefill] Form pre-filled with existing data.");
+            } else {
+                console.log("[Prefill] No existing profile data found or empty response.");
+                  toggleCountryDropdown(false);
+            }
+        } catch (error) {
+            console.warn("[Prefill] Could not fetch existing profile data:", error.message);
+            // If 401 Unauthorized, redirect to login
+            if (error.message.includes('401') || error.message.includes('Not authenticated') || error.message.includes('session')) { // Check for 401 or session related errors
+               console.log("Unauthorized access or session issue, redirecting to welcome page.");
+               window.location.href = 'welcome.html';
+               return; // Stop further execution
+            }
+             // Ensure dropdown is hidden on other errors too
+            toggleCountryDropdown(false);
         }
     }
 
-    // All other JS (header setup, form handlers, etc.) remains unchanged,
-    // now using the updated apiRequest that includes credentials.
+    // --- Form Handling Logic ---
+    function setupFormHandlers() {
+         // --- Nationality Change Listener ---
+        function toggleCountryDropdown(show) {
+            if (show) {
+                countryDropdown.style.display = 'block';
+                countryDropdown.setAttribute('required', 'required');
+                countryDropdown.disabled = false;
+            } else {
+                countryDropdown.style.display = 'none';
+                countryDropdown.removeAttribute('required');
+                countryDropdown.disabled = true;
+                countryDropdown.value = "";
+            }
+        }
+
+        nationalityRadios.forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                 console.log(`Nationality changed: ${event.target.id} (Value: ${event.target.value})`);
+                toggleCountryDropdown(otherRadio.checked);
+                clearError(nationalityGroup);
+            });
+        });
+
+         // --- Event Listeners to Clear Errors on Input/Change ---
+         nameInput.addEventListener('input', () => clearError(nameGroup));
+         dobInput.addEventListener('input', () => clearError(dobGroup));
+         countryDropdown.addEventListener('change', () => clearError(nationalityGroup));
+         genderRadios.forEach(radio => radio.addEventListener('change', () => clearError(genderGroup)));
+
+        // --- Form Submission ---
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log("Form submission initiated.");
+            clearFeedback();
+
+            if (validateForm()) {
+                console.log("Form validation successful.");
+                showLoading(true);
+
+                const selectedNationalityRadio = document.querySelector('input[name="nationality_choice"]:checked');
+                const selectedGenderRadio = document.querySelector('input[name="gender"]:checked');
+
+                const natChoiceValue = selectedNationalityRadio ? selectedNationalityRadio.value : null;
+                const genderValue = selectedGenderRadio ? selectedGenderRadio.value : null;
+
+                const formData = {
+                    name: nameInput.value.trim(),
+                    nationality_choice: natChoiceValue,
+                    country: (natChoiceValue === 'other') ? countryDropdown.value : null,
+                    dob: dobInput.value,
+                    gender: genderValue
+                };
+
+                console.log('Submitting data to backend:', JSON.stringify(formData));
+
+                try {
+                    // Use the updated apiRequest function
+                    await apiRequest('/api/user/profile/about', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(formData)
+                    });
+
+                    console.log("Data submitted successfully to backend.");
+                    window.location.href = "learningstyle.html";
+
+                } catch (error) {
+                    console.error("Backend submission failed:", error);
+                    // Check for 401/session errors during POST as well
+                    if (error.message.includes('401') || error.message.includes('Not authenticated') || error.message.includes('session')) {
+                         showFeedback("Your session may have expired. Please log in again.", true);
+                         // Optionally redirect after a delay
+                         setTimeout(() => { window.location.href = 'welcome.html'; }, 3000);
+                    } else {
+                         showFeedback(`Error saving data: ${error.message}`, true);
+                    }
+                    showLoading(false);
+                }
+
+            } else {
+                 console.log("Form validation failed.");
+                 showFeedback("Please fix the errors highlighted above.", true);
+                 const firstError = form.querySelector('.input-group.error');
+                 if (firstError) {
+                     firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                 }
+            }
+        });
+
+        // --- Validation Function ---
+        function validateForm() {
+             console.log("Running form validation...");
+            let isValid = true;
+            clearError(nameGroup);
+            clearError(nationalityGroup);
+            clearError(dobGroup);
+            clearError(genderGroup);
+
+            if (nameInput.value.trim() === '') {
+                showError(nameGroup, 'name-error', 'Please enter your full name');
+                isValid = false;
+                 console.log("Validation failed: Name empty");
+            }
+
+            const selectedNationality = document.querySelector('input[name="nationality_choice"]:checked');
+            if (!selectedNationality) {
+                showError(nationalityGroup, 'nationality-error', 'Please select your nationality');
+                isValid = false;
+                 console.log("Validation failed: No nationality selected");
+            } else if (selectedNationality.value === 'other') {
+                 if (!countryDropdown.value) {
+                    showError(nationalityGroup, 'nationality-error', 'Please select your country from the list');
+                    isValid = false;
+                     console.log("Validation failed: Nationality 'other' selected but no country chosen");
+                }
+            }
+
+            if (!dobInput.value) {
+                showError(dobGroup, 'dob-error', 'Please enter your date of birth');
+                isValid = false;
+                 console.log("Validation failed: DOB empty");
+            } else {
+                try {
+                    const dob = new Date(dobInput.value);
+                     if (isNaN(dob.getTime())) {
+                        throw new Error("Invalid date format");
+                     }
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+
+                    if (dob > today) {
+                        showError(dobGroup, 'dob-error', 'Date of birth cannot be in the future');
+                        isValid = false;
+                         console.log("Validation failed: DOB in future");
+                    } else {
+                        const date18YearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+                        if (dob > date18YearsAgo) {
+                            showError(dobGroup, 'dob-error', 'You must be at least 18 years old.');
+                            isValid = false;
+                             console.log("Validation failed: Under 18");
+                        }
+                    }
+                } catch (e) {
+                    showError(dobGroup, 'dob-error', 'Please enter a valid date format (YYYY-MM-DD)');
+                    isValid = false;
+                     console.log("Validation failed: Invalid DOB format", e.message);
+                }
+            }
+
+            if (!document.querySelector('input[name="gender"]:checked')) {
+                showError(genderGroup, 'gender-error', 'Please select your gender');
+                isValid = false;
+                 console.log("Validation failed: No gender selected");
+            }
+
+             console.log("Validation result:", isValid);
+            return isValid;
+        }
+
+        // --- Helper Functions for Error Display ---
+        function showError(groupElement, errorElementId, message) {
+             if(groupElement) groupElement.classList.add('error');
+             const errorElement = document.getElementById(errorElementId);
+             if(errorElement) {
+                 errorElement.textContent = message;
+                 errorElement.style.display = 'block';
+             }
+        }
+        function clearError(groupElement) {
+            if (groupElement) {
+                groupElement.classList.remove('error');
+                const errorElement = groupElement.querySelector('.validation-error');
+                if(errorElement) {
+                    errorElement.style.display = 'none';
+                    errorElement.textContent = '';
+                }
+            }
+        }
+
+    } // End setupFormHandlers
+
+    // --- Initial Page Setup ---
+    window.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM Content Loaded for aboutyourself.html");
+        setDobMaxDate();
+        setupHeaderScroll();
+        setupFormHandlers();
+        fetchAndPrefillData(); // Now uses updated apiRequest
+        applyEntranceAnimations();
+    }); // End DOMContentLoaded
+
+    // --- Helper Functions ---
+    function setDobMaxDate() { const dobInput = document.getElementById('dob'); if (dobInput) { const today = new Date(); const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()); const maxDateStr = eighteenYearsAgo.toISOString().split("T")[0]; dobInput.max = maxDateStr; console.log("Set DOB max date to:", maxDateStr); } }
+    function setupHeaderScroll() { window.addEventListener('scroll', function() { document.body.classList.toggle('scrolled', window.scrollY > 30); }, { passive: true }); }
+    function applyEntranceAnimations() { document.querySelectorAll('.content-header, .form-card').forEach((el, index) => { el.style.opacity = '0'; el.style.transform = 'translateY(30px)'; el.style.animation = `fadeInUp 0.8s ease-out ${0.1 + index * 0.15}s forwards`; }); }
 
   </script>
 </body>
