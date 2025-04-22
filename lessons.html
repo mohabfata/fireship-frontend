@@ -11,7 +11,7 @@
   <style>
     /* --- Base Style Variables --- */
      :root {
-      --primary-color: #4361ee; --accent-color: #3a0ca3; --light-color: #f8f9fa; --dark-color: #212529; --success-color: #4cc9f0; --danger-color: #f72585; --border-radius: 8px; --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); --border-color: #e9ecef; --transition-speed: 0.3s; --transition-timing: cubic-bezier(0.4, 0, 0.2, 1); /* Added danger color */
+      --primary-color: #4361ee; --accent-color: #3a0ca3; --light-color: #f8f9fa; --dark-color: #212529; --success-color: #4cc9f0; --danger-color: #f72585; --border-radius: 8px; --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); --border-color: #e9ecef; --transition-speed: 0.3s; --transition-timing: cubic-bezier(0.4, 0, 0.2, 1); /* Added danger color */ --bg-light: #f8faff; /* Added from profile */ --gray-color: #8492a6; /* Added from profile */
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Poppins', sans-serif; background: linear-gradient(to bottom, #ffffff, #eaf2ff); min-height: 100vh; color: var(--dark-color); padding: 0; margin: 0; padding-top: 70px; /* Increased padding for taller header */ }
@@ -20,7 +20,7 @@
     header.main-header {
         background-color: white; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); padding: 0 2rem; /* Adjusted padding */ position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: flex; justify-content: space-between; /* Space between logo and profile */ align-items: center; height: 70px; /* Standard height */ border-bottom: 1px solid var(--border-color);
     }
-     body.scrolled header.main-header { background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06); }
+     body.scrolled header.main-header { background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06); backdrop-filter: blur(10px); }
 
     /* Logo Area */
     .header-logo-link { display: flex; align-items: center; text-decoration: none; height: 100%; } /* Make logo clickable */
@@ -54,14 +54,15 @@
     .lessons-list { display: flex; flex-direction: column; gap: 1rem; min-height: 150px; position: relative; }
     .list-loading-spinner { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 40px; height: 40px; border: 4px solid var(--border-color); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; display: none; }
     @keyframes spin { 0% { transform: translateX(-50%) rotate(0deg); } 100% { transform: translateX(-50%) rotate(360deg); } }
-    .lesson-card { background-color: var(--light-color); border-radius: var(--border-radius); padding: 1.5rem; transition: transform 0.3s, box-shadow 0.3s; border-left: 4px solid var(--primary-color); display: flex; justify-content: space-between; border: 1px solid var(--border-color); opacity: 0; animation: fadeIn 0.5s ease forwards; }
+    .lesson-card { background-color: var(--light-color); border-radius: var(--border-radius); padding: 1.5rem; transition: transform 0.3s, box-shadow 0.3s; border-left: 4px solid var(--primary-color); display: flex; justify-content: space-between; border: 1px solid var(--border-color); opacity: 0; animation: fadeIn 0.5s ease forwards; align-items: center; flex-wrap: wrap; gap: 1rem;}
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .lesson-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08); }
+    .lesson-details { flex-grow: 1; min-width: 200px; }
     .lesson-details h3 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--dark-color); font-weight: 600; }
     .lesson-details p { color: #6c757d; margin-bottom: 0.5rem; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
     .lesson-details p i { color: var(--primary-color); width: 14px; text-align: center; }
     .lesson-details .teacher { display: flex; align-items: center; font-size: 0.85rem; margin-top: 0.8rem; }
-    .teacher-avatar { width: 24px; height: 24px; border-radius: 50%; margin-right: 0.75rem; border: 1px solid var(--border-color); background-color: #eee; }
+    .teacher-avatar { width: 24px; height: 24px; border-radius: 50%; margin-right: 0.75rem; border: 1px solid var(--border-color); background-color: #eee; object-fit: cover; }
     .lesson-actions { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap; /* Allow buttons to wrap */ }
     .btn { background-color: white; color: var(--primary-color); border: 1px solid var(--primary-color); padding: 8px 12px; border-radius: var(--border-radius); cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 0.85rem; transition: all 0.3s; display: inline-flex; align-items: center; text-decoration: none; }
     .btn i { margin-right: 6px; }
@@ -77,8 +78,8 @@
     .empty-state p, .error-state p { margin-bottom: 1.5rem; }
     .error-state p { color: var(--danger-color); }
     /* Responsive */
-     @media (max-width: 768px) { body { padding-top: 70px; } header.main-header{ height: 70px; padding: 0 1.5rem;} .lessons-page-container { margin: 20px; padding: 1.5rem; } .page-title { font-size: 1.6rem; margin-bottom: 1.5rem; } .lesson-card { flex-direction: column; gap: 1rem; } .lesson-actions { margin-top: 1rem; justify-content: flex-start; } }
-     @media (max-width: 480px) { .lesson-actions { flex-wrap: wrap; justify-content: flex-start; } .btn { width: auto; /* Allow natural width */ margin-bottom: 5px; } }
+     @media (max-width: 768px) { body { padding-top: 70px; } header.main-header{ height: 70px; padding: 0 1.5rem;} .lessons-page-container { margin: 20px; padding: 1.5rem; } .page-title { font-size: 1.6rem; margin-bottom: 1.5rem; } .lesson-card { flex-direction: column; gap: 1rem; align-items: flex-start; } .lesson-actions { margin-top: 1rem; justify-content: flex-start; width: 100%; } }
+     @media (max-width: 480px) { .lesson-actions { flex-wrap: wrap; justify-content: flex-start; } .btn { width: auto; /* Allow natural width */ margin-bottom: 5px; flex-basis: calc(50% - 5px); /* Roughly two buttons per row */ text-align: center; justify-content: center; } }
 
   </style>
 </head>
@@ -153,61 +154,63 @@
     // Add this line BEFORE the apiRequest function definition
     const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
 
-    async function apiRequest(url, options) {
-         // Construct the full URL if the provided URL starts with '/'
-         const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
-         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+    async function apiRequest(url, options = {}) { // Default options to {}
+         const fullUrl = url.startsWith('/') ? API_BASE_URL + url : url; // Use constant
+
+         // Create opts object including credentials
+         const opts = {
+             credentials: 'include', // <-- Add credentials: 'include'
+             ...options, // Merge other passed options
+         };
+
+         console.debug(`API Req: ${opts.method || 'GET'} ${fullUrl}`); // Log method and fullUrl
+
          try {
-             // Use fullUrl in the fetch call
-             const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+             // Use fullUrl and opts in the fetch call
+             const r = await fetch(fullUrl, opts);
 
              if (!r.ok) {
                  let errorMsg = `API Error (${r.status})`;
                  let errorData = null;
-                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
-                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore */ }
+                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData);
 
                  // Specific 401 handling for this page (redirect to welcome)
-                 if (r.status === 401) { // Check specific status
+                 if (r.status === 401) {
                      console.warn("API 401 -> Welcome");
                      window.location.href = 'welcome.html';
-                     return null; // Return null to signal a redirect or halt further processing
+                     return null; // Signal redirect
                  }
-                 // Throw a formatted error for other non-ok statuses
                  throw new Error(errorData?.message || `Request failed: ${r.status}`);
              }
 
-             // Check content type before trying to parse JSON
              const ct = r.headers.get("content-type");
              if (ct?.includes("application/json")) {
                  const d = await r.json();
-                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                 console.debug(`API OK JSON @ ${fullUrl}:`, d);
                  return d;
              } else {
-                 // Handle non-JSON success responses (like 204 No Content or other types)
-                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
-                 // Return an empty object as the original function did
-                 return {};
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`);
+                 return {}; // Return empty object for non-JSON OK
              }
-         } catch (e) { // Error handling
-              console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
-              // Check for network errors (e.g., "Failed to fetch")
+         } catch (e) {
+              console.error(`API Excep (${fullUrl}):`, e);
               if (e.message.toLowerCase().includes('failed to fetch')) {
                   throw new Error("Network error.");
               }
-              // Re-throw original error (could be the custom error from !r.ok or the network error)
               throw e;
          }
     }
 
-    function showLoadingState(isLoading) { /* ... Keep existing ... */ if (loadingSpinner) loadingSpinner.style.display = isLoading ? 'block' : 'none'; if (!isLoading) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
-    function displayLessons(lessons) { /* ... Keep existing ... */ if (!lessonsListContainer) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (lessons?.length > 0) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; lessons.sort((a, b) => new Date(a.utcStartTime) - new Date(b.utcStartTime)); lessons.forEach((lesson, index) => { const lessonCard = createLessonCardElement(lesson); lessonCard.style.animationDelay = `${index * 0.05}s`; lessonsListContainer.appendChild(lessonCard); }); } else { if (emptyStateDiv) emptyStateDiv.style.display = 'block'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
-    function displayErrorState() { /* ... Keep existing ... */ if (!lessonsListContainer) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'block'; }
-    function createLessonCardElement(lesson) { /* ... Keep existing ... */ const card = document.createElement('div'); card.className = 'lesson-card animate-in'; card.dataset.lessonId = lesson.id; const startTime = new Date(lesson.utcStartTime); const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 20) * 60 * 1000); const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }; const formattedDate = startTime.toLocaleDateString(undefined, dateOptions); const formattedStartTime = startTime.toLocaleTimeString(undefined, timeOptions); const formattedEndTime = endTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); card.innerHTML = `<div class="lesson-details"><h3>${lesson.title || 'Personalized Session'}</h3><p><i class="far fa-calendar-alt"></i> ${formattedDate}</p><p><i class="far fa-clock"></i> ${formattedStartTime} - ${formattedEndTime}</p><div class="teacher"><img class="teacher-avatar" src="${lesson.instructor?.avatarUrl || 'placeholder-avatar.png'}" alt="Teacher" onerror="this.onerror=null; this.src='placeholder-avatar.png';"><span>${lesson.instructor?.name || 'To be decided'}</span></div></div><div class="lesson-actions"><button class="btn" onclick="rescheduleLesson('${lesson.id}')"><i class="fas fa-edit"></i> Reschedule</button><a href="confirmation.html?lessonId=${lesson.id}" class="btn btn-secondary"><i class="fas fa-video"></i> Join/View</a><button class="btn btn-danger" onclick="cancelLesson('${lesson.id}')"><i class="fas fa-times-circle"></i> Cancel</button></div>`; return card; }
-    function rescheduleLesson(lessonId) { /* ... Keep existing ... */ console.log("Reschedule lesson:", lessonId); alert(`Rescheduling requires integration.`); }
-    async function cancelLesson(lessonId) { /* ... Keep existing ... */ console.log("Cancel lesson:", lessonId); if (confirm(`Are you sure you want to cancel lesson ${lessonId}? This action cannot be undone.`)) { alert(`Lesson cancellation requires backend integration.`); /* try { showButtonLoading(event.target, true); // Need event passed or find button await apiRequest(`/api/lessons/${lessonId}/cancel`, { method: 'POST' }); showFeedback('Lesson cancelled successfully.', false); fetchAndDisplayLessons(); // Refresh list } catch (error) { console.error('Error cancelling lesson:', error); showFeedback(`Failed to cancel: ${error.message}`, true); } finally { // showButtonLoading(event.target, false); } */ } }
 
-    // --- NEW Header Logic (Copied & Adapted from Index.html - Keep Existing) ---
+    function showLoadingState(isLoading) { if (loadingSpinner) loadingSpinner.style.display = isLoading ? 'block' : 'none'; if (!isLoading) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
+    function displayLessons(lessons) { if (!lessonsListContainer) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (lessons?.length > 0) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; lessons.sort((a, b) => new Date(a.utcStartTime) - new Date(b.utcStartTime)); lessons.forEach((lesson, index) => { const lessonCard = createLessonCardElement(lesson); lessonCard.style.animationDelay = `${index * 0.05}s`; lessonsListContainer.appendChild(lessonCard); }); } else { if (emptyStateDiv) emptyStateDiv.style.display = 'block'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
+    function displayErrorState() { if (!lessonsListContainer) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'block'; }
+    function createLessonCardElement(lesson) { const card = document.createElement('div'); card.className = 'lesson-card animate-in'; card.dataset.lessonId = lesson.id; const startTime = new Date(lesson.utcStartTime); const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 20) * 60 * 1000); const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }; const formattedDate = startTime.toLocaleDateString(undefined, dateOptions); const formattedStartTime = startTime.toLocaleTimeString(undefined, timeOptions); const formattedEndTime = endTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); card.innerHTML = `<div class="lesson-details"><h3>${lesson.title || 'Personalized Session'}</h3><p><i class="far fa-calendar-alt"></i> ${formattedDate}</p><p><i class="far fa-clock"></i> ${formattedStartTime} - ${formattedEndTime}</p><div class="teacher"><img class="teacher-avatar" src="${lesson.instructor?.avatarUrl || 'placeholder-avatar.png'}" alt="Teacher" onerror="this.onerror=null; this.src='placeholder-avatar.png';"><span>${lesson.instructor?.name || 'To be decided'}</span></div></div><div class="lesson-actions"><button class="btn" onclick="rescheduleLesson('${lesson.id}')"><i class="fas fa-edit"></i> Reschedule</button><a href="confirmation.html?lessonId=${lesson.id}" class="btn btn-secondary"><i class="fas fa-video"></i> Join/View</a><button class="btn btn-danger" onclick="cancelLesson('${lesson.id}')"><i class="fas fa-times-circle"></i> Cancel</button></div>`; return card; }
+    function rescheduleLesson(lessonId) { console.log("Reschedule lesson:", lessonId); alert(`Rescheduling requires integration.`); }
+    async function cancelLesson(lessonId) { console.log("Cancel lesson:", lessonId); if (confirm(`Are you sure you want to cancel lesson ${lessonId}? This action cannot be undone.`)) { alert(`Lesson cancellation requires backend integration.`); /* try { showButtonLoading(event.target, true); // Need event passed or find button await apiRequest(`/api/lessons/${lessonId}/cancel`, { method: 'POST' }); showFeedback('Lesson cancelled successfully.', false); fetchAndDisplayLessons(); // Refresh list } catch (error) { console.error('Error cancelling lesson:', error); showFeedback(`Failed to cancel: ${error.message}`, true); } finally { // showButtonLoading(event.target, false); } */ } }
+
+    // --- NEW Header Logic ---
     function updateHeaderUI(userData, hasBooking) {
          if (userData && userProfileHeader && userNameHeader && userAvatarHeader && signInLink) {
              signInLink.style.display = 'none';
@@ -281,14 +284,16 @@
                  // This case might happen if the status endpoint returns OK but no user (e.g., session exists but user data missing)
                  console.log("[Header Auth Check] User status received but no user data.");
                  updateHeaderUI(null, false); // Treat as logged out
-                  // Potentially redirect here too if this state is invalid for the lessons page
-                  // window.location.href = 'welcome.html';
+                 // Redirect if not logged in for lessons page
+                 console.warn("User not logged in on lessons page. Redirecting...");
+                 window.location.href = 'welcome.html';
              }
          } catch (error) {
               console.warn("[Header Auth Check] Could not fetch user status:", error.message);
               updateHeaderUI(null, false); // Assume logged out on error, show Sign In
                // Redirect here if auth error means user cannot see lessons page
-               // window.location.href = 'welcome.html';
+                console.error("Auth check failed. Redirecting...");
+                window.location.href = 'welcome.html';
          }
      }
      // --- End NEW Header Logic ---
@@ -302,6 +307,7 @@
             await checkAuthAndSetupHeader();
 
             // Fetch lessons (will redirect via apiRequest if not authenticated)
+            // Use updated apiRequest
             const response = await apiRequest('/api/user/lessons', { method: 'GET' });
             if (response === null) return; // Stop if redirected by checkAuth or apiRequest
 
@@ -321,7 +327,7 @@
     // --- Initialization ---
      window.addEventListener('DOMContentLoaded', function() {
         console.log("Lessons Page DOM Loaded");
-        fetchAndDisplayLessons(); // Fetch lessons AND setup header
+        fetchAndDisplayLessons(); // Fetch lessons AND setup header (uses updated apiRequest)
         setupDropdown(); // Setup dropdown click listener
         if(signOutBtn) {
              signOutBtn.addEventListener('click', handleSignOut); // Setup signout listener
@@ -342,6 +348,6 @@
          return el;
      }
 
-  </script> 
+  </script>
 </body>
 </html>
