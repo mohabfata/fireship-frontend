@@ -499,7 +499,7 @@
 
         } catch (error) {
             console.error("[Fetch] Error during profile page data fetch:", error.message);
-            // If the error is NOT a redirect (handled by apiRequest/checkAuth) show an error state
+            // If the error is NOT a redirect (handled by apiRequest/checkAuth) show an error states
              if (window.location.pathname.includes('profile.html')) { // Check if we are still on the profile page
                 if (!profileData) { // Check if profile data failed to load
                      console.log("[Fetch] Displaying profile fetch error state.");
