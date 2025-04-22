@@ -460,52 +460,54 @@
         // Add this line BEFORE the apiRequest function definition
         const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
 
-        async function apiRequest(url, options) {
-             // Construct the full URL if the provided URL starts with '/'
-             const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
-             console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+        async function apiRequest(url, options = {}) { // Default options to {}
+             const fullUrl = url.startsWith('/') ? API_BASE_URL + url : url; // Use constant
+
+             // Create opts object including credentials
+             const opts = {
+                 credentials: 'include', // <-- Add credentials: 'include'
+                 ...options, // Merge other passed options
+             };
+
+             console.debug(`API Req: ${opts.method || 'GET'} ${fullUrl}`); // Log method and fullUrl
+
              try {
-                 // Use fullUrl in the fetch call
-                 const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+                 // Use fullUrl and opts in the fetch call
+                 const r = await fetch(fullUrl, opts);
 
                  if (!r.ok) {
                      let errorMsg = `API Error (${r.status})`;
                      let errorData = null;
-                     try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
+                     try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore */ }
                      console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
 
                      // Specific 401 handling for booking page (redirect to welcome)
-                     if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) { // Avoid redirect loop on logout
+                     if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) {
                          console.warn("API 401 -> Welcome");
                          window.location.href = 'welcome.html';
-                         return null; // Return null to signal a redirect or halt further processing
+                         return null; // Signal redirect
                      }
-                     // Throw a formatted error
                      throw new Error(errorData?.message || `Request failed: ${r.status}`);
                  }
 
-                 // Check content type before trying to parse JSON
                  const ct = r.headers.get("content-type");
                  if (ct?.includes("application/json")) {
                      const d = await r.json();
                      console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
                      return d;
                  } else {
-                     // Handle non-JSON success responses (like 204 No Content or other types)
                      console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
-                     // Return an empty object or a success indicator if needed by calling code
-                     return { success: true }; // Or return {}; if preferred
+                     return { success: true }; // Indicate success for non-JSON OK
                  }
-             } catch (e) { // Error handling
-                  console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
-                  // Check for network errors (e.g., "Failed to fetch")
+             } catch (e) {
+                  console.error(`API Excep (${fullUrl}):`, e); // Log fullUrl
                   if (e.message.toLowerCase().includes('failed to fetch')) {
                       throw new Error("Network error.");
                   }
-                  // Re-throw original error (could be the custom error from !r.ok or the network error)
                   throw e;
              }
         }
+
         function showButtonLoading(b, l) { if(!b)return; const t=b.querySelector('.btn-text'); const o=b.querySelector('.btn-loader'); b.disabled=l; b.classList.toggle('loading',l); if(t)t.style.display=l?'none':'inline'; if(o)o.style.display=l?'inline-block':'none'; }
         function showModalFeedback(m, e=false) { if (!els.modalFeedback) return; els.modalFeedback.textContent = m; els.modalFeedback.className = e ? 'error' : ''; els.modalFeedback.style.display = 'block'; }
         function clearModalFeedback() { if (!els.modalFeedback) return; els.modalFeedback.textContent = ''; els.modalFeedback.style.display = 'none'; }
@@ -552,44 +554,42 @@
         async function handleSignOut() {
             console.log("Signing out...");
             try {
+                // Use updated apiRequest
                 const result = await apiRequest('/api/auth/logout', { method: 'POST' });
-                 if (result === null) return; // Redirect should have happened in apiRequest
-                // Fallback redirect if apiRequest didn't handle it
+                 if (result === null) return; // Redirect should have happened
                 window.location.href = 'welcome.html';
             } catch (error) {
                 console.error("Sign out failed:", error);
-                // Avoid alert if it was a redirect signal
                 if (error.message !== "Redirecting") {
                    alert(`Sign out failed: ${error.message}`);
                 }
             }
         }
-        async function checkAuthAndSetupHeader() { // Renamed to avoid conflict with checkUserStatus
+        async function checkAuthAndSetupHeader() {
             console.log("[Header Auth Check] Checking...");
             try {
+                 // Use updated apiRequest
                 const status = await apiRequest('/api/user/status', { method: 'GET' });
-                if (status === null) return null; // Redirect happened or fatal API error, signal to stop init
+                if (status === null) return null; // Redirect happened or fatal API error
 
                 if (status && status.user) {
                     console.log("[Header Auth Check] User logged in:", status.user);
                     updateHeaderUI(status.user, status.hasBooking || false);
-                    return status; // Return status for checkUserStatus to use
+                    return status;
                 } else {
                     console.log("[Header Auth Check] User not logged in.");
                     updateHeaderUI(null, false);
-                    // If not logged in, booking page should likely redirect or show a message
                     setOverlay(true, `Please <a href="welcome.html?source=signIn" style="font-weight:600;color:var(--primary-color);">Sign In</a> to book.`);
                     if(els.bookButton) els.bookButton.disabled = true;
                     if(els.prevMonthBtn) els.prevMonthBtn.disabled = true;
                     if(els.nextMonthBtn) els.nextMonthBtn.disabled = true;
-                    return null; // Indicate not logged in
+                    return null;
                 }
             } catch (error) {
                 console.warn("[Header Auth Check] Failed:", error.message);
-                 // Don't alert here, just update UI and log
                  updateHeaderUI(null, false);
                  setOverlay(true, `Authentication Error. Please try refreshing. <br><small>(${error.message})</small>`);
-                 return null; // Indicate error
+                 return null;
             }
         }
 
@@ -598,10 +598,9 @@
             console.log("[Booking Status Check] Using initial status:", initialStatus);
             setOverlay(true, 'Checking booking status...');
             try {
-                // Use the status already fetched by the header check if available
+                 // Use updated apiRequest (will be called if initialStatus is null)
                 const status = initialStatus || await apiRequest('/api/user/status', { method: 'GET' });
-                if (status === null) { // Redirect or major error happened
-                    // Overlay message should be set by checkAuthAndSetupHeader or apiRequest
+                if (status === null) {
                     throw new Error("User status check failed or redirected.");
                 }
 
@@ -609,57 +608,64 @@
                 console.log("[Booking Status Check] Received:", status, "Has booking:", hasBooking);
 
                 if (hasBooking) {
-                    setOverlay(true, `Session booked. <a href="lessons.html" style="font-weight:600;color:var(--primary-color);">View Lesson</a>`); // Link to lessons.html
+                    setOverlay(true, `Session booked. <a href="lessons.html" style="font-weight:600;color:var(--primary-color);">View Lesson</a>`);
                     if (els.bookButton) els.bookButton.disabled = true;
-                    // Disable calendar nav if booked
                      if(els.prevMonthBtn) els.prevMonthBtn.disabled = true;
                      if(els.nextMonthBtn) els.nextMonthBtn.disabled = true;
                 } else {
-                     // Check if profile setup is complete before allowing booking
                      if (!status.setupComplete?.about || !status.setupComplete?.learningStyle || !status.setupComplete?.proficiency) {
                          console.log("[Booking Status Check] Profile setup incomplete.");
                          setOverlay(true, `Please complete your profile setup first.<br><a href="aboutyourself.html" style="font-weight:600;color:var(--primary-color);">Go to Profile Setup</a>`);
                          if (els.bookButton) els.bookButton.disabled = true;
                          if (els.prevMonthBtn) els.prevMonthBtn.disabled = true;
                          if (els.nextMonthBtn) els.nextMonthBtn.disabled = true;
-                         return false; // Indicate user cannot proceed with booking yet
+                         return false;
                      } else {
-                         setOverlay(false); // Setup complete, remove overlay
-                         if (els.bookButton) els.bookButton.disabled = true; // Disabled until time selected
+                         setOverlay(false);
+                         if (els.bookButton) els.bookButton.disabled = true;
                          console.log("[Booking Status Check] User can book.");
-                         // Enable calendar nav if not booked (renderCalendar will handle limits)
                          if(els.prevMonthBtn) els.prevMonthBtn.disabled = false;
                          if(els.nextMonthBtn) els.nextMonthBtn.disabled = false;
                      }
                 }
-                 return true; // Indicate status check was successful (even if booked or setup needed)
+                 return true;
 
             } catch (e) {
                 console.error("[Booking Status Check] Failed:", e);
-                // Don't show overlay if it was handled by auth check already
                 if (!els.calendarDisabledOverlay.classList.contains('visible')) {
                      setOverlay(true, `Could not verify booking status. Refresh. <br><small>(${e.message})</small>`);
                 }
                 if (els.bookButton) els.bookButton.disabled = true;
                 if (els.prevMonthBtn) els.prevMonthBtn.disabled = true;
                 if (els.nextMonthBtn) els.nextMonthBtn.disabled = true;
-                 return false; // Indicate failure
+                 return false;
             }
         }
-        async function fetchMonthStatus(y, m) { /* (Keep existing function) */ if (!y||m===undefined||m<0||m>11) return {}; const k=`${y}-${String(m+1).padStart(2,'0')}`; if (monthStatusCache[k]) { console.debug(`[Month Status] Cache hit: ${k}.`); return monthStatusCache[k]; } console.log(`[Month Status] Fetching ${k}...`); if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='block'; if(els.calendarDays) els.calendarDays.classList.add('loading'); try { const d = await apiRequest(`/api/booking/month-status?year=${y}&month=${m+1}`, {method:'GET'}); if(d===null) return {}; const s=d.dayStatus||{}; monthStatusCache[k]=s; console.log(`[Month Status] Received for ${k}.`); return s; } catch (e) { console.error(`[Month Status] Error for ${k}:`, e); if(els.monthTitle) els.monthTitle.textContent="Load Error"; return {}; } finally { if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='none'; if(els.calendarDays) els.calendarDays.classList.remove('loading'); } }
-        async function renderCalendar() { /* (Keep existing function) */ if (!els.calendarDays || !els.monthTitle || !els.prevMonthBtn || !els.nextMonthBtn) return; const year = currentCalendarDate.getFullYear(); const month = currentCalendarDate.getMonth(); console.log(`[Render Calendar] Rendering ${year}-${month + 1}`); els.monthTitle.textContent = `${MONTH_NAMES_SHORT[month]} ${year}`; els.calendarDays.innerHTML = '<div style="grid-column: span 7; text-align: center; padding: 20px; color: var(--gray-color);">Loading days...</div>'; els.calendarDays.classList.add('loading'); if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='block'; const dayStatuses = await fetchMonthStatus(year, month); els.calendarDays.innerHTML = ''; if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='none'; els.calendarDays.classList.remove('loading'); const today = new Date(); today.setHours(0, 0, 0, 0); const firstDayOfMonth = new Date(year, month, 1); const firstDayWeekday = firstDayOfMonth.getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate(); const firstDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1); els.prevMonthBtn.disabled = hasBooking || (firstDayOfMonth <= firstDayOfCurrentMonth); const maxNavDate = new Date(today.getFullYear(), today.getMonth() + 6, 0); els.nextMonthBtn.disabled = hasBooking || (new Date(year, month, daysInMonth) >= maxNavDate); for (let i = 0; i < firstDayWeekday; i++) { const empty = document.createElement('div'); empty.className = 'day empty'; els.calendarDays.appendChild(empty); } for (let day = 1; day <= daysInMonth; day++) { const dayElem = document.createElement('div'); dayElem.className = 'day'; dayElem.textContent = day; dayElem.dataset.day = day; const checkDate = new Date(year, month, day); checkDate.setHours(0, 0, 0, 0); const backendStatus = dayStatuses[day] || 'unavailable_window'; let canClick = false; if (hasBooking) { dayElem.classList.add('disabled-day'); } else if (backendStatus === 'past' || backendStatus === 'unavailable_window') { dayElem.classList.add('disabled-day'); } else { canClick = true; dayElem.addEventListener('click', () => selectDate(day)); if (backendStatus === 'potentially_available') { dayElem.classList.add('bookable'); } else { dayElem.classList.add('viewable-only'); } } if (!canClick) { dayElem.style.cursor = 'not-allowed'; } else { dayElem.style.cursor = 'pointer'; } dayElem.removeAttribute('title'); /* Remove tooltip */ if (checkDate.getTime() === today.getTime()) dayElem.classList.add('today'); if (selectedDate && selectedDate.getTime() === checkDate.getTime()) dayElem.classList.add('selected'); els.calendarDays.appendChild(dayElem); } console.log(`[Render Calendar] Finished rendering ${year}-${month + 1}`); }
-        function selectDate(day) { /* (Keep existing function) */ if (hasBooking || !els.calendarDays || !els.selectedDateDisplay || !els.timeSlotsContainer) return; const year = currentCalendarDate.getFullYear(); const month = currentCalendarDate.getMonth(); selectedDate = new Date(year, month, day); console.log("[Date Select] Selected:", selectedDate.toLocaleDateString()); selectedTimeSlotInfo = null; if (els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; if (els.bookButton) els.bookButton.disabled = true; if (els.bookingSummary) els.bookingSummary.style.display = 'none'; renderCalendar(); const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' }; els.selectedDateDisplay.textContent = selectedDate.toLocaleDateString(undefined, options); switchToTimeView(); updateClockToCurrentAnimated(); fetchAndGenerateTimeSlots(selectedDate); }
-        function switchToTimeView() { /* (Keep existing function) */ if (!els.calendarView || !els.timeView) return; if (viewState === 'calendar' && selectedDate) { viewState = 'time'; els.calendarView.classList.add('hidden'); els.timeView.classList.add('visible'); console.log("[View Switch] To Time"); } }
-        function switchToCalendarView() { /* (Keep existing function) */ if (!els.calendarView || !els.timeView) return; if (viewState === 'time') { viewState = 'calendar'; els.timeView.classList.remove('visible'); els.calendarView.classList.remove('hidden'); console.log("[View Switch] To Calendar"); } }
-        async function fetchAndGenerateTimeSlots(date) { /* (Keep existing function) */ if (!els.timeSlotsContainer || !date) return; const localDateString = getLocalDateString(date); console.log(`[Time Slots] Requesting for: ${localDateString}`); els.timeSlotsContainer.innerHTML = `<div class="time-slots-loading"><i class="fas fa-spinner fa-spin"></i> Loading times...</div>`; try { let slots; const cacheKey = localDateString; if (availabilityCache[cacheKey]) { console.debug(`[Time Slots] Cache hit: ${cacheKey}.`); slots = availabilityCache[cacheKey]; } else { console.log(`[Time Slots] Cache miss: ${cacheKey}. Fetching...`); const apiUrl = `/api/booking/availability?date=${localDateString}`; const data = await apiRequest(apiUrl, { method: 'GET' }); if (data === null) throw new Error("API error or redirect."); slots = data.slots || []; availabilityCache[cacheKey] = slots; console.log(`[Time Slots] Received ${slots.length} slots from API.`); } generateTimeSlotsUI(slots); } catch (error) { console.error(`[Time Slots] Error fetching/processing:`, error); els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">Load failed: ${error.message || 'Could not fetch times.'}</div>`; } }
-        function generateTimeSlotsUI(slots) { /* (Keep existing function) */ if (!els.timeSlotsContainer) return; els.timeSlotsContainer.innerHTML = ''; if (!slots || slots.length === 0) { els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">No time slots found for this date.</div>`; return; } const periods = { morning: [], afternoon: [], evening: [] }; slots.forEach(slot => { try { const utcDate = new Date(slot.time); if (isNaN(utcDate)) return; const localHour = utcDate.getHours(); const displayTimeRange = formatTimeRangeForDisplay(slot.time); const slotData = { utcTime: slot.time, status: slot.status, displayTimeRange: displayTimeRange }; if (localHour < 12) periods.morning.push(slotData); else if (localHour < 17) periods.afternoon.push(slotData); else periods.evening.push(slotData); } catch (e) {} }); let slotDelay = 0; const stagger = 0.03; let slotsAdded = 0; const addPeriodSection = (pSlots, lbl) => { if (pSlots.length > 0) { const pC = document.createElement('div'); pC.className = 'time-period'; pC.innerHTML = `<div class="period-label">${lbl} (Your Time)</div><div class="time-grid"></div>`; const g = pC.querySelector('.time-grid'); pSlots.sort((a,b) => new Date(a.utcTime) - new Date(b.utcTime)); pSlots.forEach(sd => { const sE = createTimeSlotElement(sd, slotDelay); g.appendChild(sE); slotDelay += stagger; slotsAdded++; }); els.timeSlotsContainer.appendChild(pC); } }; addPeriodSection(periods.morning, 'Morning'); addPeriodSection(periods.afternoon, 'Afternoon'); addPeriodSection(periods.evening, 'Evening'); if (slotsAdded === 0) { els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">No time slots available for this date.</div>`; } else { requestAnimationFrame(() => { els.timeSlotsContainer.querySelectorAll('.time-slot').forEach(el => el.classList.add('animate-in')); }); } if (selectedTimeSlotInfo) { const ps = els.timeSlotsContainer.querySelector(`.time-slot[data-utc-time="${selectedTimeSlotInfo.utcTime}"]`); if (ps?.classList.contains('available')) { ps.classList.add('selected'); const sld = new Date(selectedTimeSlotInfo.utcTime); updateClockAnimated(sld.getHours(), sld.getMinutes()); if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = `Selected: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}`; updateSummary(); if(els.bookingSummary) els.bookingSummary.style.display = 'block'; if(els.bookButton) els.bookButton.disabled = false;} else { selectedTimeSlotInfo = null; if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; updateClockToCurrentAnimated(); updateSummary(); if(els.bookingSummary) els.bookingSummary.style.display = 'none'; if(els.bookButton) els.bookButton.disabled = true; } } }
-        function createTimeSlotElement(slotData, delay) { /* (Keep existing function) */ const slot = document.createElement('div'); slot.className = `time-slot ${slotData.status}`; slot.dataset.utcTime = slotData.utcTime; slot.textContent = slotData.displayTimeRange; slot.style.setProperty('--slot-animation-delay', `${delay}s`); if (slotData.status === 'available') { slot.addEventListener('click', () => selectTimeSlot(slot, slotData)); slot.style.cursor = 'pointer'; } else { slot.style.cursor = 'not-allowed'; } return slot; }
-        function selectTimeSlot(slotElem, slotData) { /* (Keep existing function) */ if (hasBooking || slotData.status !== 'available') return; els.timeSlotsContainer?.querySelectorAll('.time-slot.selected').forEach(el => el.classList.remove('selected')); slotElem.classList.add('selected'); try { const startDate = new Date(slotData.utcTime); if (isNaN(startDate)) throw new Error("Invalid date"); const endDate = new Date(startDate.getTime() + LESSON_DURATION_MINUTES * 60 * 1000); const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true }; const tzName = getLocalTimeZoneName(); selectedTimeSlotInfo = { utcTime: slotData.utcTime, localStartTimeLabel: startDate.toLocaleTimeString(undefined, timeOptions), localEndTimeLabel: endDate.toLocaleTimeString(undefined, timeOptions), localTimeZoneName: tzName }; console.log("[Time Select] Info:", selectedTimeSlotInfo); updateClockAnimated(startDate.getHours(), startDate.getMinutes()); if (els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = `Selected: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${tzName}`; updateSummary(); if (els.bookingSummary) { els.bookingSummary.style.display = 'block'; els.bookingSummary.style.opacity = 0; requestAnimationFrame(() => { els.bookingSummary.style.opacity = 1; }); } if (els.bookButton) els.bookButton.disabled = false; } catch (e) { console.error("Error selecting slot:", e); selectedTimeSlotInfo = null; if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; if(els.bookButton) els.bookButton.disabled = true; if(els.bookingSummary) els.bookingSummary.style.display = 'none'; updateClockToCurrentAnimated(); } }
-        function updateSummary() { /* (Keep existing function) */ if (!els.summaryDateSpan || !els.summaryTimeSpan) return; els.summaryDateSpan.textContent = selectedDate ? `Date: ${selectedDate.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric', year:'numeric' })}` : 'Date: --'; if (selectedTimeSlotInfo) { els.summaryTimeSpan.textContent = `Time: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}`; } else { els.summaryTimeSpan.textContent = 'Time: --'; } }
+        async function fetchMonthStatus(y, m) {
+            if (!y||m===undefined||m<0||m>11) return {};
+            const k=`${y}-${String(m+1).padStart(2,'0')}`;
+            if (monthStatusCache[k]) { console.debug(`[Month Status] Cache hit: ${k}.`); return monthStatusCache[k]; }
+            console.log(`[Month Status] Fetching ${k}...`);
+            if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='block'; if(els.calendarDays) els.calendarDays.classList.add('loading');
+            try {
+                // Use updated apiRequest
+                const d = await apiRequest(`/api/booking/month-status?year=${y}&month=${m+1}`, {method:'GET'});
+                if(d===null) return {}; const s=d.dayStatus||{}; monthStatusCache[k]=s;
+                console.log(`[Month Status] Received for ${k}.`); return s;
+            } catch (e) { console.error(`[Month Status] Error for ${k}:`, e); if(els.monthTitle) els.monthTitle.textContent="Load Error"; return {}; }
+            finally { if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='none'; if(els.calendarDays) els.calendarDays.classList.remove('loading'); }
+        }
+        async function renderCalendar() { /* ... (Keep existing logic, uses fetchMonthStatus which uses apiRequest) ... */ if (!els.calendarDays || !els.monthTitle || !els.prevMonthBtn || !els.nextMonthBtn) return; const year = currentCalendarDate.getFullYear(); const month = currentCalendarDate.getMonth(); console.log(`[Render Calendar] Rendering ${year}-${month + 1}`); els.monthTitle.textContent = `${MONTH_NAMES_SHORT[month]} ${year}`; els.calendarDays.innerHTML = '<div style="grid-column: span 7; text-align: center; padding: 20px; color: var(--gray-color);">Loading days...</div>'; els.calendarDays.classList.add('loading'); if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='block'; const dayStatuses = await fetchMonthStatus(year, month); els.calendarDays.innerHTML = ''; if(els.calendarDaysLoading) els.calendarDaysLoading.style.display='none'; els.calendarDays.classList.remove('loading'); const today = new Date(); today.setHours(0, 0, 0, 0); const firstDayOfMonth = new Date(year, month, 1); const firstDayWeekday = firstDayOfMonth.getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate(); const firstDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1); els.prevMonthBtn.disabled = hasBooking || (firstDayOfMonth <= firstDayOfCurrentMonth); const maxNavDate = new Date(today.getFullYear(), today.getMonth() + 6, 0); els.nextMonthBtn.disabled = hasBooking || (new Date(year, month, daysInMonth) >= maxNavDate); for (let i = 0; i < firstDayWeekday; i++) { const empty = document.createElement('div'); empty.className = 'day empty'; els.calendarDays.appendChild(empty); } for (let day = 1; day <= daysInMonth; day++) { const dayElem = document.createElement('div'); dayElem.className = 'day'; dayElem.textContent = day; dayElem.dataset.day = day; const checkDate = new Date(year, month, day); checkDate.setHours(0, 0, 0, 0); const backendStatus = dayStatuses[day] || 'unavailable_window'; let canClick = false; if (hasBooking) { dayElem.classList.add('disabled-day'); } else if (backendStatus === 'past' || backendStatus === 'unavailable_window') { dayElem.classList.add('disabled-day'); } else { canClick = true; dayElem.addEventListener('click', () => selectDate(day)); if (backendStatus === 'potentially_available') { dayElem.classList.add('bookable'); } else { dayElem.classList.add('viewable-only'); } } if (!canClick) { dayElem.style.cursor = 'not-allowed'; } else { dayElem.style.cursor = 'pointer'; } dayElem.removeAttribute('title'); /* Remove tooltip */ if (checkDate.getTime() === today.getTime()) dayElem.classList.add('today'); if (selectedDate && selectedDate.getTime() === checkDate.getTime()) dayElem.classList.add('selected'); els.calendarDays.appendChild(dayElem); } console.log(`[Render Calendar] Finished rendering ${year}-${month + 1}`); }
+        function selectDate(day) { /* (Keep existing logic, calls fetchAndGenerateTimeSlots) */ if (hasBooking || !els.calendarDays || !els.selectedDateDisplay || !els.timeSlotsContainer) return; const year = currentCalendarDate.getFullYear(); const month = currentCalendarDate.getMonth(); selectedDate = new Date(year, month, day); console.log("[Date Select] Selected:", selectedDate.toLocaleDateString()); selectedTimeSlotInfo = null; if (els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; if (els.bookButton) els.bookButton.disabled = true; if (els.bookingSummary) els.bookingSummary.style.display = 'none'; renderCalendar(); const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' }; els.selectedDateDisplay.textContent = selectedDate.toLocaleDateString(undefined, options); switchToTimeView(); updateClockToCurrentAnimated(); fetchAndGenerateTimeSlots(selectedDate); }
+        function switchToTimeView() { /* (Keep existing logic) */ if (!els.calendarView || !els.timeView) return; if (viewState === 'calendar' && selectedDate) { viewState = 'time'; els.calendarView.classList.add('hidden'); els.timeView.classList.add('visible'); console.log("[View Switch] To Time"); } }
+        function switchToCalendarView() { /* (Keep existing logic) */ if (!els.calendarView || !els.timeView) return; if (viewState === 'time') { viewState = 'calendar'; els.timeView.classList.remove('visible'); els.calendarView.classList.remove('hidden'); console.log("[View Switch] To Calendar"); } }
+        async function fetchAndGenerateTimeSlots(date) { /* (Uses apiRequest) */ if (!els.timeSlotsContainer || !date) return; const localDateString = getLocalDateString(date); console.log(`[Time Slots] Requesting for: ${localDateString}`); els.timeSlotsContainer.innerHTML = `<div class="time-slots-loading"><i class="fas fa-spinner fa-spin"></i> Loading times...</div>`; try { let slots; const cacheKey = localDateString; if (availabilityCache[cacheKey]) { console.debug(`[Time Slots] Cache hit: ${cacheKey}.`); slots = availabilityCache[cacheKey]; } else { console.log(`[Time Slots] Cache miss: ${cacheKey}. Fetching...`); const apiUrl = `/api/booking/availability?date=${localDateString}`; const data = await apiRequest(apiUrl, { method: 'GET' }); if (data === null) throw new Error("API error or redirect."); slots = data.slots || []; availabilityCache[cacheKey] = slots; console.log(`[Time Slots] Received ${slots.length} slots from API.`); } generateTimeSlotsUI(slots); } catch (error) { console.error(`[Time Slots] Error fetching/processing:`, error); els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">Load failed: ${error.message || 'Could not fetch times.'}</div>`; } }
+        function generateTimeSlotsUI(slots) { /* (Keep existing logic) */ if (!els.timeSlotsContainer) return; els.timeSlotsContainer.innerHTML = ''; if (!slots || slots.length === 0) { els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">No time slots found for this date.</div>`; return; } const periods = { morning: [], afternoon: [], evening: [] }; slots.forEach(slot => { try { const utcDate = new Date(slot.time); if (isNaN(utcDate)) return; const localHour = utcDate.getHours(); const displayTimeRange = formatTimeRangeForDisplay(slot.time); const slotData = { utcTime: slot.time, status: slot.status, displayTimeRange: displayTimeRange }; if (localHour < 12) periods.morning.push(slotData); else if (localHour < 17) periods.afternoon.push(slotData); else periods.evening.push(slotData); } catch (e) {} }); let slotDelay = 0; const stagger = 0.03; let slotsAdded = 0; const addPeriodSection = (pSlots, lbl) => { if (pSlots.length > 0) { const pC = document.createElement('div'); pC.className = 'time-period'; pC.innerHTML = `<div class="period-label">${lbl} (Your Time)</div><div class="time-grid"></div>`; const g = pC.querySelector('.time-grid'); pSlots.sort((a,b) => new Date(a.utcTime) - new Date(b.utcTime)); pSlots.forEach(sd => { const sE = createTimeSlotElement(sd, slotDelay); g.appendChild(sE); slotDelay += stagger; slotsAdded++; }); els.timeSlotsContainer.appendChild(pC); } }; addPeriodSection(periods.morning, 'Morning'); addPeriodSection(periods.afternoon, 'Afternoon'); addPeriodSection(periods.evening, 'Evening'); if (slotsAdded === 0) { els.timeSlotsContainer.innerHTML = `<div class="time-slots-error">No time slots available for this date.</div>`; } else { requestAnimationFrame(() => { els.timeSlotsContainer.querySelectorAll('.time-slot').forEach(el => el.classList.add('animate-in')); }); } if (selectedTimeSlotInfo) { const ps = els.timeSlotsContainer.querySelector(`.time-slot[data-utc-time="${selectedTimeSlotInfo.utcTime}"]`); if (ps?.classList.contains('available')) { ps.classList.add('selected'); const sld = new Date(selectedTimeSlotInfo.utcTime); updateClockAnimated(sld.getHours(), sld.getMinutes()); if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = `Selected: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}`; updateSummary(); if(els.bookingSummary) els.bookingSummary.style.display = 'block'; if(els.bookButton) els.bookButton.disabled = false;} else { selectedTimeSlotInfo = null; if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; updateClockToCurrentAnimated(); updateSummary(); if(els.bookingSummary) els.bookingSummary.style.display = 'none'; if(els.bookButton) els.bookButton.disabled = true; } } }
+        function createTimeSlotElement(slotData, delay) { /* (Keep existing logic) */ const slot = document.createElement('div'); slot.className = `time-slot ${slotData.status}`; slot.dataset.utcTime = slotData.utcTime; slot.textContent = slotData.displayTimeRange; slot.style.setProperty('--slot-animation-delay', `${delay}s`); if (slotData.status === 'available') { slot.addEventListener('click', () => selectTimeSlot(slot, slotData)); slot.style.cursor = 'pointer'; } else { slot.style.cursor = 'not-allowed'; } return slot; }
+        function selectTimeSlot(slotElem, slotData) { /* (Keep existing logic) */ if (hasBooking || slotData.status !== 'available') return; els.timeSlotsContainer?.querySelectorAll('.time-slot.selected').forEach(el => el.classList.remove('selected')); slotElem.classList.add('selected'); try { const startDate = new Date(slotData.utcTime); if (isNaN(startDate)) throw new Error("Invalid date"); const endDate = new Date(startDate.getTime() + LESSON_DURATION_MINUTES * 60 * 1000); const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true }; const tzName = getLocalTimeZoneName(); selectedTimeSlotInfo = { utcTime: slotData.utcTime, localStartTimeLabel: startDate.toLocaleTimeString(undefined, timeOptions), localEndTimeLabel: endDate.toLocaleTimeString(undefined, timeOptions), localTimeZoneName: tzName }; console.log("[Time Select] Info:", selectedTimeSlotInfo); updateClockAnimated(startDate.getHours(), startDate.getMinutes()); if (els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = `Selected: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${tzName}`; updateSummary(); if (els.bookingSummary) { els.bookingSummary.style.display = 'block'; els.bookingSummary.style.opacity = 0; requestAnimationFrame(() => { els.bookingSummary.style.opacity = 1; }); } if (els.bookButton) els.bookButton.disabled = false; } catch (e) { console.error("Error selecting slot:", e); selectedTimeSlotInfo = null; if(els.selectedTimeDisplay) els.selectedTimeDisplay.textContent = 'Select a time'; if(els.bookButton) els.bookButton.disabled = true; if(els.bookingSummary) els.bookingSummary.style.display = 'none'; updateClockToCurrentAnimated(); } }
+        function updateSummary() { /* (Keep existing logic) */ if (!els.summaryDateSpan || !els.summaryTimeSpan) return; els.summaryDateSpan.textContent = selectedDate ? `Date: ${selectedDate.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric', year:'numeric' })}` : 'Date: --'; if (selectedTimeSlotInfo) { els.summaryTimeSpan.textContent = `Time: ${selectedTimeSlotInfo.localStartTimeLabel} - ${selectedTimeSlotInfo.localEndTimeLabel} ${selectedTimeSlotInfo.localTimeZoneName}`; } else { els.summaryTimeSpan.textContent = 'Time: --'; } }
 
-        // --- Event Listeners (Keep Existing - minor change for consistency) ---
-        // Event listener setup moved to initializeBookingPage to ensure they are added
-        // only after successful status checks and for logged-in, non-booked users.
+        // --- Event Listeners (Keep Existing - setup moved to init) ---
 
         // --- Clock Functionality (Keep Existing) ---
         let clockRadius, centerX, centerY; let currentHourAngle = -Math.PI / 2; let currentMinuteAngle = -Math.PI / 2; let targetHourAngle = -Math.PI / 2; let targetMinuteAngle = -Math.PI / 2; let animationReqId = null; const ANIMATION_DURATION = 500; let animationStartTime = 0; let startHourAngle = currentHourAngle; let startMinuteAngle = currentMinuteAngle;
