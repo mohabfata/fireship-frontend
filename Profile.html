@@ -20,7 +20,7 @@
     header.main-header {
         background-color: white; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); padding: 0 2rem; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; height: 70px; border-bottom: 1px solid var(--border-color);
     }
-     body.scrolled header.main-header { background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06); }
+     body.scrolled header.main-header { background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06); backdrop-filter: blur(10px); }
     .header-logo-link { display: flex; align-items: center; text-decoration: none; height: 100%; }
     .header-logo { display: flex; align-items: center; height: 40px; overflow: visible; }
     .header-logo img { height: 80px; margin-right: 0.8rem; transform: translateY(-7px); }
@@ -153,19 +153,19 @@
         <div class="details-grid">
             <div class="detail-item">
                 <div class="detail-label">Date of Birth</div>
-                <div class="detail-value" id="profile-dob">--</div>
+                <div class="detail-value placeholder" id="profile-dob">--</div> <!-- Added placeholder class -->
             </div>
             <div class="detail-item">
                 <div class="detail-label">Gender</div>
-                <div class="detail-value" id="profile-gender">--</div>
+                <div class="detail-value placeholder" id="profile-gender">--</div> <!-- Added placeholder class -->
             </div>
             <div class="detail-item">
                 <div class="detail-label">Nationality</div>
-                <div class="detail-value" id="profile-nationality">--</div>
+                <div class="detail-value placeholder" id="profile-nationality">--</div> <!-- Added placeholder class -->
             </div>
              <div class="detail-item">
                 <div class="detail-label">Native Language</div>
-                <div class="detail-value" id="profile-native-language">--</div>
+                <div class="detail-value placeholder" id="profile-native-language">--</div> <!-- Added placeholder class -->
             </div>
         </div>
     </div>
@@ -176,11 +176,11 @@
          <div class="details-grid">
             <div class="detail-item">
                 <div class="detail-label">Proficiency Level</div>
-                <div class="detail-value" id="profile-proficiency">--</div>
+                <div class="detail-value placeholder" id="profile-proficiency">--</div> <!-- Added placeholder class -->
             </div>
             <div class="detail-item">
                 <div class="detail-label">Learning Path</div>
-                <div class="detail-value" id="profile-learning-path">--</div>
+                <div class="detail-value placeholder" id="profile-learning-path">--</div> <!-- Added placeholder class -->
             </div>
              <div class="detail-item" style="grid-column: span 2;"> <!-- Span across columns -->
                  <a href="learningstyle.html" class="btn btn-primary" style="width: auto; padding: 10px 20px;">
@@ -263,9 +263,9 @@
                  let errorMsg = `API Error (${r.status})`;
                  let errorData = null;
                  try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore */ }
-                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData);
 
-                 // Specific 401 handling for this page (redirect to welcome)
+                 // Specific 401 handling for profile page (redirect to welcome)
                  if (r.status === 401) {
                      console.warn("API 401 -> Welcome");
                      window.location.href = 'welcome.html';
@@ -277,14 +277,14 @@
              const ct = r.headers.get("content-type");
              if (ct?.includes("application/json")) {
                  const d = await r.json();
-                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                 console.debug(`API OK JSON @ ${fullUrl}:`, d);
                  return d;
              } else {
-                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
-                 return {}; // Return empty object like original
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`);
+                 return {}; // Return empty object for non-JSON OK responses
              }
          } catch (e) {
-              console.error(`API Excep (${fullUrl}):`, e); // Log fullUrl
+              console.error(`API Excep (${fullUrl}):`, e);
               if (e.message.toLowerCase().includes('failed to fetch')) {
                   throw new Error("Network error.");
               }
@@ -295,7 +295,16 @@
 
     function showLoadingState(isLoading) { if (loadingSpinner) loadingSpinner.style.display = isLoading ? 'block' : 'none'; if (!isLoading) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
     function displayLessons(lessons) { if (!lessonsListContainer) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (lessons?.length > 0) { if (emptyStateDiv) emptyStateDiv.style.display = 'none'; if (errorStateDiv) errorStateDiv.style.display = 'none'; lessons.sort((a, b) => new Date(a.utcStartTime) - new Date(b.utcStartTime)); lessons.forEach((lesson, index) => { const lessonCard = createLessonCardElement(lesson); lessonCard.style.animationDelay = `${index * 0.05}s`; lessonsListContainer.appendChild(lessonCard); }); } else { if (emptyStateDiv) emptyStateDiv.style.display = 'block'; if (errorStateDiv) errorStateDiv.style.display = 'none'; } }
-    function displayErrorState(isProfileError = false) { if (!lessonsListContainer || !errorStateDiv) return; lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove()); if (emptyStateDiv) emptyStateDiv.style.display = 'none'; const errorMsgElement = errorStateDiv.querySelector('p'); if(errorMsgElement) { errorMsgElement.textContent = isProfileError ? "Error fetching profile data. Please refresh." : "Error fetching lessons. Please refresh."; } errorStateDiv.style.display = 'block'; }
+    function displayErrorState(isProfileError = false) {
+        if (!errorStateDiv) return;
+        if(lessonsListContainer) lessonsListContainer.querySelectorAll('.lesson-card').forEach(card => card.remove());
+        if (emptyStateDiv) emptyStateDiv.style.display = 'none';
+        const errorMsgElement = errorStateDiv.querySelector('p');
+        if(errorMsgElement) {
+            errorMsgElement.textContent = isProfileError ? "Error fetching profile data. Please refresh." : "Error fetching lessons. Please refresh.";
+        }
+        errorStateDiv.style.display = 'block';
+    }
     function createLessonCardElement(lesson) { const card = document.createElement('div'); card.className = 'lesson-card animate-in'; card.dataset.lessonId = lesson.id; const startTime = new Date(lesson.utcStartTime); const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 20) * 60 * 1000); const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }; const timeOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }; const formattedDate = startTime.toLocaleDateString(undefined, dateOptions); const formattedStartTime = startTime.toLocaleTimeString(undefined, timeOptions); const formattedEndTime = endTime.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); card.innerHTML = `<div class="lesson-details"><h3>${lesson.title || 'Personalized Session'}</h3><p><i class="far fa-calendar-alt"></i> ${formattedDate}</p><p><i class="far fa-clock"></i> ${formattedStartTime} - ${formattedEndTime}</p><div class="teacher"><img class="teacher-avatar" src="${lesson.instructor?.avatarUrl || 'placeholder-avatar.png'}" alt="Teacher" onerror="this.onerror=null; this.src='placeholder-avatar.png';"><span>${lesson.instructor?.name || 'To be decided'}</span></div></div><div class="lesson-actions"><button class="btn" onclick="rescheduleLesson('${lesson.id}')"><i class="fas fa-edit"></i> Reschedule</button><a href="confirmation.html?lessonId=${lesson.id}" class="btn btn-secondary"><i class="fas fa-video"></i> Join/View</a><button class="btn btn-danger" onclick="cancelLesson('${lesson.id}')"><i class="fas fa-times-circle"></i> Cancel</button></div>`; return card; }
     function rescheduleLesson(lessonId) { console.log("Reschedule lesson:", lessonId); alert(`Rescheduling requires integration.`); }
     async function cancelLesson(lessonId) { console.log("Cancel lesson:", lessonId); if (confirm(`Are you sure you want to cancel lesson ${lessonId}? This action cannot be undone.`)) { alert(`Cancellation requires backend integration.`); /* Add backend call here */ } }
@@ -309,14 +318,19 @@
         try {
             // Use updated apiRequest
             const status = await apiRequest('/api/user/status', { method: 'GET' });
-            if (status === null) return; // Redirect happened
+            if (status === null) return false; // Redirect happened or fatal API error
+
             if (status && status.user) {
+                console.log("[Header Auth Check] User logged in:", status.user);
                 updateHeaderUI(status.user, status.hasBooking || false);
+                return true; // Auth OK
             } else {
+                console.log("[Header Auth Check] User not logged in.");
                 updateHeaderUI(null, false);
-                // Redirect if not logged in for profile page
+                 // Redirect if not logged in for profile page
                  console.warn("User not logged in on profile page. Redirecting...");
                  window.location.href = 'welcome.html';
+                 return false; // Auth failed
             }
         } catch (error) {
             console.warn("[Header Auth Check] Failed:", error.message);
@@ -324,125 +338,111 @@
              // Redirect on error for profile page
              console.error("Auth check failed. Redirecting...");
              window.location.href = 'welcome.html';
+             return false; // Auth failed
         }
     }
 
-    // --- Populate Profile Details ---
+    // --- Populate Profile Details (More Robust) ---
     function populateProfileDetails(profileData) {
-        if (!profileData) {
-            // Handle case where profile data couldn't be fetched
-             if (profileNameEl) profileNameEl.textContent = 'Error Loading';
-             if (profileEmailEl) profileEmailEl.textContent = 'Error Loading';
-             if (profileDobEl) profileDobEl.textContent = '--';
-             if (profileGenderEl) profileGenderEl.textContent = '--';
-             if (profileNationalityEl) profileNationalityEl.textContent = '--';
-             if (profileNativeLangEl) profileNativeLangEl.textContent = '--';
-             if (profileProficiencyEl) profileProficiencyEl.textContent = '--';
-             if (profileLearningPathEl) profileLearningPathEl.textContent = '--';
-             if (profileAvatarEl) profileAvatarEl.src = 'placeholder-avatar.png';
-             document.querySelectorAll('.profile-value').forEach(el => el.classList.add('placeholder'));
-             return;
+        // Default values for error/loading state
+        const defaultVal = '--';
+        const nameDefault = 'Loading...';
+        const emailDefault = 'Loading...';
+
+        // --- Helper to update element text and placeholder class ---
+        function updateDetail(element, value, placeholderValue = defaultVal) {
+            if (element) {
+                const displayValue = value || placeholderValue;
+                element.textContent = displayValue;
+                element.classList.toggle('placeholder', !value); // Add placeholder class if value is missing
+            }
         }
 
-        // Header part already updated by checkAuthAndSetupHeader
-        if (profileNameEl) profileNameEl.textContent = profileData.name || 'Name Not Set';
-        if (profileEmailEl) profileEmailEl.textContent = profileData.email || 'Email Not Found';
-        if (profileAvatarEl && profileData.avatarUrl) {
-             profileAvatarEl.src = profileData.avatarUrl;
-             profileAvatarEl.onerror = () => { profileAvatarEl.src = 'placeholder-avatar.png'; };
-        } else if (profileAvatarEl) {
-             profileAvatarEl.src = 'placeholder-avatar.png';
+        // --- Update Profile Header ---
+        updateDetail(profileNameEl, profileData?.name, nameDefault);
+        updateDetail(profileEmailEl, profileData?.email, emailDefault);
+        if (profileAvatarEl) {
+            profileAvatarEl.src = profileData?.avatarUrl || 'placeholder-avatar.png';
+            profileAvatarEl.onerror = () => { profileAvatarEl.src = 'placeholder-avatar.png'; };
         }
 
-        // Account Details Section
-        if (profileDobEl) {
-             // Attempt to parse DOB assuming YYYY-MM-DD and display in local long format
-             let dobDisplay = '--';
-             try {
+        // --- Update Account Details ---
+        let dobDisplay = defaultVal;
+        if (profileData?.dob) {
+            try {
                  if (profileData.dob && /^\d{4}-\d{2}-\d{2}$/.test(profileData.dob)) {
-                     // Add time part and Z to correctly interpret as UTC date part only
                      const utcDate = new Date(profileData.dob + 'T00:00:00Z');
                      if (!isNaN(utcDate)) {
                          dobDisplay = utcDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
-                     }
-                 }
-             } catch (e) { console.error("Error formatting DOB:", e); }
-             profileDobEl.textContent = dobDisplay;
-             profileDobEl.classList.toggle('placeholder', dobDisplay === '--');
-         }
-        if (profileGenderEl) {
-            profileGenderEl.textContent = profileData.gender ? profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1) : '--';
-             profileGenderEl.classList.toggle('placeholder', !profileData.gender);
+                     } else { console.warn("Invalid DOB date parsed:", profileData.dob); }
+                 } else { console.warn("Invalid DOB format received:", profileData.dob); }
+            } catch (e) { console.error("Error formatting DOB:", e); }
         }
-        if (profileNationalityEl) {
-             // Display country name if 'Other' was chosen, otherwise show the choice ('US', 'SA', etc.)
-             let natDisplay = '--';
-             if (profileData.nationality_choice) {
-                 natDisplay = profileData.nationality_choice === 'other' && profileData.country
-                     ? `Other (${profileData.country})` // Show country name if 'Other' was choice
-                     : profileData.nationality_choice; // Otherwise show the choice code/value
-             }
-             profileNationalityEl.textContent = natDisplay;
-             profileNationalityEl.classList.toggle('placeholder', natDisplay === '--');
-         }
-         if (profileNativeLangEl) {
-             profileNativeLangEl.textContent = profileData.native_language ? profileData.native_language.charAt(0).toUpperCase() + profileData.native_language.slice(1) : '--';
-              profileNativeLangEl.classList.toggle('placeholder', !profileData.native_language);
-         }
+        updateDetail(profileDobEl, dobDisplay, defaultVal);
+
+        updateDetail(profileGenderEl, profileData?.gender ? profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1) : null, defaultVal);
+
+        let natDisplay = defaultVal;
+        if (profileData?.nationality_choice) {
+            natDisplay = profileData.nationality_choice === 'other' && profileData.country
+                ? `Other (${profileData.country})`
+                : profileData.nationality_choice;
+        }
+        updateDetail(profileNationalityEl, natDisplay, defaultVal);
+
+        updateDetail(profileNativeLangEl, profileData?.native_language ? profileData.native_language.charAt(0).toUpperCase() + profileData.native_language.slice(1) : null, defaultVal);
 
 
-        // Learning Preferences Section
-        if (profileProficiencyEl) {
-             profileProficiencyEl.textContent = profileData.level || '--'; // Using 'level' based on other scripts
-             profileProficiencyEl.classList.toggle('placeholder', !profileData.level);
+        // --- Update Learning Preferences ---
+        updateDetail(profileProficiencyEl, profileData?.level, defaultVal); // Use alias 'level'
+
+        let pathDisplay = defaultVal;
+        if (profileData?.step1 && profileData?.step2 && profileData?.step3) { // Use aliases 'step1', 'step2', 'step3'
+            pathDisplay = `${profileData.step1} > ${profileData.step2} > ${profileData.step3}`;
         }
-        if (profileLearningPathEl) {
-            let pathDisplay = '--';
-             // Using step1, step2, step3 based on learning-style page data structure
-             if (profileData.step1 && profileData.step2 && profileData.step3) {
-                 // Simple concatenation - adjust formatting as needed
-                 pathDisplay = `${profileData.step1} > ${profileData.step2} > ${profileData.step3}`;
-             }
-             profileLearningPathEl.textContent = pathDisplay;
-             profileLearningPathEl.classList.toggle('placeholder', pathDisplay === '--');
-        }
+        updateDetail(profileLearningPathEl, pathDisplay, defaultVal);
     }
 
 
     // --- Data Fetching for Profile Page ---
     async function fetchProfilePageData() {
-        showLoadingState(true); // Show spinner for lessons list (initially)
-        try {
-            // Setup header first using status check (will redirect if needed)
-            await checkAuthAndSetupHeader();
+        showLoadingState(true);
+        let profileFetchSuccess = false;
+        let lessonsFetchSuccess = false;
 
-            // Fetch full profile details (will redirect if needed)
-            // Use updated apiRequest
+        try {
+            // Check Auth and Setup Header
+            const isAuthOk = await checkAuthAndSetupHeader();
+            if (!isAuthOk) return; // Stop if redirected
+
+            // Fetch full profile details (now uses updated apiRequest)
             const profileData = await apiRequest('/api/user/profile/all', { method: 'GET' });
-            if (profileData === null) { // Redirect happened in apiRequest
-                 displayErrorState(true); // Show profile error
-                 return;
-            }
+            if (profileData === null) throw new Error("Profile data fetch resulted in redirect."); // Handle null from apiRequest
+
             console.log("Fetched combined profile data:", profileData);
             populateProfileDetails(profileData); // Populate profile sections
+            profileFetchSuccess = true;
 
-            // Fetch lessons (will redirect if needed)
-            // Use updated apiRequest
+            // Fetch lessons (now uses updated apiRequest)
             const lessonsResponse = await apiRequest('/api/user/lessons', { method: 'GET' });
-             if (lessonsResponse === null) { // Redirect happened
-                 displayErrorState(false); // Show lesson error
-                 return;
-             }
+             if (lessonsResponse === null) throw new Error("Lessons fetch resulted in redirect."); // Handle null
+
             const lessons = Array.isArray(lessonsResponse?.lessons) ? lessonsResponse.lessons : [];
             console.log("Fetched lessons:", lessons);
             displayLessons(lessons);
+            lessonsFetchSuccess = true;
 
         } catch (error) {
             console.error("Error fetching profile page data:", error);
-            // 401/Redirects should be handled by apiRequest or checkAuth
-            // Show general error for other issues
-            displayErrorState(true);
-            populateProfileDetails(null); // Reset profile fields
+            // Only display error if the specific fetch failed, otherwise rely on auth redirect
+            if (!profileFetchSuccess) {
+                displayErrorState(true); // Show profile-specific error
+                populateProfileDetails(null); // Reset profile fields on error
+            }
+            if (!lessonsFetchSuccess && profileFetchSuccess) { // Only show lesson error if profile was okay
+                 displayErrorState(false);
+            }
+             // If auth check failed, the page should have already redirected.
         } finally {
             showLoadingState(false);
         }
