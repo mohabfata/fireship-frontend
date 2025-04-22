@@ -196,10 +196,6 @@
             color: white;
         }
 
-        /* --- REMOVE Original Simplified Header Styles ---
-           We keep the body.scrolled one as it's compatible.
-        --- */
-
         .page-container { max-width: 1000px; margin: 40px auto 0; padding: 0 20px; }
         /* Page Header (Keep Existing) */
         .page-header { text-align: center; margin-bottom: 40px; opacity: 0; transform: translateY(20px); animation: fadeInUp 0.6s var(--transition-timing) forwards; } .page-header h1 { font-size: 2.8rem; color: var(--primary-color); margin-bottom: 10px; font-weight: 700; } .page-header p { font-size: 1.15rem; color: var(--gray-color); max-width: 700px; margin: 0 auto; }
@@ -328,55 +324,56 @@
     // Add this line BEFORE the apiRequest function definition
     const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
 
-    async function apiRequest(url, options) {
-         // Construct the full URL if the provided URL starts with '/'
-         const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
-         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
-         try {
-             // Use fullUrl in the fetch call
-             const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+    async function apiRequest(url, options = {}) { // Default options to {}
+        const fullUrl = url.startsWith('/') ? API_BASE_URL + url : url; // Use constant
 
-             if (!r.ok) {
-                 let errorMsg = `API Error (${r.status})`;
-                 let errorData = null;
-                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
-                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+        // Create opts object including credentials
+        const opts = {
+            credentials: 'include', // <-- Add credentials: 'include'
+            ...options, // Merge other passed options
+        };
 
-                 // Special handling for 401 (Unauthorized) - redirect to welcome
-                 if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) { // Don't redirect on logout failure
-                     console.warn("API 401 Unauthorized detected, redirecting to welcome page.");
-                     window.location.href = 'welcome.html';
-                     return null; // Prevent further processing after redirect trigger
-                 }
-                 // Throw a formatted error
-                 throw new Error(errorData?.message || `Request failed: ${r.status}`);
-             }
+        console.debug(`API Req: ${opts.method || 'GET'} ${fullUrl}`); // Log method and fullUrl
 
-             // Check content type before trying to parse JSON
-             const ct = r.headers.get("content-type");
-             if (ct?.includes("application/json")) {
-                 const d = await r.json();
-                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
-                 return d;
-             } else {
-                 // For non-JSON responses (like maybe logout), return success indication
-                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
-                 return { success: true }; // Or return {}; if preferred
-             }
-         } catch (e) { // Error handling
-              console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
-              // Handle specific error types if needed, e.g., network errors
-              if (e.message.toLowerCase().includes('failed to fetch')) {
-                  throw new Error("Network error. Please check your connection.");
-              }
-              // Re-throw other errors (could be the custom error from !r.ok or the network error)
-              throw e;
-         }
+        try {
+            // Use fullUrl and opts in the fetch call
+            const r = await fetch(fullUrl, opts);
+
+            if (!r.ok) {
+                let errorMsg = `API Error (${r.status})`;
+                let errorData = null;
+                try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore */ }
+                console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData);
+
+                // Specific handling for 401 - Redirect
+                if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) {
+                    console.warn("API 401 Unauthorized detected, redirecting to welcome page.");
+                    window.location.href = 'welcome.html';
+                    return null; // Signal redirect
+                }
+                throw new Error(errorData?.message || `Request failed: ${r.status}`);
+            }
+
+            const ct = r.headers.get("content-type");
+            if (ct?.includes("application/json")) {
+                const d = await r.json();
+                console.debug(`API OK JSON @ ${fullUrl}:`, d);
+                return d;
+            } else {
+                console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`);
+                return { success: true }; // Indicate success for non-JSON OK responses
+            }
+        } catch (e) {
+            console.error(`API Excep (${fullUrl}):`, e);
+            if (e.message.toLowerCase().includes('failed to fetch')) {
+                throw new Error("Network error. Please check your connection.");
+            }
+            throw e;
+        }
     }
 
 
     function showButtonLoading(button, isLoading) {
-        // (Keep existing showButtonLoading function)
          if (!button) return;
         const btnText = button.querySelector('.btn-text');
         const btnLoader = button.querySelector('.btn-loader');
@@ -387,25 +384,20 @@
 
         if (btnText) btnText.style.display = isLoading ? 'none' : 'inline';
         if (btnLoader) btnLoader.style.display = isLoading ? 'inline-block' : 'none';
-        // If you want the icon to *always* show when not loading, adjust this:
-        // if (btnIcon) btnIcon.style.display = isLoading ? 'none' : 'inline-block';
-        // If icon is *part* of the loading state (e.g., spinner icon):
-        if (btnIcon) btnIcon.style.display = isLoading ? 'inline-block' : 'none'; // Show icon only when loading? Check your CSS/HTML structure
+        if (btnIcon) btnIcon.style.display = isLoading ? 'none' : 'inline-block'; // Keep correct logic
     }
 
      function showFeedback(message, isError = false) {
-        // (Keep existing function)
         if (els.submissionFeedback) {
             els.submissionFeedback.textContent = message;
             els.submissionFeedback.className = isError ? 'error' : 'success';
             els.submissionFeedback.style.display = 'block';
         } else {
-            alert(message); // Fallback
+            alert(message);
         }
     }
 
     function clearFeedback() {
-         // (Keep existing function)
         if (els.submissionFeedback) {
             els.submissionFeedback.textContent = '';
             els.submissionFeedback.style.display = 'none';
@@ -414,17 +406,15 @@
 
     // --- Fetch and Pre-fill Data ---
     async function fetchAndPrefillProficiency() {
-        // (Keep existing function)
         console.log("Attempting to fetch existing proficiency data...");
         try {
             // Use the updated apiRequest function
             const prefs = await apiRequest('/api/user/preferences/proficiency', { method: 'GET' });
-            if (prefs === null) return; // Redirect happened or fatal API error in apiRequest
+            if (prefs === null) return; // Redirect happened or fatal API error
 
             console.log("Fetched proficiency data:", prefs);
 
             if (prefs && Object.keys(prefs).length > 0) {
-                // Pre-select Native Language
                 if (prefs.nativeLanguage) {
                     selectedNativeLang = prefs.nativeLanguage;
                     const langOption = els.nativeLangOptionsContainer?.querySelector(`.language-option[data-lang="${prefs.nativeLanguage}"]`);
@@ -434,45 +424,39 @@
                     }
                 }
 
-                // Pre-select Proficiency Level
                 if (prefs.level) {
                     const levelIndex = levelMapping[prefs.level];
                     if (levelIndex !== undefined && levelIndex >= 0) {
-                        selectProficiency(levelIndex, prefs.quizSelected || false); // Pass fetched quiz status
+                        selectProficiency(levelIndex, prefs.quizSelected || false);
                         console.log(`Pre-selected level: ${prefs.level} (Index: ${levelIndex}), Quiz: ${prefs.quizSelected || false}`);
                         if (els.continueButton) els.continueButton.disabled = false;
                     } else {
-                         // Handle case where fetched level name is invalid
                          console.warn(`Fetched level "${prefs.level}" not found in mapping.`);
-                         if (els.continueButton) els.continueButton.disabled = true; // Force selection if fetched level is bad
+                         if (els.continueButton) els.continueButton.disabled = true;
                     }
                 } else {
-                    // If level is missing, but native language is set, don't disable button initially, require selection
                     if (prefs.nativeLanguage && els.continueButton) {
-                         els.continueButton.disabled = true; // Requires level selection
-                         updateDescriptionArea(-1); // Show placeholder text
+                         els.continueButton.disabled = true;
+                         updateDescriptionArea(-1);
                     }
                 }
                  console.log("Proficiency form pre-filled.");
             } else {
                  console.log("No existing proficiency data found.");
-                 // Ensure default native language is selected visually if no data fetched
                  const defaultLangOption = els.nativeLangOptionsContainer?.querySelector(`.language-option[data-lang="${selectedNativeLang}"]`);
                  if (defaultLangOption && !els.nativeLangOptionsContainer?.querySelector('.language-option.selected')) {
                       defaultLangOption.classList.add('selected');
                  }
-                 // Ensure button is disabled if no level prefilled
                  if (els.continueButton) els.continueButton.disabled = true;
-                 updateDescriptionArea(-1); // Show placeholder text
+                 updateDescriptionArea(-1);
             }
         } catch (error) {
+            // Error handling (401 redirect) is now inside apiRequest
             console.warn("Could not fetch proficiency data:", error.message);
-             // Ensure default language is selected visually on error too
              const defaultLangOption = els.nativeLangOptionsContainer?.querySelector(`.language-option[data-lang="${selectedNativeLang}"]`);
               if (defaultLangOption && !els.nativeLangOptionsContainer?.querySelector('.language-option.selected')) {
                    defaultLangOption.classList.add('selected');
               }
-             // Keep button disabled on fetch error
              if (els.continueButton) els.continueButton.disabled = true;
              updateDescriptionArea(-1);
         }
@@ -481,7 +465,6 @@
 
     // --- UI Generation and Interaction ---
     function generateLevelSelectorItems() {
-        // (Keep existing function)
         if (!els.levelSelectorItemsContainer) return;
         els.levelSelectorItemsContainer.innerHTML = '';
         proficiencyLevels.forEach((level, index) => {
@@ -506,7 +489,6 @@
     }
 
     function updateDescriptionArea(index) {
-         // (Keep existing function)
         if (!els.descriptionParagraph) return;
         els.descriptionParagraph.classList.add('fade-out');
         els.descriptionParagraph.classList.remove('fade-in');
@@ -524,7 +506,6 @@
     }
 
     function selectProficiency(selectedIndex, viaQuiz = false) {
-        // (Keep existing function)
         if (selectedIndex < 0 || selectedIndex >= proficiencyLevels.length || !els.levelSelectorItemsContainer) return;
 
         console.log(`Proficiency selected: Index ${selectedIndex}, viaQuiz: ${viaQuiz}`);
@@ -547,7 +528,6 @@
     }
 
     function setupNativeLanguageSelection() {
-        // (Keep existing function)
         if (!els.nativeLangOptionsContainer) return;
         els.nativeLangOptionsContainer.addEventListener('click', (event) => {
             const targetOption = event.target.closest('.language-option');
@@ -562,7 +542,6 @@
 
     // --- Continue Button Logic ---
     async function handleContinue() {
-         // (Keep existing function)
         clearFeedback();
         if (selectedProficiencyIndex === -1) {
             showFeedback("Please select your proficiency level first.", true);
@@ -582,14 +561,12 @@
         try {
             // Use the updated apiRequest function
             const result = await apiRequest('/api/user/preferences/proficiency', {
-                 method: 'POST', // Or PUT
+                 method: 'POST',
                  headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify(dataToSend)
             });
 
             if (result === null) { // Redirect happened or fatal API error
-                 // Button loading state might need reset if redirect doesn't happen immediately
-                 // showButtonLoading(els.continueButton, false); // Consider adding this if needed
                  return;
             }
 
@@ -598,7 +575,13 @@
 
         } catch (error) {
             console.error("Failed to save proficiency data:", error);
-            showFeedback(`Error saving data: ${error.message}`, true);
+             // Check for 401/session errors during POST as well
+              if (error.message.includes('401') || error.message.includes('Not authenticated') || error.message.includes('session')) {
+                   showFeedback("Your session may have expired. Please log in again.", true);
+                   setTimeout(() => { window.location.href = 'welcome.html'; }, 3000);
+              } else {
+                   showFeedback(`Error saving data: ${error.message}`, true);
+              }
             showButtonLoading(els.continueButton, false);
         }
     }
@@ -681,17 +664,19 @@
         try {
             // Use the updated apiRequest
             const status = await apiRequest('/api/user/status', { method: 'GET' });
-            if (status === null) return; // Redirect happened or fatal API error
+            if (status === null) return false; // Redirect happened or fatal API error
 
             if (status && status.user) {
                 console.log("[Header Auth Check] User logged in:", status.user);
                 updateHeaderUI(status.user, status.hasBooking || false);
+                return true; // Indicate auth OK
             } else {
                 console.log("[Header Auth Check] User not logged in.");
                  // Proficiency page usually requires login, redirect or show message
                  updateHeaderUI(null, false);
                  console.warn("User not logged in on proficiency page. Redirecting to welcome.");
                  window.location.href = 'welcome.html'; // Redirect if not logged in
+                 return false; // Indicate auth failed
             }
         } catch (error) {
             console.warn("[Header Auth Check] Failed:", error.message);
@@ -699,7 +684,8 @@
              // Consider showing an error message or redirecting on auth error too
              // showFeedback("Error checking login status. Please refresh.", true);
              console.error("Auth check failed, potentially redirecting.");
-             // window.location.href = 'welcome.html'; // Optionally redirect on error
+             window.location.href = 'welcome.html'; // Optionally redirect on error
+             return false; // Indicate auth failed
         }
     }
 
@@ -709,15 +695,14 @@
         console.log("Initializing proficiency page...");
 
         // 1. Setup Header and check auth status FIRST
-        await checkAuthAndSetupHeader(); // Wait for auth check (which might redirect)
+        const isAuthOk = await checkAuthAndSetupHeader(); // Wait for auth check (which might redirect)
         setupDropdown(); // Setup dropdown interaction
         if(els.signOutBtn) {
             els.signOutBtn.addEventListener('click', handleSignOut); // Setup signout listener
         }
 
         // Ensure the rest of the code only runs if the page wasn't redirected
-        // A simple check: if the user profile header is not displayed (meaning user logged out/redirected)
-        if (els.userProfileHeader && els.userProfileHeader.style.display === 'none' && els.signInLink && els.signInLink.style.display !== 'none') {
+        if (!isAuthOk) {
             console.log("Halting full page init as user is not logged in or redirected.");
             return; // Stop further initialization if auth failed/redirected
         }
