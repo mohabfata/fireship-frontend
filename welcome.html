@@ -99,7 +99,7 @@
           <!-- Google Sign-In Button Area -->
           <div class="google-btn-wrapper" id="google-signin-button-wrapper">
             <div id="g_id_onload"
-                 data-client_id="969404171303-3dv2kqs2uhnqendr7kp6l1qcphjnoq40.apps.googleusercontent.com" /* TODO: Replace with your actual Client ID */
+                 data-client_id="969404171303-3dv2kqs2uhnqendr7kp6l1qcphjnoq40.apps.googleusercontent.com"
                  data-context="signin"
                  data-ux_mode="popup"
                  data-callback="handleGoogleSignInResponse"
@@ -146,66 +146,61 @@
          if (authErrorMessage) { authErrorMessage.textContent = message; authErrorMessage.style.display = 'block'; }
          else { alert(message); }
     }
-    async function apiRequest(url, options) {
+    
+    // Centralized API request with credentials included
+    async function apiRequest(url, options = {}) {
          const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
-         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`);
+         const opts = {
+             credentials: 'include',         // <<< ensure cookies are sent/stored
+             ...options,
+         };
+         console.debug(`API Req: ${opts.method||'GET'} ${fullUrl}`, opts);
          try {
-             const r = await fetch(fullUrl, options);
+             const r = await fetch(fullUrl, opts);
              if (!r.ok) {
-                 let m = `API Error (${r.status})`; let d=null;
-                 try { d=await r.json(); m=d.message||m;} catch (e) {}
-                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, d);
-                 // Let the caller handle specific status codes if needed
-                 throw new Error(m || `Request failed: ${r.status}`);
+                 let m = `API Error (${r.status})`;
+                 let d = null;
+                 try { d = await r.json(); m = d.message || m; } catch {}
+                 console.error(`API Fail: ${r.status} ${r.statusText}`, d);
+                 throw new Error(m);
              }
-             const ct = r.headers.get("content-type");
-             if (ct?.includes("application/json")) { const d = await r.json(); console.debug(`API OK JSON @ ${fullUrl}:`, d); return d; }
-             else { console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); return {}; }
+             const ct = r.headers.get('content-type');
+             if (ct && ct.includes('application/json')) return await r.json();
+             return {};
          } catch (e) {
-              console.error(`API Excep (${fullUrl}):`, e);
-              if (e.message.toLowerCase().includes('failed to fetch')) throw new Error("Network error.");
-              throw e; // Re-throw other errors
+              console.error(`API Exception:`, e);
+              if (e.message.includes('failed to fetch')) throw new Error('Network error.');
+              throw e;
          }
     }
-     function updateUiPostSignIn(redirectUrl, message) {
-         // Keep this function as it was
+
+    function updateUiPostSignIn(redirectUrl, message) {
          if (loginPrompt) loginPrompt.style.display = 'none';
          if (googleButtonWrapper) googleButtonWrapper.style.display = 'none';
          if (authErrorMessage) authErrorMessage.style.display = 'none';
          if (continueSection && successPrompt && continueButton) {
              successPrompt.innerHTML = `<i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 8px;"></i> ${message}`;
-             continueButton.textContent = 'Continue';
              continueButton.style.display = 'inline-flex';
-             continueButton.onclick = function() { window.location.href = redirectUrl; };
+             continueButton.onclick = () => { window.location.href = redirectUrl; };
              continueSection.style.display = 'block';
-         } else { console.error("UI elements for post-sign-in not found."); }
-     }
+         }
+    }
 
-    // --- Google Sign-In Handler (Simplified Error Handling) ---
+    // --- Google Sign-In Handler ---
     async function handleGoogleSignInResponse(response) {
-      console.log("Google Sign-In Response Received.");
       clearAuthError();
       const token = response.credential;
-      if (!token) { showAuthError("Google credential missing."); return; }
+      if (!token) { showAuthError('Google credential missing.'); return; }
 
-      console.log("Step 1: Verifying token with backend...");
       try {
-         const authResult = await apiRequest('/api/auth/google', {
+         await apiRequest('/api/auth/google', {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ token: token })
+           body: JSON.stringify({ token })
          });
-         // If apiRequest throws an error (non-OK status), it will be caught below
-         console.log("Backend verification successful:", authResult);
 
-         // If verification succeeded (didn't throw), proceed immediately to status check
-         console.log("Step 2: Checking user status...");
          const status = await apiRequest('/api/user/status', { method: 'GET' });
-         // If status fails (e.g., 401 because cookie wasn't set/sent), it throws and goes to catch
 
-         console.log("User status received:", status);
-
-         // Determine next step ONLY if status was successful
          let nextUrl = 'aboutyourself.html';
          let message = 'Sign-in successful. Please continue setup.';
          if (status.hasBooking) {
@@ -213,31 +208,23 @@
          } else if (status.setupComplete?.about && status.setupComplete?.learningStyle && status.setupComplete?.proficiency) {
              nextUrl = 'booking.html'; message = 'Welcome back! Ready to book.';
          } else if (status.setupComplete?.about && status.setupComplete?.learningStyle) {
-              nextUrl = 'languageproficiency.html'; message = 'Great! Next: proficiency.';
+             nextUrl = 'languageproficiency.html'; message = 'Great! Next: proficiency.';
          } else if (status.setupComplete?.about) {
              nextUrl = 'learningstyle.html'; message = 'Welcome! Next: learning style.';
          }
+
          updateUiPostSignIn(nextUrl, message);
 
       } catch (error) {
-          // This will catch errors from EITHER apiRequest('/api/auth/google') OR apiRequest('/api/user/status')
-          console.error("Error during sign-in flow:", error);
-          // Provide a generic but clear error based on the likely failure point
-          if (error.message.includes('401') || error.message.includes('authenticated')) {
-               showAuthError(`Authentication failed. Please ensure cookies are enabled and try again.`);
-          } else if (error.message.includes('Network error')) {
-               showAuthError('Network error. Please check your connection and try again.');
-          }
-          else {
-              showAuthError(`Sign-in failed: ${error.message}.`);
-          }
+          console.error('Error during sign-in flow:', error);
+          const msg = error.message.includes('401')
+                      ? 'Authentication failed. Please ensure cookies are enabled and try again.'
+                      : error.message.includes('Network error')
+                        ? 'Network error. Please check your connection and try again.'
+                        : `Sign-in failed: ${error.message}`;
+          showAuthError(msg);
       }
     }
-
-    // --- Remove DOMContentLoaded Status Check for now ---
-    // document.addEventListener('DOMContentLoaded', async () => {
-    //     console.log("Welcome page loaded. Skipping initial auth status check for debugging.");
-    // });
 
   </script>
 </body>
