@@ -417,51 +417,54 @@
     // Add this line BEFORE the apiRequest function definition
     const API_BASE_URL = 'https://api.fireship.org'; // <-- YOUR LIVE API URL
 
-    async function apiRequest(url, options) {
-         // Construct the full URL if the provided URL starts with '/'
-         const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url; // Use the constant
-         console.debug(`API Req: ${options?.method || 'GET'} ${fullUrl}`); // Log the full URL
+    async function apiRequest(url, options = {}) { // Default options to {}
+         const fullUrl = url.startsWith('/') ? API_BASE_URL + url : url; // Use constant
+
+         // Create opts object including credentials
+         const opts = {
+             credentials: 'include', // <-- Add credentials: 'include'
+             ...options, // Merge other passed options
+         };
+
+         console.debug(`API Req: ${opts.method || 'GET'} ${fullUrl}`); // Log method and fullUrl
+
          try {
-             // Use fullUrl in the fetch call
-             const r = await fetch(fullUrl, options); // <--- Ensure this uses fullUrl
+             // Use fullUrl and opts in the fetch call
+             const r = await fetch(fullUrl, opts);
 
              if (!r.ok) {
                  let errorMsg = `API Error (${r.status})`;
                  let errorData = null;
-                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore if response is not json */ }
-                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData); // Log fullUrl
+                 try { errorData = await r.json(); errorMsg = errorData.message || errorMsg; } catch (e) { /* ignore */ }
+                 console.error(`API Fail: ${r.status} ${r.statusText} @ ${fullUrl}`, errorData);
 
-                 // Special handling for 401 (Unauthorized) - redirect to welcome
-                 if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) { // Don't redirect on logout failure
+                 // Specific handling for 401 - Redirect
+                 if (r.status === 401 && !fullUrl.includes('/api/auth/logout')) {
                      console.warn("API 401 Unauthorized detected, redirecting to welcome page.");
                      window.location.href = 'welcome.html';
-                     return null; // Prevent further processing after redirect trigger
+                     return null; // Signal redirect
                  }
-                 // Throw a formatted error
                  throw new Error(errorData?.message || `Request failed: ${r.status}`);
              }
 
-             // Check content type before trying to parse JSON
              const ct = r.headers.get("content-type");
              if (ct?.includes("application/json")) {
                  const d = await r.json();
-                 console.debug(`API OK JSON @ ${fullUrl}:`, d); // Log fullUrl
+                 console.debug(`API OK JSON @ ${fullUrl}:`, d);
                  return d;
              } else {
-                 // For non-JSON responses (like maybe logout), return success indication
-                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`); // Log fullUrl
-                 return { success: true }; // Or return {}; if preferred
+                 console.debug(`API OK NoJSON @ ${fullUrl} (${r.status})`);
+                 return { success: true }; // Indicate success for non-JSON OK
              }
-         } catch (e) { // Error handling
-              console.error(`API Excep (${fullUrl}):`, e); // <--- Ensure this uses fullUrl
-              // Handle specific error types if needed, e.g., network errors
+         } catch (e) {
+              console.error(`API Excep (${fullUrl}):`, e);
               if (e.message.toLowerCase().includes('failed to fetch')) {
                   throw new Error("Network error. Please check your connection.");
               }
-              // Re-throw other errors (could be the custom error from !r.ok or the network error)
               throw e;
          }
     }
+
 
     function getLessonIdFromUrl() {
         const params = new URLSearchParams(window.location.search);
@@ -524,13 +527,13 @@
     async function handleSignOut() {
         console.log("Signing out...");
         try {
+            // Use updated apiRequest
             const result = await apiRequest('/api/auth/logout', { method: 'POST' });
              if (result === null) return; // Redirect happened in apiRequest
-            // Fallback redirect if apiRequest didn't handle it
+            // Fallback redirect
             window.location.href = 'welcome.html';
         } catch (error) {
             console.error("Sign out failed:", error);
-             // Avoid alert if it was a redirect signal
             if (error.message !== "Redirecting") {
                 alert(`Sign out failed: ${error.message}`);
             }
@@ -540,8 +543,9 @@
     async function checkAuthAndSetupHeader() {
         console.log("[Header Auth Check] Checking...");
         try {
+            // Use updated apiRequest
             const status = await apiRequest('/api/user/status', { method: 'GET' });
-            if (status === null) return false; // Redirect happened or fatal API error, stop further processing
+            if (status === null) return false; // Redirect happened or fatal API error
 
             if (status && status.user) {
                 console.log("[Header Auth Check] User logged in:", status.user);
@@ -550,7 +554,7 @@
             } else {
                 console.log("[Header Auth Check] User not logged in.");
                 updateHeaderUI(null, false);
-                 // For confirmation page, user SHOULD be logged in. Show error or redirect.
+                 // Confirmation page requires login
                  showError("You must be logged in to view this confirmation.");
                  // Optionally redirect after a delay: setTimeout(() => { window.location.href = 'welcome.html'; }, 3000);
                 return false; // Indicate failure (not logged in)
@@ -575,21 +579,18 @@
         showLoading(true);
 
         try {
-            // Auth check is now done in initPage before this runs
-            // TODO: Replace with your actual backend endpoint
+            // Use updated apiRequest
             const apiUrl = `/api/lessons/${lessonId}`;
             const lessonData = await apiRequest(apiUrl, { method: 'GET' });
 
             if (lessonData === null) { // Redirect or API error handled in apiRequest
-                 // Error message should have been shown by checkAuth or apiRequest 401 handler
-                 // Or if it was another API error, show a generic message here.
                  if (!document.getElementById('error-message').style.display || document.getElementById('error-message').style.display === 'none') {
                      showError("Failed to load lesson data.");
                  }
                  return;
             }
 
-            lessonDataStore = lessonData; // Store for later use
+            lessonDataStore = lessonData;
             console.log("Lesson data received:", lessonData);
 
             populateLessonDetails(lessonData);
@@ -601,17 +602,15 @@
             if (els.errorMessageDiv) {
                  els.errorMessageDiv.style.display = 'none';
             }
-            createConfetti(); // Display confetti on successful load
+            createConfetti();
 
         } catch (error) {
             console.error("Failed to fetch lesson details:", error);
-            // Handle specific errors like 404 (Not Found) or 403 (Forbidden) that might not have been caught by apiRequest 401
             if (error.message.includes('404')) {
                  showError(`Lesson with ID ${lessonId} not found.`);
-            } else if (error.message.includes('403')) { // 403 Forbidden might be used if user is logged in but shouldn't see this lesson
+            } else if (error.message.includes('403')) {
                  showError("You are not authorized to view this lesson.");
             } else {
-                 // Show error message from apiRequest if available, otherwise generic
                  showError(`Error loading lesson: ${error.message}`);
             }
         } finally {
@@ -620,10 +619,9 @@
     }
 
     function populateLessonDetails(data) {
-        // (Keep existing function)
         if (!data) return;
         els.lessonTitleEl.textContent = data.learningPathTitle || 'Personalized Session';
-        els.instructorNameEl.textContent = "To be decided"; // Placeholder
+        els.instructorNameEl.textContent = data.instructor?.name || "To be decided"; // Use instructor info
         const lessonStartTimeUTC = data.utcStartTime;
         if (lessonStartTimeUTC) {
              const startTime = new Date(lessonStartTimeUTC);
@@ -660,12 +658,11 @@
     }
 
     function setupInteractions(data) {
-         // (Keep existing function)
         if (els.copyButton && els.zoomLinkField && els.copyToast) {
             els.copyButton.onclick = function() {
                 if (els.zoomLinkField.value === 'Loading...' || els.zoomLinkField.value === 'Not available' || els.zoomLinkField.value === '#') return;
                 els.zoomLinkField.select();
-                els.zoomLinkField.setSelectionRange(0, 99999); // For mobile devices
+                els.zoomLinkField.setSelectionRange(0, 99999);
                 navigator.clipboard.writeText(els.zoomLinkField.value)
                     .then(() => {
                         els.copyToast.classList.add('show');
@@ -677,13 +674,13 @@
         setupCalendarButtons(data);
     }
 
-    // --- Helper Functions (Keep: createConfetti, generateQRCode, Countdown, Calendar Buttons) ---
+    // --- Helper Functions ---
     function createConfetti() { const container = document.querySelector('.container'); if (!container) return; const colors = ['#5A8DEE', '#3DDC97', '#FFC107', '#FF6347', '#9C27B0', '#00BCD4']; for (let i = 0; i < 50; i++) { const confetti = document.createElement('div'); confetti.className = 'confetti'; confetti.style.left = Math.random() * 100 + '%'; confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; confetti.style.animationDelay = Math.random() * 3 + 's'; container.appendChild(confetti); } }
     function generateQRCode(url) { if (!els.qrCodeContainer) return; els.qrCodeContainer.innerHTML = ''; try { new QRCode(els.qrCodeContainer, { text: url, width: 150, height: 150, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); } catch(e) { console.error("QR Code generation failed:", e); els.qrCodeContainer.innerHTML = '<p style="color: var(--danger);">QR code generation failed.</p>'; } }
     function startCountdown(targetDate) { if (!(targetDate instanceof Date) || isNaN(targetDate)) { console.error("Invalid target date for countdown:", targetDate); stopCountdown(); if (els.countdownErrorEl) els.countdownErrorEl.style.display = 'block'; updateCountdownDisplay(0); return; } if (els.countdownErrorEl) els.countdownErrorEl.style.display = 'none'; stopCountdown(); const update = () => updateCountdownDisplay(targetDate); update(); countdownInterval = setInterval(update, 1000); }
     function stopCountdown() { if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; } }
     function updateCountdownDisplay(targetDate) { if (!els.daysEl || !els.hoursEl || !els.minutesEl || !els.secondsEl || !els.countdownTimerEl) return; const now = new Date(); const diff = targetDate - now; if (diff <= 0) { els.daysEl.textContent = '0'; els.hoursEl.textContent = '0'; els.minutesEl.textContent = '0'; els.secondsEl.textContent = '0'; stopCountdown(); const countdownSection = document.querySelector('.countdown-section'); if (countdownSection && !countdownSection.querySelector('.lesson-starting-message')) { countdownSection.style.backgroundColor = 'var(--success)'; countdownSection.innerHTML = '<h2 class="lesson-starting-message" style="color: white; padding: 20px;">Your lesson is starting now!</h2>'; } return; } const days = Math.floor(diff / (1000 * 60 * 60 * 24)); const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)); const seconds = Math.floor((diff % (1000 * 60)) / 1000); els.daysEl.textContent = days; els.hoursEl.textContent = hours; els.minutesEl.textContent = minutes; els.secondsEl.textContent = seconds; }
-    function setupCalendarButtons(lessonData) { if (!lessonData?.utcStartTime || !lessonData?.zoom) { console.warn("Cannot setup calendar buttons, missing lesson data."); if(els.googleBtn) els.googleBtn.disabled = true; if(els.outlookBtn) els.outlookBtn.disabled = true; if(els.appleBtn) els.appleBtn.disabled = true; return; } if(els.googleBtn) els.googleBtn.disabled = false; if(els.outlookBtn) els.outlookBtn.disabled = false; if(els.appleBtn) els.appleBtn.disabled = false; const startTime = new Date(lessonData.utcStartTime); if (isNaN(startTime)) { console.error("Invalid lesson start time for calendar link generation."); return; } const endTime = new Date(startTime.getTime() + (lessonData.durationMinutes || 20) * 60 * 1000); const title = encodeURIComponent(lessonData.learningPathTitle || 'Fireship English Lesson'); const description = encodeURIComponent( `Instructor: To be decided\nJoin via Zoom: ${lessonData.zoom.joinUrl || 'N/A'}\nMeeting ID: ${lessonData.zoom.meetingId || 'N/A'}\nPasscode: ${lessonData.zoom.passcode || 'N/A'}` ); const location = encodeURIComponent(lessonData.zoom.joinUrl || 'Online'); const formatGoogleDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, ''); const googleStart = formatGoogleDate(startTime); const googleEnd = formatGoogleDate(endTime); const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${googleStart}/${googleEnd}&details=${description}&location=${location}`; if (els.googleBtn) { els.googleBtn.onclick = () => { window.open(googleUrl, '_blank'); }; } if (els.outlookBtn) { els.outlookBtn.onclick = () => { alert('Outlook Calendar link generation would require backend support or a library.'); }; } if (els.appleBtn) { els.appleBtn.onclick = () => { alert('iCalendar (.ics) file generation would require backend support or a library.'); }; } }
+    function setupCalendarButtons(lessonData) { if (!lessonData?.utcStartTime || !lessonData?.zoom) { console.warn("Cannot setup calendar buttons, missing lesson data."); if(els.googleBtn) els.googleBtn.disabled = true; if(els.outlookBtn) els.outlookBtn.disabled = true; if(els.appleBtn) els.appleBtn.disabled = true; return; } if(els.googleBtn) els.googleBtn.disabled = false; if(els.outlookBtn) els.outlookBtn.disabled = false; if(els.appleBtn) els.appleBtn.disabled = false; const startTime = new Date(lessonData.utcStartTime); if (isNaN(startTime)) { console.error("Invalid lesson start time for calendar link generation."); return; } const endTime = new Date(startTime.getTime() + (lessonData.durationMinutes || 20) * 60 * 1000); const title = encodeURIComponent(lessonData.learningPathTitle || 'Fireship English Lesson'); const description = encodeURIComponent( `Instructor: ${lessonData.instructor?.name || 'To be decided'}\nJoin via Zoom: ${lessonData.zoom.joinUrl || 'N/A'}\nMeeting ID: ${lessonData.zoom.meetingId || 'N/A'}\nPasscode: ${lessonData.zoom.passcode || 'N/A'}` ); const location = encodeURIComponent(lessonData.zoom.joinUrl || 'Online'); const formatGoogleDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, ''); const googleStart = formatGoogleDate(startTime); const googleEnd = formatGoogleDate(endTime); const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${googleStart}/${googleEnd}&details=${description}&location=${location}`; if (els.googleBtn) { els.googleBtn.onclick = () => { window.open(googleUrl, '_blank'); }; } if (els.outlookBtn) { els.outlookBtn.onclick = () => { alert('Outlook Calendar link generation would require backend support or a library.'); }; } if (els.appleBtn) { els.appleBtn.onclick = () => { alert('iCalendar (.ics) file generation would require backend support or a library.'); }; } }
 
 
     // --- Initial Load ---
@@ -718,6 +715,6 @@
     document.addEventListener('DOMContentLoaded', initPage); // Call the async init function
 
   </script>
-  
+
 </body>
 </html>
